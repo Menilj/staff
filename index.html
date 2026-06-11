@@ -539,6 +539,15 @@
             .sidebar-overlay.active {
                 display: block;
             }
+            /* Make tables scrollable horizontally on mobile */
+            .table-responsive {
+                overflow-x: auto;
+            }
+            /* Reduce button text on small screens */
+            .action-icon {
+                font-size: 0.8rem;
+                padding: 4px 6px;
+            }
         }
     </style>
 </head>
@@ -592,7 +601,7 @@
                         <thead>
                             <tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Assigned</th><th>Status</th><th>Actions</th>
                         </thead>
-                        <tbody id="bookingsTableBody"><tr><td colspan="7">Loading bookings...</td></tr></tbody>
+                        <tbody id="bookingsTableBody"><tr><td colspan="7">Loading bookings...</td></tr>
                     </table>
                 </div>
             </div>
