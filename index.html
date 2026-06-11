@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>CampusVault – Staff Portal | Real‑time</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Modern Dark Mode (default) */
+        :root {
+            --bg: #0a0c10;
+            --surface: rgba(18, 22, 28, 0.96);
+            --surface-solid: #12161c;
+            --text: #edf2f8;
+            --text-muted: #8e9aaf;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(71, 85, 105, 0.6);
+            --shadow-sm: 0 8px 20px rgba(0,0,0,0.3);
+            --shadow-md: 0 12px 28px rgba(0,0,0,0.4);
+            --radius: 24px;
+            --radius-sm: 14px;
+            --backdrop-blur: blur(12px);
+        }
+
+        body.light {
+            --bg: #f1f5f9;
+            --surface: rgba(255, 255, 255, 0.92);
+            --surface-solid: #ffffff;
+            --text: #0f172a;
+            --text-muted: #475569;
+            --primary: #1e3a5f;
+            --primary-hover: #2d4a6e;
+            --border: rgba(203, 213, 225, 0.8);
+            --shadow-sm: 0 8px 20px rgba(0,0,0,0.05);
+            --shadow-md: 0 12px 28px rgba(0,0,0,0.08);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.2s, color 0.2s;
+        }
+
+        /* Login */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 20% 30%, #0a1929, #030712);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .login-card {
+            background: var(--surface-solid);
+            backdrop-filter: var(--backdrop-blur);
+            border-radius: 2rem;
+            padding: 2rem 1.8rem;
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+        }
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 12px;
+            background: var(--surface-solid);
+            border: 1px solid var(--border);
+            border-radius: 60px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 24px;
+            transition: 0.2s;
+        }
+        .google-btn:hover { background: var(--bg); }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+            min-height: 100vh;
+        }
+        .dashboard.active { display: block; }
+
+        .top-bar {
+            background: var(--surface);
+            backdrop-filter: var(--backdrop-blur);
+            border-bottom: 1px solid var(--border);
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .brand {
+            font-weight: 800;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #3b82f6, #38bdf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .staff-badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .theme-toggle, .logout-staff {
+            background: var(--surface-solid);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            color: var(--text);
+            transition: 0.2s;
+        }
+        .theme-toggle:hover, .logout-staff:hover { background: var(--bg); }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.2rem;
+        }
+        .card {
+            background: var(--surface);
+            backdrop-filter: var(--backdrop-blur);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 1.8rem;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-weight: 700;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        th, td {
+            padding: 12px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--bg);
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-active { background: #10b98120; color: #10b981; border: 1px solid #10b98140; }
+        .badge-pending { background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b40; }
+        .badge-assigned { background: #3b82f620; color: var(--primary); border: 1px solid #3b82f640; }
+
+        .action-icon {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 40px;
+            transition: 0.2s;
+            margin: 0 2px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .action-icon:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Activity timeline */
+        .activity-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-chip {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .refresh-btn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .refresh-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .refresh-btn.loading i { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .activity-timeline {
+            padding: 0.5rem;
+        }
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+        .activity-item:hover { background: var(--bg); border-radius: 16px; }
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--primary);
+        }
+        .activity-content { flex: 1; }
+        .activity-title { font-weight: 600; font-size: 0.9rem; }
+        .activity-detail { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; }
+        .activity-time { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
+        .empty-activity { text-align: center; padding: 2rem; color: var(--text-muted); }
+
+        /* Modals, forms, camera, signature */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+            padding: 1rem;
+        }
+        .modal-content {
+            background: var(--surface-solid);
+            border-radius: 28px;
+            width: 100%;
+            max-width: 550px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+        .form-group { margin-bottom: 1rem; }
+        label { font-weight: 500; font-size: 0.8rem; display: block; margin-bottom: 6px; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .photo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .photo-item {
+            background: var(--bg);
+            border-radius: 16px;
+            overflow: hidden;
+            width: 100px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        .photo-item img { width: 100px; height: 100px; object-fit: cover; }
+        .signature-canvas {
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            background: white;
+            width: 100%;
+            height: 140px;
+            touch-action: none;
+            margin: 8px 0;
+        }
+        video, #capturedImage {
+            width: 100%;
+            border-radius: 20px;
+            max-height: 300px;
+            object-fit: cover;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: var(--bg); }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-solid);
+            border-left: 4px solid var(--success);
+            padding: 12px 20px;
+            border-radius: 60px;
+            box-shadow: var(--shadow-md);
+            z-index: 1200;
+            font-size: 0.85rem;
+            animation: slideUp 0.2s ease;
+        }
+        @keyframes slideUp {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 20px; opacity: 1; }
+        }
+        @media (max-width: 640px) {
+            .container { padding: 0.8rem; }
+            th, td { padding: 8px 6px; font-size: 0.7rem; }
+            .activity-item { flex-wrap: wrap; }
+            .activity-time { margin-left: auto; }
+        }
+    </style>
+</head>
+<body class="dark">
+<div class="login-overlay" id="loginScreen">
+    <div class="login-card">
+        <h2><i class="fas fa-user-shield"></i> Staff Portal</h2>
+        <p style="margin-top: 6px;">CampusVault • Real‑time Operations</p>
+        <button class="google-btn" id="staffGoogleBtn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Sign in with Google</button>
+        <p id="staffLoginError" style="color:var(--danger); margin-top:14px; display:none;"></p>
+    </div>
+</div>
+
+<div class="dashboard" id="staffDashboard">
+    <div class="top-bar">
+        <div class="brand"><i class="fas fa-cube"></i> CampusVault <span class="staff-badge">STAFF</span></div>
+        <div style="display: flex; gap: 12px;">
+            <button class="theme-toggle" id="themeToggleStaff"><i class="fas fa-sun"></i> Light</button>
+            <button class="logout-staff" id="logoutStaffBtn"><i class="fas fa-sign-out-alt"></i> Exit</button>
+        </div>
+    </div>
+    <div class="container">
+        <!-- Bookings Card -->
+        <div class="card">
+            <div class="card-header">
+                <span><i class="fas fa-boxes"></i> Active Bookings</span>
+                <span class="badge badge-assigned">Assigned to me: <span id="myAssignedCount">0</span></span>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Assigned</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="bookingsTableBody"><tr><td colspan="7">Loading bookings...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Activity Log (Real‑time) -->
+        <div class="card">
+            <div class="card-header">
+                <span><i class="fas fa-history"></i> My Recent Activity</span>
+                <div class="activity-filters">
+                    <span class="filter-chip active" data-filter="all">All</span>
+                    <span class="filter-chip" data-filter="ACCEPT_BOOKING">Accept</span>
+                    <span class="filter-chip" data-filter="REQUEST_EDIT">Edits</span>
+                    <span class="filter-chip" data-filter="UPLOAD_PHOTO">Photos</span>
+                    <span class="filter-chip" data-filter="REQUEST_COLLECTION">Collection</span>
+                    <button class="refresh-btn" id="refreshActivityBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+            </div>
+            <div id="activityTimelineContainer" class="activity-timeline">
+                <div class="empty-activity"><i class="fas fa-spinner fa-pulse"></i> Loading activity...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'editModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3><i class="fas fa-pen-alt"></i> Request Data Edit</h3>
+        <form id="editForm">
+            <input type="hidden" id="editBookingKey">
+            <div class="form-group"><label>Full Name</label><input id="editName" required></div>
+            <div class="form-group"><label>Phone</label><input id="editPhone"></div>
+            <div class="form-group"><label>Email</label><input id="editEmail" type="email"></div>
+            <div class="form-group"><label>Check‑in Date</label><input id="editCheckIn" type="date"></div>
+            <div class="form-group"><label>Collection Due</label><input id="editCollect" type="date"></div>
+            <div class="form-group"><label>Item Count</label><input id="editItemCount" type="number"></div>
+            <div class="form-group"><label>Category</label><select id="editCategory"><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Books</option><option>Other</option></select></div>
+            <div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('editModal')">Cancel</button><button type="submit" class="btn btn-primary">Submit Request</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Photos Modal -->
+<div id="photosModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'photosModal')">
+    <div class="modal-content" style="max-width:650px;" onclick="event.stopPropagation()">
+        <h3><i class="fas fa-camera-retro"></i> Verification Photos</h3>
+        <div id="photosContainer" class="photo-grid"></div>
+        <div class="flex-between">
+            <button class="btn btn-outline" onclick="document.getElementById('fileUpload').click()"><i class="fas fa-upload"></i> Upload File</button>
+            <button class="btn btn-outline" id="openRealtimeCameraBtn"><i class="fas fa-video"></i> Live Camera</button>
+            <input type="file" id="fileUpload" accept="image/*" multiple style="display:none">
+            <button class="btn btn-primary" onclick="closeModal('photosModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Live Camera Modal -->
+<div id="cameraModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'cameraModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3><i class="fas fa-camera"></i> Take Photo</h3>
+        <video id="liveVideo" autoplay playsinline class="camera-preview"></video>
+        <canvas id="photoCanvas" style="display:none;"></canvas>
+        <img id="capturedImage" style="display:none; width:100%; border-radius:20px;">
+        <div class="flex-between">
+            <button class="btn btn-outline" id="snapPhotoBtn"><i class="fas fa-camera"></i> Capture</button>
+            <button class="btn btn-primary" id="confirmPhotoBtn" style="display:none;"><i class="fas fa-check"></i> Use Photo</button>
+            <button class="btn btn-outline" id="retakePhotoBtn" style="display:none;">Retake</button>
+            <button class="btn btn-outline" onclick="closeModal('cameraModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Collection Modal (Signatures) -->
+<div id="collectionModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'collectionModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3><i class="fas fa-signature"></i> Request Collection</h3>
+        <div><label>Staff Signature (draw)</label><canvas id="staffCanvas" class="signature-canvas" width="500" height="140" style="width:100%; height:140px;"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('staffCanvas')">Clear</button></div>
+        <div><label>Customer Signature (draw)</label><canvas id="customerCanvas" class="signature-canvas" width="500" height="140" style="width:100%; height:140px;"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('customerCanvas')">Clear</button></div>
+        <div class="flex-between"><button class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button class="btn btn-primary" id="submitCollectionReq">Submit Request</button></div>
+    </div>
+</div>
+
+<script>
+    // Firebase Config (same as staff portal)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCuCd89dawEHOGrKmcCimw3pBErKYJU_VI",
+        authDomain: "campusvault-connect.firebaseapp.com",
+        databaseURL: "https://campusvault-connect-default-rtdb.firebaseio.com",
+        projectId: "campusvault-connect",
+        storageBucket: "campusvault-connect.firebasestorage.app",
+        messagingSenderId: "185904648786",
+        appId: "1:185904648786:web:390764d552d388b6e2058b"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+    const staffRef = db.ref('staff');
+    const bookingsRef = db.ref('bookings');
+    const pendingApprovalsRef = db.ref('pending_approvals');
+    const staffLogsRef = db.ref('staff_logs');
+
+    let currentStaffEmail = null;
+    let allBookings = [];
+    let currentActivityLogs = [];
+    let activeFilter = 'all';
+    let currentPhotoBookingKey = null;
+    let currentStream = null;
+    let currentCollectionBooking = null;
+
+    // ========== AUTH ==========
+    document.getElementById('staffGoogleBtn').onclick = () => {
+        auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(async result => {
+            const email = result.user.email;
+            const sanitized = email.replace(/\./g, ',');
+            const snap = await staffRef.child(sanitized).once('value');
+            if (snap.exists()) {
+                currentStaffEmail = email;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('staffDashboard').classList.add('active');
+                loadStaffDashboard();
+                logStaffAction('LOGIN', null, 'Staff logged in');
+            } else {
+                auth.signOut();
+                document.getElementById('staffLoginError').innerText = '❌ Unauthorized staff email. Contact admin.';
+                document.getElementById('staffLoginError').style.display = 'block';
+            }
+        }).catch(err => {
+            document.getElementById('staffLoginError').innerText = err.message;
+            document.getElementById('staffLoginError').style.display = 'block';
+        });
+    };
+
+    function logout() { auth.signOut().then(() => location.reload()); }
+    document.getElementById('logoutStaffBtn').onclick = logout;
+
+    // Theme (dark by default)
+    const themeToggle = document.getElementById('themeToggleStaff');
+    themeToggle.onclick = () => {
+        document.body.classList.toggle('light');
+        const isLight = document.body.classList.contains('light');
+        localStorage.setItem('staffTheme', isLight ? 'light' : 'dark');
+        themeToggle.innerHTML = isLight ? '<i class="fas fa-moon"></i> Dark' : '<i class="fas fa-sun"></i> Light';
+    };
+    const savedTheme = localStorage.getItem('staffTheme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light');
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark';
+    } else {
+        document.body.classList.remove('light');
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light';
+    }
+
+    function showToast(msg, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2800);
+    }
+
+    async function logStaffAction(action, bookingId = null, details = '') {
+        if (!currentStaffEmail) return;
+        await staffLogsRef.push({
+            staffEmail: currentStaffEmail,
+            action: action,
+            bookingId: bookingId,
+            details: details,
+            timestamp: new Date().toISOString()
+        });
+        // Real‑time listener will update UI instantly
+    }
+
+    // ========== BOOKINGS ==========
+    function loadStaffDashboard() {
+        loadBookingsRealtime();
+        loadMyActivityLog();
+        subscribeToActivityLogs();
+        setupActivityFilters();
+        document.getElementById('refreshActivityBtn').addEventListener('click', () => loadMyActivityLog());
+    }
+
+    function loadBookingsRealtime() {
+        bookingsRef.on('value', (snap) => {
+            const bookings = [];
+            snap.forEach(child => {
+                const b = child.val();
+                b._key = child.key;
+                bookings.push(b);
+            });
+            allBookings = bookings;
+            renderBookingsTable(bookings);
+            updateAssignedCount(bookings);
+        });
+    }
+
+    function renderBookingsTable(bookings) {
+        const tbody = document.getElementById('bookingsTableBody');
+        if (!bookings.length) { tbody.innerHTML = '<tr><td colspan="7">No bookings available.</td></tr>'; return; }
+        let html = '';
+        for (let b of bookings) {
+            const isAssignedToMe = b.assigned_to === currentStaffEmail;
+            const isUnassigned = !b.assigned_to;
+            const canAccept = (isUnassigned && b.status === 'active');
+            const canManage = (isAssignedToMe && b.status === 'active');
+            const flags = (b.pending_edit ? '🔶 Edit Pending ' : '') + (b.pending_collection ? '📄 Collect Pending' : '');
+            html += `<tr>
+                <td>${b.bookingId || b._key.slice(-6)}</td>
+                <td>${b.name || '—'}</td>
+                <td>${b.phone || '—'}</td>
+                <td>${b.itemCount || '?'} (${b.category || '—'})</td>
+                <td>${b.assigned_to ? `👤 ${b.assigned_to.split('@')[0]}` : '<span class="badge badge-pending">Unassigned</span>'}</td>
+                <td>${b.status} ${flags ? `<br><small>${flags}</small>` : ''}</td>
+                <td>
+                    ${canAccept ? `<button class="action-icon" onclick="acceptBooking('${b._key}')" title="Accept"><i class="fas fa-check-circle"></i> Accept</button>` : ''}
+                    ${canManage ? `<button class="action-icon" onclick="openEditModal('${b._key}')" title="Edit"><i class="fas fa-edit"></i> Edit</button>` : ''}
+                    ${canManage ? `<button class="action-icon" onclick="openPhotosModal('${b._key}')" title="Photos"><i class="fas fa-image"></i> Photos</button>` : ''}
+                    ${canManage ? `<button class="action-icon" onclick="openCollectionModal('${b._key}')" title="Collection"><i class="fas fa-truck"></i> Collect</button>` : ''}
+                    <button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId || b._key}')" title="WhatsApp"><i class="fab fa-whatsapp"></i> Chat</button>
+                </td>
+            </tr>`;
+        }
+        tbody.innerHTML = html;
+    }
+
+    function updateAssignedCount(bookings) {
+        const cnt = bookings.filter(b => b.assigned_to === currentStaffEmail && b.status === 'active').length;
+        document.getElementById('myAssignedCount').innerText = cnt;
+    }
+
+    window.acceptBooking = async (key) => {
+        const booking = allBookings.find(b => b._key === key);
+        if (!booking || booking.assigned_to) { showToast('Already assigned', true); return; }
+        await bookingsRef.child(key).update({ assigned_to: currentStaffEmail, assigned_at: new Date().toISOString() });
+        await logStaffAction('ACCEPT_BOOKING', key, 'Accepted booking');
+        showToast('Booking assigned to you');
+    };
+
+    window.sendWhatsAppStaff = (phone, name, bookingId) => {
+        if (!phone) { showToast('No phone number', true); return; }
+        let cleaned = phone.replace(/\D/g, '');
+        if (cleaned.startsWith('0')) cleaned = '254' + cleaned.substring(1);
+        const msg = `Hello ${name}, CampusVault staff: Your booking ${bookingId} is in progress. Need help?`;
+        window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(msg)}`, '_blank');
+        logStaffAction('WHATSAPP_CONTACT', bookingId, 'WhatsApp contact');
+    };
+
+    // Edit request
+    window.openEditModal = (key) => {
+        const b = allBookings.find(bk => bk._key === key);
+        if (!b) return;
+        document.getElementById('editBookingKey').value = key;
+        document.getElementById('editName').value = b.name || '';
+        document.getElementById('editPhone').value = b.phone || '';
+        document.getElementById('editEmail').value = b.email || '';
+        document.getElementById('editCheckIn').value = b.checkIn || '';
+        document.getElementById('editCollect').value = b.collect || '';
+        document.getElementById('editItemCount').value = b.itemCount || '';
+        document.getElementById('editCategory').value = b.category || 'Other';
+        document.getElementById('editModal').style.display = 'flex';
+    };
+
+    document.getElementById('editForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('editBookingKey').value;
+        const requestedData = {
+            name: document.getElementById('editName').value,
+            phone: document.getElementById('editPhone').value,
+            email: document.getElementById('editEmail').value,
+            checkIn: document.getElementById('editCheckIn').value,
+            collect: document.getElementById('editCollect').value,
+            itemCount: document.getElementById('editItemCount').value,
+            category: document.getElementById('editCategory').value,
+        };
+        const origSnap = await bookingsRef.child(key).once('value');
+        const orig = origSnap.val();
+        const reqId = pendingApprovalsRef.push().key;
+        await pendingApprovalsRef.child(reqId).set({
+            type: 'edit', bookingKey: key, bookingId: orig.bookingId || key,
+            requester: currentStaffEmail,
+            originalData: { name: orig.name, phone: orig.phone, email: orig.email, checkIn: orig.checkIn, collect: orig.collect, itemCount: orig.itemCount, category: orig.category },
+            requestedData, timestamp: new Date().toISOString()
+        });
+        await bookingsRef.child(key).update({ pending_edit: true });
+        await logStaffAction('REQUEST_EDIT', key, 'Edit request sent');
+        showToast('Edit request submitted (pending admin)');
+        closeModal('editModal');
+    };
+
+    // ========== PHOTOS (Live Camera & Upload) ==========
+    window.openPhotosModal = async (bookingKey) => {
+        currentPhotoBookingKey = bookingKey;
+        await loadPhotosForBooking(bookingKey);
+        document.getElementById('photosModal').style.display = 'flex';
+    };
+
+    async function loadPhotosForBooking(bookingKey) {
+        const snap = await bookingsRef.child(`${bookingKey}/verificationPhotos`).once('value');
+        const photos = snap.val() || [];
+        const container = document.getElementById('photosContainer');
+        if (!photos.length) { container.innerHTML = '<p>No photos yet. Upload or capture using camera.</p>'; return; }
+        container.innerHTML = photos.map((p, idx) => `
+            <div class="photo-item">
+                <img src="${p.imageData}" alt="verification">
+                <button class="action-icon" onclick="deletePhoto('${bookingKey}', ${idx})"><i class="fas fa-trash-alt"></i></button>
+                <small>${new Date(p.timestamp).toLocaleTimeString()}</small>
+            </div>
+        `).join('');
+    }
+
+    window.deletePhoto = async (bookingKey, idx) => {
+        const snap = await bookingsRef.child(`${bookingKey}/verificationPhotos`).once('value');
+        let photos = snap.val() || [];
+        photos.splice(idx, 1);
+        await bookingsRef.child(`${bookingKey}/verificationPhotos`).set(photos);
+        await logStaffAction('DELETE_PHOTO', bookingKey, 'Deleted photo');
+        loadPhotosForBooking(bookingKey);
+        showToast('Photo deleted');
+    };
+
+    document.getElementById('fileUpload').onchange = async (e) => {
+        const files = Array.from(e.target.files);
+        for (let file of files) {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const imageData = ev.target.result;
+                const snap = await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).once('value');
+                let photos = snap.val() || [];
+                photos.push({ imageData, timestamp: new Date().toISOString(), uploadedBy: currentStaffEmail });
+                await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).set(photos);
+                await logStaffAction('UPLOAD_PHOTO', currentPhotoBookingKey, 'Uploaded file');
+                loadPhotosForBooking(currentPhotoBookingKey);
+                showToast('Photo added');
+            };
+            reader.readAsDataURL(file);
+        }
+        document.getElementById('fileUpload').value = '';
+    };
+
+    // Live camera
+    const video = document.getElementById('liveVideo');
+    const canvasPhoto = document.getElementById('photoCanvas');
+    const capturedImg = document.getElementById('capturedImage');
+    const snapBtn = document.getElementById('snapPhotoBtn');
+    const confirmBtn = document.getElementById('confirmPhotoBtn');
+    const retakeBtn = document.getElementById('retakePhotoBtn');
+
+    document.getElementById('openRealtimeCameraBtn').onclick = async () => {
+        await startCamera();
+        document.getElementById('cameraModal').style.display = 'flex';
+    };
+
+    async function startCamera() {
+        if (currentStream) stopCamera();
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            currentStream = stream;
+            video.srcObject = stream;
+            video.style.display = 'block';
+            capturedImg.style.display = 'none';
+            snapBtn.style.display = 'inline-flex';
+            confirmBtn.style.display = 'none';
+            retakeBtn.style.display = 'none';
+        } catch (err) {
+            showToast('Camera access denied', true);
+        }
+    }
+
+    function stopCamera() {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            currentStream = null;
+        }
+        video.srcObject = null;
+    }
+
+    snapBtn.onclick = () => {
+        if (!video.videoWidth) return;
+        canvasPhoto.width = video.videoWidth;
+        canvasPhoto.height = video.videoHeight;
+        const ctx = canvasPhoto.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvasPhoto.width, canvasPhoto.height);
+        const imageData = canvasPhoto.toDataURL('image/jpeg', 0.9);
+        capturedImg.src = imageData;
+        capturedImg.style.display = 'block';
+        video.style.display = 'none';
+        snapBtn.style.display = 'none';
+        confirmBtn.style.display = 'inline-flex';
+        retakeBtn.style.display = 'inline-flex';
+    };
+
+    retakeBtn.onclick = () => {
+        video.style.display = 'block';
+        capturedImg.style.display = 'none';
+        snapBtn.style.display = 'inline-flex';
+        confirmBtn.style.display = 'none';
+        retakeBtn.style.display = 'none';
+    };
+
+    confirmBtn.onclick = async () => {
+        if (!capturedImg.src || capturedImg.src === '') return;
+        const imageData = capturedImg.src;
+        const snap = await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).once('value');
+        let photos = snap.val() || [];
+        photos.push({ imageData, timestamp: new Date().toISOString(), uploadedBy: currentStaffEmail });
+        await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).set(photos);
+        await logStaffAction('UPLOAD_PHOTO', currentPhotoBookingKey, 'Live camera photo');
+        loadPhotosForBooking(currentPhotoBookingKey);
+        showToast('Photo captured and saved');
+        stopCamera();
+        closeModal('cameraModal');
+    };
+
+    // ========== COLLECTION WITH SIGNATURES ==========
+    function initSignatureCanvas(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        const resizeCanvas = () => {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000';
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#000';
+            ctx.lineCap = 'round';
+        };
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        const getCoords = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+            return { x, y };
+        };
+        const startDraw = (e) => {
+            drawing = true;
+            const { x, y } = getCoords(e);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            e.preventDefault();
+        };
+        const draw = (e) => {
+            if (!drawing) return;
+            const { x, y } = getCoords(e);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            e.preventDefault();
+        };
+        const endDraw = () => drawing = false;
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('touchstart', startDraw);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', endDraw);
+    }
+
+    window.clearCanvas = (id) => {
+        const canvas = document.getElementById(id);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+
+    window.openCollectionModal = (bookingKey) => {
+        const booking = allBookings.find(b => b._key === bookingKey);
+        if (booking.pending_collection) { showToast('Collection already requested', true); return; }
+        if (booking.status !== 'active') { showToast('Only active bookings can be collected', true); return; }
+        currentCollectionBooking = bookingKey;
+        setTimeout(() => {
+            initSignatureCanvas('staffCanvas');
+            initSignatureCanvas('customerCanvas');
+        }, 100);
+        document.getElementById('collectionModal').style.display = 'flex';
+    };
+
+    document.getElementById('submitCollectionReq').onclick = async () => {
+        if (!currentCollectionBooking) return;
+        const staffCanvas = document.getElementById('staffCanvas');
+        const customerCanvas = document.getElementById('customerCanvas');
+        const staffSig = staffCanvas.toDataURL();
+        const custSig = customerCanvas.toDataURL();
+        if (staffSig.length < 500 || custSig.length < 500) {
+            showToast('Both signatures are required', true);
+            return;
+        }
+        const bookingSnap = await bookingsRef.child(currentCollectionBooking).once('value');
+        const booking = bookingSnap.val();
+        const reqId = pendingApprovalsRef.push().key;
+        await pendingApprovalsRef.child(reqId).set({
+            type: 'collection', bookingId: currentCollectionBooking, bookingCode: booking.bookingId,
+            requester: currentStaffEmail, staffSignature: staffSig, customerSignature: custSig,
+            timestamp: new Date().toISOString()
+        });
+        await bookingsRef.child(currentCollectionBooking).update({ pending_collection: true });
+        await logStaffAction('REQUEST_COLLECTION', currentCollectionBooking, 'Collection with signatures');
+        showToast('Collection request submitted (pending admin)');
+        closeModal('collectionModal');
+    };
+
+    // ========== ACTIVITY LOG (Real-time + Refresh) ==========
+    async function loadMyActivityLog() {
+        const refreshBtn = document.getElementById('refreshActivityBtn');
+        if (refreshBtn) refreshBtn.classList.add('loading');
+        try {
+            const snap = await staffLogsRef.orderByChild('staffEmail').equalTo(currentStaffEmail).limitToLast(50).once('value');
+            const logs = [];
+            snap.forEach(child => logs.unshift(child.val()));
+            currentActivityLogs = logs;
+            renderActivityLog(logs, activeFilter);
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to load activity', true);
+        } finally {
+            if (refreshBtn) refreshBtn.classList.remove('loading');
+        }
+    }
+
+    function renderActivityLog(logs, filter = 'all') {
+        const container = document.getElementById('activityTimelineContainer');
+        if (!container) return;
+        let filtered = logs;
+        if (filter !== 'all') filtered = logs.filter(log => log.action === filter);
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="empty-activity"><i class="fas fa-inbox"></i><p>No activity found</p></div>`;
+            return;
+        }
+        container.innerHTML = filtered.map(log => {
+            let icon = 'fa-clock';
+            switch (log.action) {
+                case 'LOGIN': icon = 'fa-sign-in-alt'; break;
+                case 'ACCEPT_BOOKING': icon = 'fa-check-circle'; break;
+                case 'REQUEST_EDIT': icon = 'fa-edit'; break;
+                case 'UPLOAD_PHOTO': icon = 'fa-camera'; break;
+                case 'DELETE_PHOTO': icon = 'fa-trash-alt'; break;
+                case 'REQUEST_COLLECTION': icon = 'fa-truck'; break;
+                case 'WHATSAPP_CONTACT': icon = 'fa-whatsapp'; break;
+                default: icon = 'fa-history';
+            }
+            const timestamp = new Date(log.timestamp);
+            const timeAgo = getTimeAgo(timestamp);
+            const fullTime = timestamp.toLocaleString();
+            return `
+                <div class="activity-item">
+                    <div class="activity-icon"><i class="fas ${icon}"></i></div>
+                    <div class="activity-content">
+                        <div class="activity-title">${formatActionName(log.action)}</div>
+                        <div class="activity-detail">${log.details || ''} ${log.bookingId ? `Booking: ${log.bookingId}` : ''}</div>
+                    </div>
+                    <div class="activity-time" title="${fullTime}">${timeAgo}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function formatActionName(action) {
+        return action.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ');
+    }
+
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return 'just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `${days}d ago`;
+        return date.toLocaleDateString();
+    }
+
+    function setupActivityFilters() {
+        const filterChips = document.querySelectorAll('.filter-chip');
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                filterChips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                activeFilter = chip.dataset.filter;
+                renderActivityLog(currentActivityLogs, activeFilter);
+            });
+        });
+    }
+
+    function subscribeToActivityLogs() {
+        // Real‑time listener – every new log entry appears instantly without page refresh
+        staffLogsRef.orderByChild('staffEmail').equalTo(currentStaffEmail).limitToLast(50).on('value', (snap) => {
+            const logs = [];
+            snap.forEach(child => logs.unshift(child.val()));
+            currentActivityLogs = logs;
+            renderActivityLog(logs, activeFilter);
+        });
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        if (id === 'cameraModal') stopCamera();
+    }
+    function closeModalOnBg(e, id) {
+        if (e.target === e.currentTarget) closeModal(id);
+    }
+
+    // Expose all needed functions globally
+    window.closeModal = closeModal;
+    window.closeModalOnBg = closeModalOnBg;
+    window.acceptBooking = acceptBooking;
+    window.openEditModal = openEditModal;
+    window.openPhotosModal = openPhotosModal;
+    window.openCollectionModal = openCollectionModal;
+    window.sendWhatsAppStaff = sendWhatsAppStaff;
+    window.deletePhoto = deletePhoto;
+    window.clearCanvas = clearCanvas;
+</script>
+</body>
+</html>
