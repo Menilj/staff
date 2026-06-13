@@ -6,15 +6,9 @@
     <title>Staff Portal | CampusVault</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="apple-touch-icon.png">
-    
-    
-    
-    
-    
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -157,9 +151,7 @@
                 <button class="theme-toggle" id="themeToggleMobile"><i class="fas fa-sun"></i> Light</button>
             </div>
         </div>
-       
 
-        <!-- Bookings Tab (only tab) -->
         <div class="tab-content active" id="tab-bookings">
             <div class="card">
                 <div class="card-header">
@@ -182,7 +174,7 @@
     </main>
 </div>
 
-<!-- Modals (edit, photos, camera, collection) unchanged -->
+<!-- Modals -->
 <div id="editModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'editModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3><i class="fas fa-pen-alt"></i> Request Edit (Admin Approval)</h3>
@@ -199,6 +191,7 @@
         </form>
     </div>
 </div>
+
 <div id="photosModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'photosModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3><i class="fas fa-camera"></i> Verification Photos</h3>
@@ -211,6 +204,7 @@
         </div>
     </div>
 </div>
+
 <div id="cameraModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'cameraModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3><i class="fas fa-camera-retro"></i> Take Photo</h3>
@@ -225,6 +219,7 @@
         </div>
     </div>
 </div>
+
 <div id="collectionModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'collectionModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3><i class="fas fa-signature"></i> Request Collection</h3>
@@ -248,7 +243,6 @@
     const auth = firebase.auth(), db = firebase.database();
     const staffRef = db.ref('staff'), bookingsRef = db.ref('bookings');
     const pendingApprovalsRef = db.ref('pending_approvals');
-    // staffLogsRef removed – no logging needed without activity tab
 
     let currentStaffEmail = null, allBookings = [];
     let currentPhotoBookingKey = null, currentStream = null, currentCollectionBooking = null;
@@ -262,7 +256,6 @@
     }
     setTheme(localStorage.getItem('staffTheme') !== 'light');
     document.getElementById('themeToggleMobile').onclick = () => setTheme(document.body.classList.contains('light'));
-    
 
     function showToast(msg, isError=false) {
         const t = document.createElement('div'); t.className='toast';
@@ -290,7 +283,7 @@
     function logout() { auth.signOut().then(()=>location.reload()); }
     document.getElementById('logoutStaffBtn').onclick = logout;
 
-    // Navigation – only one link, just close mobile sidebar
+    // Navigation
     const sidebar=document.getElementById('sidebar'), overlay=document.getElementById('sidebarOverlay');
     document.getElementById('hamburgerBtn').onclick = ()=>{ sidebar.classList.add('open'); overlay.classList.add('active'); };
     window.closeSidebar = ()=>{ sidebar.classList.remove('open'); overlay.classList.remove('active'); };
@@ -306,7 +299,19 @@
             const canAccept = (isUnassigned && b.status==='active');
             const canManage = (isAssignedToMe && b.status==='active');
             const flags = (b.pending_edit?'🔶 Edit Pending ':'')+(b.pending_collection?'📄 Collect Pending':'');
-            html+=`<tr><td>${b.bookingId||b._key.slice(-6)}</td><td>${b.name||'—'}</td><td>${b.phone||'—'}</td><td>${b.itemCount||'?'} (${b.category||'—'})</td><td>${b.assigned_to?`👤 ${b.assigned_to.split('@')[0]}`:'<span class="badge badge-pending">Unassigned</span>'}</td><td>${b.status} ${flags?`<br><small>${flags}</small>`:''}</td><td>${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')" title="Accept"><i class="fas fa-check-circle" style="color:var(--success)"></i> Accept</button>`:''}${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')" title="Edit"><i class="fas fa-edit"></i> Edit</button>`:''}${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')" title="Photos"><i class="fas fa-image"></i> Photos</button>`:''}${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')" title="Collection"><i class="fas fa-truck"></i> Collect</button>`:''}<button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}')" title="WhatsApp"><i class="fab fa-whatsapp" style="color:#25D366"></i> Chat</button></td></tr>`;
+            html+=`<tr>
+                <td>${b.bookingId||b._key.slice(-6)}</td><td>${b.name||'—'}</td><td>${b.phone||'—'}</td>
+                <td>${b.itemCount||'?'} (${b.category||'—'})</td>
+                <td>${b.assigned_to?`👤 ${b.assigned_to.split('@')[0]}`:'<span class="badge badge-pending">Unassigned</span>'}</td>
+                <td>${b.status} ${flags?`<br><small>${flags}</small>`:''}</td>
+                <td>
+                    ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')" title="Accept"><i class="fas fa-check-circle" style="color:var(--success)"></i> Accept</button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')" title="Edit"><i class="fas fa-edit"></i> Edit</button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')" title="Photos"><i class="fas fa-image"></i> Photos</button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')" title="Collection"><i class="fas fa-truck"></i> Collect</button>`:''}
+                    <button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}')" title="WhatsApp"><i class="fab fa-whatsapp" style="color:#25D366"></i> Chat</button>
+                </td>
+            </tr>`;
         }
         tbody.innerHTML=html;
     }
@@ -321,7 +326,21 @@
             const canAccept = (isUnassigned && b.status==='active');
             const canManage = (isAssignedToMe && b.status==='active');
             const flags = (b.pending_edit?'🔶 Edit Pending ':'')+(b.pending_collection?'📄 Collect Pending':'');
-            html+=`<div class="data-card"><div class="card-row"><span class="card-label">ID</span><span>${b.bookingId||b._key.slice(-6)}</span></div><div class="card-row"><span class="card-label">Customer</span><span>${b.name||'—'}</span></div><div class="card-row"><span class="card-label">Phone</span><span>${b.phone||'—'}</span></div><div class="card-row"><span class="card-label">Items</span><span>${b.itemCount||'?'} (${b.category||'—'})</span></div><div class="card-row"><span class="card-label">Assigned</span><span>${b.assigned_to?`👤 ${b.assigned_to.split('@')[0]}`:'<span class="badge badge-pending">Unassigned</span>'}</span></div><div class="card-row"><span class="card-label">Status</span><span>${b.status} ${flags?`<small>${flags}</small>`:''}</span></div><div class="card-actions">${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')"><i class="fas fa-check-circle" style="color:var(--success)"></i> Accept</button>`:''}${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')"><i class="fas fa-edit"></i> Edit</button>`:''}${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')"><i class="fas fa-image"></i> Photos</button>`:''}${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')"><i class="fas fa-truck"></i> Collect</button>`:''}<button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}')"><i class="fab fa-whatsapp" style="color:#25D366"></i> Chat</button></div></div>`;
+            html+=`<div class="data-card">
+                <div class="card-row"><span class="card-label">ID</span><span>${b.bookingId||b._key.slice(-6)}</span></div>
+                <div class="card-row"><span class="card-label">Customer</span><span>${b.name||'—'}</span></div>
+                <div class="card-row"><span class="card-label">Phone</span><span>${b.phone||'—'}</span></div>
+                <div class="card-row"><span class="card-label">Items</span><span>${b.itemCount||'?'} (${b.category||'—'})</span></div>
+                <div class="card-row"><span class="card-label">Assigned</span><span>${b.assigned_to?`👤 ${b.assigned_to.split('@')[0]}`:'<span class="badge badge-pending">Unassigned</span>'}</span></div>
+                <div class="card-row"><span class="card-label">Status</span><span>${b.status} ${flags?`<small>${flags}</small>`:''}</span></div>
+                <div class="card-actions">
+                    ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')"><i class="fas fa-check-circle" style="color:var(--success)"></i> Accept</button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')"><i class="fas fa-edit"></i> Edit</button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')"><i class="fas fa-image"></i> Photos</button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')"><i class="fas fa-truck"></i> Collect</button>`:''}
+                    <button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}')"><i class="fab fa-whatsapp" style="color:#25D366"></i> Chat</button>
+                </div>
+            </div>`;
         }
         container.innerHTML=html;
     }
@@ -452,7 +471,9 @@
             snapBtn.style.display = 'inline-flex';
             confirmBtn.style.display = 'none';
             retakeBtn.style.display = 'none';
-        } catch(err) { showToast('Camera access denied', true); }
+        } catch(err) {
+            showToast('Camera access denied. Please grant permission.', true);
+        }
     }
     function stopCamera() {
         if(currentStream) { currentStream.getTracks().forEach(track=>track.stop()); currentStream=null; }
@@ -582,66 +603,32 @@
     window.closeModal = closeModal;
     window.closeModalOnBg = closeModalOnBg;
 
-    
-  // 1. Register the Service Worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then(reg => console.log('Service Worker registered!', reg))
-        .catch(err => console.err('Service Worker failed: ', err));
+    // Service Worker & Install Prompt (unchanged)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered!', reg))
+                .catch(err => console.error('Service Worker failed: ', err));
+        });
+    }
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (installBtn) installBtn.style.display = 'block';
+        triggerInstall();
     });
-  }
-
-  // 2. Capture the Installation Prompt
-  let deferredPrompt;
-  const installBtn = document.getElementById('installBtn'); // Optional: Link to a button ID in your HTML
-
-  window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent older Android Chrome from showing the generic bottom banner automatically
-    e.preventDefault();
-    // Save the event so it can be triggered later
-    deferredPrompt = e;
-    
-    // OPTIONAL: If you have an install button on your webpage, show it now
-    if (installBtn) {
-      installBtn.style.display = 'block';
-    }
-
-    // ALTERNATIVE (Auto-Prompt): If you want to prompt them immediately on page load:
-    // Warning: Many modern browsers block immediate popups. Triggering via a button click is safer.
-    triggerInstall(); 
-  });
-
-  function triggerInstall() {
-    if (deferredPrompt) {
-      // Show the browser's native installation dialog
-      deferredPrompt.prompt();
-      
-      // Wait for the user to respond to the prompt
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
-        } else {
-          console.log('User dismissed the install prompt');
+    function triggerInstall() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                console.log(choiceResult.outcome);
+                deferredPrompt = null;
+            });
         }
-        deferredPrompt = null;
-      });
     }
-  }
-
-  // Optional: Bind the trigger function to your custom web button
-  if (installBtn) {
-    installBtn.addEventListener('click', triggerInstall);
-  }
-
-    
-
-
-
-
-
-
-
+    if (installBtn) installBtn.addEventListener('click', triggerInstall);
 </script>
 </body>
 </html>
