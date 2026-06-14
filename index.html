@@ -9,6 +9,10 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="192x192" href="apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0b1e33">
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -16,13 +20,12 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        /* ---------- BASE ---------- */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root {
             --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --text-secondary: #cbd5e1;
             --primary: #38bdf8; --accent: #0ea5e9; --success: #10b981; --warning: #f59e0b;
             --danger: #ef4444; --border: #334155; --shadow: 0 2px 4px rgba(0,0,0,0.2);
-            --shadow-md: 0 6px 12px rgba(0,0,0,0.3); --radius: 10px; --radius-sm: 6px;
+            --shadow-md: 0 6px 12px rgba(0,0,0,0.3); --radius: 12px; --radius-sm: 8px;
             --transition: 0.2s ease; --sidebar-width: 260px; --font: 'Inter', sans-serif;
             --whatsapp-green: #25D366;
         }
@@ -56,7 +59,7 @@
 
         .main { flex:1; margin-left:var(--sidebar-width); padding:24px; transition:margin-left 0.3s ease; min-height:100vh; }
         .topbar-mobile { display:none; background:var(--surface); padding:12px 16px; border-bottom:1px solid var(--border); justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; box-shadow:var(--shadow); }
-        .hamburger { background:none; border:none; font-size:1.5rem; color:var(--text); cursor:pointer; }
+        .hamburger { background:none; border:none; font-size:1.5rem; color:var(--text); cursor:pointer; padding:8px; }
         .theme-toggle { background:var(--bg); border:1px solid var(--border); border-radius:20px; padding:8px 14px; display:flex; align-items:center; gap:6px; cursor:pointer; transition:var(--transition); font-size:0.9rem; color:var(--text-secondary); font-weight:500; }
         .theme-toggle i { font-size:1rem; }
         .theme-toggle:hover { background:var(--border); }
@@ -66,29 +69,119 @@
         .card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--border); overflow:hidden; margin-bottom:24px; transition: box-shadow 0.2s; }
         .card:hover { box-shadow: var(--shadow-md); }
         .card-header { padding:16px 20px; border-bottom:1px solid var(--border); font-weight:700; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+
+        /* Table Styles - Desktop */
+        .desktop-table { display:block; }
         .table-responsive { overflow-x:auto; -webkit-overflow-scrolling:touch; position:relative; max-height:60vh; overflow-y:auto; }
-        table { width:100%; border-collapse:collapse; font-size:0.85rem; white-space:nowrap; }
+        table { width:100%; border-collapse:collapse; font-size:0.85rem; min-width:800px; }
         th { background:var(--bg); padding:12px 12px; text-align:left; font-weight:600; color:var(--text-secondary); border-bottom:2px solid var(--border); position:sticky; top:0; z-index:2; cursor:pointer; user-select:none; }
         th:hover { background:var(--border); }
         th i { margin-left:4px; font-size:0.7rem; }
         td { padding:10px 12px; border-bottom:1px solid var(--border); transition: background 0.15s; }
-        tr:hover td { background:var(--bg); }
-        .sticky-col { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+        tr:hover td { background:var(--bg); cursor:pointer; }
+        .sticky-col { position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 70px; }
         tr:hover .sticky-col { background: var(--bg); }
+
+        /* Mobile Cards Layout */
+        .mobile-cards { display:none; }
+        .booking-card { 
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .booking-card:active { transform: scale(0.98); }
+        .booking-card:hover { box-shadow: var(--shadow-md); border-color: var(--primary); }
+        .booking-card-header { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .booking-card-photo { 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 10px; 
+            object-fit: cover; 
+            background: var(--bg);
+            border: 2px solid var(--border);
+        }
+        .booking-card-title { flex: 1; }
+        .booking-card-title h4 { font-size: 1rem; font-weight: 600; margin-bottom: 2px; color: var(--text); }
+        .booking-card-title .booking-id { font-size: 0.75rem; color: var(--text-secondary); font-family: monospace; }
+        .booking-card-details { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            margin-bottom: 12px;
+        }
+        .booking-detail { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 2px;
+        }
+        .booking-detail-label { 
+            font-size: 0.7rem; 
+            color: var(--text-secondary); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .booking-detail-value { 
+            font-size: 0.85rem; 
+            font-weight: 500;
+            color: var(--text);
+            word-break: break-word;
+        }
+        .booking-card-status {
+            margin-bottom: 12px;
+        }
+        .booking-card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .booking-card-actions .action-icon {
+            background: var(--bg);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            justify-content: center;
+            min-width: auto;
+        }
+        .booking-card-actions .action-icon:active {
+            transform: scale(0.95);
+        }
 
         .badge { padding:4px 10px; border-radius:12px; font-size:0.7rem; font-weight:600; display:inline-block; }
         .badge-active { background:#d1fae5; color:#065f46; }
         .badge-pending { background:#fef3c7; color:#92400e; }
         .badge-assigned { background:#dbeafe; color:#1e40af; }
+        .badge-collected { background:#e0e7ff; color:#3730a3; }
         .action-icon { background:none; border:none; font-size:1rem; cursor:pointer; padding:6px 8px; border-radius:6px; transition:0.2s; margin:0 2px; color:var(--text-secondary); }
         .action-icon:hover { background:var(--bg); color:var(--primary); transform: scale(1.1); }
+        .action-icon.whatsapp-approved { color: var(--whatsapp-green); font-weight: 700; }
+        .action-icon.whatsapp-approved:hover { background: #dcf8c6; color: #075e54; }
 
         .modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:flex-end; justify-content:center; z-index:1100; padding:0; animation: fadeIn 0.2s ease; }
         .modal-content { background:var(--surface); border-radius:20px 20px 0 0; width:100%; max-width:550px; max-height:85vh; overflow-y:auto; padding:1.5rem; border:1px solid var(--border); box-shadow:0 -10px 30px rgba(0,0,0,0.5); animation: slideUp 0.3s ease; }
-        @media (max-width:700px) {
-            .modal { align-items:flex-end; }
-            .modal-content { border-radius:20px 20px 0 0; max-width:100%; width:100%; margin:0; padding:1.5rem 1.25rem; }
-        }
         .form-group { margin-bottom:1rem; }
         label { font-weight:500; font-size:0.8rem; display:block; margin-bottom:6px; }
         input, select, textarea { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-family:inherit; font-size:0.9rem; transition: border-color 0.2s; }
@@ -105,94 +198,207 @@
         .btn-danger { background:var(--danger); color:white; }
         .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
         .btn-outline:hover { background:var(--bg); }
+        .btn-whatsapp { background: var(--whatsapp-green); color: white; font-weight: 700; }
+        .btn-whatsapp:hover { background: #128C7E; }
         .toast-container { position:fixed; bottom:20px; right:20px; display:flex; flex-direction:column-reverse; gap:8px; z-index:1200; }
         .toast { background:var(--surface); border-left:4px solid var(--success); padding:12px 20px; border-radius:8px; box-shadow:var(--shadow-md); font-size:0.85rem; animation: slideIn 0.2s ease; }
         .toast.info { border-left-color: var(--primary); }
         .toast.warning { border-left-color: var(--warning); }
         .toast.error { border-left-color: var(--danger); }
+
         @keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
         @keyframes fadeInUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
         @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .stat-card { background: var(--surface); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); transition: transform 0.2s; position: relative; }
-        .stat-card:hover { transform: translateY(-2px); }
-        .stat-card .stat-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
-        .stat-card .stat-label { color: var(--text-secondary); font-size: 0.8rem; }
-        .stat-skeleton { background: var(--border); height: 2rem; width: 60%; border-radius: 4px; animation: shimmer 1.5s infinite; }
+        .welcome-banner { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 24px; color: white; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-md); position: relative; overflow: hidden; }
+        .welcome-banner::after { content: ''; position: absolute; right: -30px; top: -30px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .welcome-text h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; position: relative; z-index: 1; }
+        .welcome-text p { opacity: 0.9; font-size: 0.95rem; position: relative; z-index: 1; }
+        .welcome-date { background: rgba(255,255,255,0.15); backdrop-filter: blur(5px); padding: 8px 16px; border-radius: 20px; font-weight: 600; position: relative; z-index: 1; }
 
-        .chart-container { position: relative; width: 100%; max-width: 300px; margin: 0 auto; }
-        .highlight { background-color: #fef08a; color: #000; border-radius: 2px; padding: 0 2px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .stat-card { background: var(--surface); border-radius: 12px; padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); transition: all 0.3s ease; display: flex; align-items: center; gap: 12px; }
+        .stat-card:active { transform: scale(0.98); }
+        .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; flex-shrink: 0; }
+        .stat-content { flex: 1; min-width: 0; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; line-height: 1.2; color: var(--text); }
+        .stat-label { color: var(--text-secondary); font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        .recent-activity { list-style: none; padding: 0; margin-top: 16px; }
-        .recent-activity li { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 0.8rem; display: flex; justify-content: space-between; }
-        .recent-activity li:last-child { border-bottom: none; }
+        .chart-card { background: var(--surface); border-radius: 12px; padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 24px; }
+        .chart-card-header { margin-bottom: 16px; font-weight: 700; font-size: 0.95rem; }
+        .chart-container { position: relative; width: 100%; max-width: 250px; margin: 0 auto; }
+        .trend-chart-container { position: relative; width: 100%; margin: 0 auto; height: 200px; }
 
-        .fab { position:fixed; bottom:20px; right:20px; width:56px; height:56px; border-radius:50%; background:var(--primary); color:white; border:none; box-shadow:var(--shadow-md); font-size:1.5rem; cursor:pointer; z-index:100; display:none; align-items:center; justify-content:center; transition:0.2s; }
+        .activity-list { list-style: none; padding: 8px 0; }
+        .activity-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; transition: background 0.2s; border-radius: 8px; margin: 2px 8px; font-size: 0.85rem; }
+        .activity-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+        .activity-time { margin-left: auto; font-size: 0.75rem; color: var(--text-secondary); }
+
+        .fab { position:fixed; bottom:80px; right:20px; width:56px; height:56px; border-radius:50%; background:var(--primary); color:white; border:none; box-shadow:var(--shadow-md); font-size:1.5rem; cursor:pointer; z-index:100; display:none; align-items:center; justify-content:center; transition:0.2s; }
+        .fab:active { transform: scale(0.9); }
         .fab.active { transform: rotate(45deg); }
-        .fab-menu { position:fixed; bottom:80px; right:20px; display:none; flex-direction:column; gap:12px; z-index:99; }
+        .fab-menu { position:fixed; bottom:150px; right:20px; display:none; flex-direction:column; gap:12px; z-index:99; }
         .fab-menu.show { display:flex; }
-        .fab-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px 16px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow); transition:0.2s; }
-        .fab-item:hover { background:var(--primary); color:white; }
+        .fab-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow); transition:0.2s; white-space: nowrap; font-size: 0.9rem; }
+        .fab-item:active { transform: scale(0.95); }
 
-        .whatsapp-float { position:fixed; bottom:20px; left:20px; width:56px; height:56px; border-radius:50%; background:var(--whatsapp-green); color:white; border:none; box-shadow:var(--shadow-md); font-size:1.8rem; cursor:pointer; z-index:100; display:flex; align-items:center; justify-content:center; transition:0.2s; text-decoration:none; }
-        .whatsapp-float:hover { transform: scale(1.1); }
+        .scroll-top-btn { position:fixed; bottom:150px; right:20px; width:40px; height:40px; border-radius:50%; background:var(--surface); border:1px solid var(--border); color:var(--text); display:none; align-items:center; justify-content:center; cursor:pointer; z-index:100; box-shadow:var(--shadow); }
 
-        .scroll-top-btn { position:fixed; bottom:90px; right:20px; width:40px; height:40px; border-radius:50%; background:var(--surface); border:1px solid var(--border); color:var(--text); display:none; align-items:center; justify-content:center; cursor:pointer; z-index:100; box-shadow:var(--shadow); }
+        .admin-badge { background: #fbbf24; color: #000; font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-left: 6px; vertical-align: middle; }
+        .search-filter-bar { display: flex; gap: 8px; padding: 12px 16px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--border); }
+        .search-filter-bar input, .search-filter-bar select { width: auto; min-width: 140px; flex: 1; }
+        .search-filter-bar .btn { white-space: nowrap; }
+        .wa-message-preview { background: #dcf8c6; border-radius: 8px; padding: 12px 16px; margin: 12px 0; font-size: 0.85rem; color: #075e54; border-left: 4px solid #25D366; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
 
-        .empty-state { text-align:center; padding:40px; color:var(--text-secondary); }
-        .empty-state i { font-size: 3rem; opacity:0.5; }
-
-        .loading-skeleton { background: var(--border); border-radius:4px; height:20px; width:80%; margin:6px 0; animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
-
-        .desktop-table { display:block; } .mobile-cards { display:none; }
-        .data-cards { display:flex; flex-direction:column; gap:12px; padding:16px; }
-        .data-card { background:var(--surface); border-radius:var(--radius); padding:16px; border:1px solid var(--border); box-shadow:var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
-        .data-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .data-card .card-row { display:flex; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; }
-        .data-card .card-label { font-weight:600; color:var(--text-secondary); font-size:0.8rem; }
-        .card-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
-
-        .bulk-actions { display: none; gap: 8px; }
-        .bulk-actions.visible { display: flex; }
-        .copied { color: var(--success); }
-        .auto-refresh-active { background: var(--success); }
-
-        @media (max-width:700px) {
-            .sidebar { transform:translateX(-100%); }
-            .sidebar.open { transform:translateX(0); }
-            .main { margin-left:0; padding:16px; }
-            .topbar-mobile { display:flex; }
-            .sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:150; }
-            .sidebar-overlay.active { display:block; }
-            .desktop-table { display:none; }
-            .mobile-cards { display:block; }
-            .fab { display:flex; }
-            .scroll-top-btn { display:flex; }
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .sidebar { 
+                transform: translateX(-100%); 
+                z-index: 250;
+            }
+            .sidebar.open { 
+                transform: translateX(0); 
+            }
+            .main { 
+                margin-left: 0; 
+                padding: 12px; 
+            }
+            .topbar-mobile { 
+                display: flex; 
+            }
+            .sidebar-overlay { 
+                display: none; 
+                position: fixed; 
+                inset: 0; 
+                background: rgba(0,0,0,0.5); 
+                z-index: 200;
+            }
+            .sidebar-overlay.active { 
+                display: block; 
+            }
+            
+            .welcome-banner {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 16px;
+            }
+            .welcome-text h1 { font-size: 1.2rem; }
+            .welcome-text p { font-size: 0.85rem; }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .stat-card {
+                padding: 12px;
+                gap: 8px;
+            }
+            .stat-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+            .stat-value {
+                font-size: 1.3rem;
+            }
+            
+            /* Switch to mobile cards, hide desktop table */
+            .desktop-table { display: none; }
+            .mobile-cards { display: block; }
+            
+            .search-filter-bar {
+                flex-direction: column;
+                gap: 8px;
+                padding: 10px;
+            }
+            .search-filter-bar input,
+            .search-filter-bar select {
+                width: 100%;
+                min-width: unset;
+                font-size: 16px; /* Prevent iOS zoom */
+            }
+            .search-filter-bar .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .card-header > div {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+            }
+            
+            .modal { align-items: flex-end; }
+            .modal-content {
+                border-radius: 16px 16px 0 0;
+                max-width: 100%;
+                max-height: 90vh;
+                padding: 1rem;
+            }
+            
+            .chart-container {
+                max-width: 200px;
+            }
+            .trend-chart-container {
+                height: 180px;
+            }
+            
+            .toast-container {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+            }
+            .toast {
+                width: 100%;
+                font-size: 0.8rem;
+            }
+            
+            .fab, .scroll-top-btn {
+                display: flex;
+            }
+            
+            .login-card {
+                padding: 24px;
+                margin: 16px;
+            }
+            .login-card h2 { font-size: 1.5rem; }
         }
 
-        @media print {
-            .sidebar, .topbar-mobile, .fab, .search-filter-bar, .btn, .action-icon, .scroll-top-btn, .fab-menu, .offline-banner, .whatsapp-float { display:none; }
-            .main { margin-left:0; }
-            .card { box-shadow:none; border:1px solid #ccc; }
+        /* Extra small screens (Redmi, etc.) */
+        @media (max-width: 400px) {
+            .main { padding: 8px; }
+            .stats-grid { grid-template-columns: 1fr; gap: 6px; }
+            .stat-card { padding: 10px; }
+            .stat-value { font-size: 1.2rem; }
+            .stat-label { font-size: 0.65rem; }
+            
+            .welcome-banner { padding: 12px; }
+            .welcome-text h1 { font-size: 1.1rem; }
+            .welcome-date { font-size: 0.8rem; }
+            
+            .booking-card { padding: 12px; margin-bottom: 8px; }
+            .booking-card-details { grid-template-columns: 1fr; gap: 8px; }
+            .booking-card-actions { flex-direction: column; }
+            .booking-card-actions .action-icon { width: 100%; justify-content: flex-start; }
+            
+            .card-header { padding: 12px; }
+            .card-header { font-size: 0.9rem; }
+            
+            .modal-content { padding: 0.8rem; }
+            
+            .fab { width: 48px; height: 48px; bottom: 70px; right: 16px; font-size: 1.2rem; }
+            .scroll-top-btn { bottom: 130px; right: 16px; }
+            .fab-menu { bottom: 130px; right: 16px; }
+            
+            .chart-container { max-width: 180px; }
+            .trend-chart-container { height: 160px; }
         }
-
-        /* iPhone Camera Styles (unchanged) */
-        .iphone-tool { width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-        .iphone-tool:active { background: rgba(0,0,0,0.8); }
-        .zoom-preset { color: rgba(255,255,255,0.7); font-size: 0.9rem; font-weight: 500; cursor: pointer; padding: 2px 8px; border-radius: 4px; transition: color 0.2s; }
-        .zoom-preset.active { color: #ffcc00; font-weight: 700; }
-        .mode-scroll { -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; padding:12px 16px; display:flex; gap:20px; justify-content:center; overflow-x:auto; background:transparent; position:absolute; bottom:70px; left:0; right:0; z-index:15; }
-        .mode-pill { color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 500; white-space: nowrap; padding: 6px 14px; border-radius: 16px; cursor: pointer; transition: 0.2s; scroll-snap-align: center; }
-        .mode-pill.active { color: #fff; background: rgba(255,255,255,0.2); font-weight: 600; }
-        .capture-btn-circle { width: 68px; height: 68px; border-radius: 50%; background: #fff; border: 4px solid rgba(255,255,255,0.8); box-shadow: 0 0 10px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.1s; }
-        .capture-btn-circle:active { transform: scale(0.92); }
-        .photo-review-panel { position: absolute; bottom: 0; left: 0; right: 0; background: var(--surface); padding: 16px; display: none; flex-direction: column; align-items: center; border-radius: 20px 20px 0 0; z-index: 25; }
-        .review-actions { display: flex; gap: 12px; margin-top: 12px; }
-        .review-actions .btn { min-width: 100px; }
-        .camera-preview { width:100%; flex:1; display:flex; align-items:center; justify-content:center; position:relative; }
     </style>
 </head>
 <body>
@@ -202,7 +408,7 @@
     <div class="login-card">
         <h2><i class="fas fa-user-tie"></i> Staff Portal</h2>
         <p>CampusVault • Operations</p>
-        <button class="google-btn" id="staffGoogleBtn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Sign in with Google</button>
+        <button class="google-btn" id="staffGoogleBtn"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" alt="Google"> Sign in with Google</button>
         <p id="staffLoginError" class="login-error"></p>
     </div>
 </div>
@@ -219,6 +425,7 @@
             <div class="user-info">
                 <img class="user-avatar" id="userAvatar" src="" style="display:none;" alt="User avatar">
                 <span id="userNameDisplay">Staff</span>
+                <span id="adminBadge" class="admin-badge" style="display:none;">ADMIN</span>
             </div>
             <button class="logout-btn" id="logoutStaffBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
@@ -227,105 +434,97 @@
     <main class="main">
         <div class="topbar-mobile">
             <button class="hamburger" id="hamburgerBtn"><i class="fas fa-bars"></i></button>
-            <div style="display:flex; gap:8px;">
+            <div style="display:flex; gap:8px; align-items:center;">
+                <span style="font-weight:600; font-size:0.9rem;">CampusVault</span>
                 <button class="theme-toggle" id="themeToggleMobile"><i class="fas fa-sun"></i> Light</button>
             </div>
         </div>
 
-        <!-- Dashboard Tab -->
         <div class="tab-content" id="tab-dashboard">
-            <h2 style="margin-bottom:16px;"><i class="fas fa-chart-pie"></i> Overview</h2>
-            <div class="stats-grid" id="statsContainer">
-                <div class="stat-card"><div class="stat-value" id="statTotal"><span class="stat-skeleton"></span></div><div class="stat-label">Total Bookings</div></div>
-                <div class="stat-card"><div class="stat-value" id="statActive"><span class="stat-skeleton"></span></div><div class="stat-label">Active</div></div>
-                <div class="stat-card"><div class="stat-value" id="statCollected"><span class="stat-skeleton"></span></div><div class="stat-label">Collected</div></div>
-                <div class="stat-card"><div class="stat-value" id="statPending"><span class="stat-skeleton"></span></div><div class="stat-label">Pending Actions</div></div>
-                <div class="stat-card"><div class="stat-value" id="statToday">0</div><div class="stat-label">Today's Bookings</div></div>
-            </div>
-            <div class="card" style="margin-bottom:20px;">
-                <div class="card-header"><i class="fas fa-chart-pie"></i> Booking Status</div>
-                <div style="padding:20px; display:flex; justify-content:center;">
-                    <div class="chart-container">
-                        <canvas id="statusChart"></canvas>
-                    </div>
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h1>Welcome back, <span id="welcomeName">Staff</span></h1>
+                    <p>Manage bookings, request collections, and send WhatsApp confirmations after approval.</p>
                 </div>
+                <div class="welcome-date" id="currentDate"></div>
+            </div>
+            <div class="stats-grid" id="statsContainer">
+                <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #38bdf8, #0ea5e9);"><i class="fas fa-boxes"></i></div><div class="stat-content"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total Bookings</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fas fa-spinner"></i></div><div class="stat-content"><div class="stat-value" id="statActive">0</div><div class="stat-label">Active</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="fas fa-check-double"></i></div><div class="stat-content"><div class="stat-value" id="statCollected">0</div><div class="stat-label">Collected</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);"><i class="fas fa-exclamation-circle"></i></div><div class="stat-content"><div class="stat-value" id="statPending">0</div><div class="stat-label">Pending</div></div></div>
+                <div class="stat-card"><div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);"><i class="fas fa-calendar-day"></i></div><div class="stat-content"><div class="stat-value" id="statToday">0</div><div class="stat-label">Today</div></div></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card-header"><i class="fas fa-chart-pie"></i> Status Breakdown</div>
+                <div class="chart-container"><canvas id="statusChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card-header"><i class="fas fa-chart-line"></i> Booking Trend (7 Days)</div>
+                <div class="trend-chart-container"><canvas id="trendChart"></canvas></div>
             </div>
             <div class="card">
                 <div class="card-header"><i class="fas fa-clock"></i> Recent Activity</div>
-                <ul id="recentActivityList" class="recent-activity"><li>No recent activity</li></ul>
+                <ul id="recentActivityList" class="activity-list"><li class="activity-item"><div class="activity-dot"></div> No recent activity <span class="activity-time">—</span></li></ul>
             </div>
         </div>
 
-        <!-- Bookings Tab -->
         <div class="tab-content" id="tab-bookings" style="display:none;">
             <div class="card">
                 <div class="card-header">
                     <span><i class="fas fa-boxes"></i> Bookings</span>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span class="badge badge-assigned">Assigned to me: <span id="myAssignedCount">0</span></span>
-                        <button class="btn btn-outline" id="autoRefreshToggle" onclick="toggleAutoRefresh()" title="Auto-refresh every 30s"><i class="fas fa-sync-alt"></i> <span id="autoRefreshText">Auto: OFF</span></button>
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap: wrap;">
+                        <span class="badge badge-assigned">👤 <span id="myAssignedCount">0</span></span>
+                        <button class="btn btn-outline" id="autoRefreshToggle" onclick="toggleAutoRefresh()"><i class="fas fa-sync-alt"></i> <span id="autoRefreshText">Auto</span></button>
                     </div>
                 </div>
                 <div class="search-filter-bar">
-                    <input type="text" id="searchInput" placeholder="Search name, ID, phone... (Ctrl+K)" aria-label="Search bookings">
-                    <select id="filterStatus" aria-label="Filter by status">
-                        <option value="all">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="collected">Collected</option>
-                        <option value="pending">Pending Actions</option>
-                    </select>
-                    <div class="bulk-actions" id="bulkActions">
-                        <button class="btn btn-danger" onclick="bulkDelete()"><i class="fas fa-trash"></i> Delete Selected</button>
-                        <button class="btn btn-primary" onclick="bulkMarkCollected()"><i class="fas fa-check"></i> Mark Collected</button>
-                    </div>
-                    <button class="btn excel-export-btn" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
+                    <input type="text" id="searchInput" placeholder="🔍 Search bookings...">
+                    <select id="filterStatus"><option value="all">All Status</option><option value="active">Active</option><option value="collected">Collected</option><option value="pending">Pending</option></select>
+                    <button class="btn btn-outline" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Export</button>
                 </div>
+                <!-- Desktop Table -->
                 <div class="desktop-table">
                     <div class="table-responsive">
                         <table id="bookingsTable">
                             <thead>
                                 <tr>
-                                    <th style="width:30px;"><input type="checkbox" id="selectAll" title="Select All" onclick="toggleSelectAll()"></th>
-                                    <th data-sort="photo" class="sticky-col">Photo</th>
+                                    <th data-sort="photo" class="sticky-col">📷</th>
                                     <th data-sort="bookingId">ID <i class="fas fa-sort"></i></th>
                                     <th data-sort="name">Customer <i class="fas fa-sort"></i></th>
                                     <th data-sort="phone">Phone <i class="fas fa-sort"></i></th>
                                     <th data-sort="items">Items <i class="fas fa-sort"></i></th>
-                                    <th data-sort="assigned">Assigned <i class="fas fa-sort"></i></th>
+                                    <th data-sort="assigned">Staff <i class="fas fa-sort"></i></th>
                                     <th data-sort="status">Status <i class="fas fa-sort"></i></th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="bookingsTableBody"><tr><td colspan="9"><div class="loading-skeleton"></div><div class="loading-skeleton" style="width:60%"></div><div class="loading-skeleton" style="width:40%"></div></td></tr></tbody>
+                            <tbody id="bookingsTableBody"></tbody>
                         </table>
                     </div>
                 </div>
-                <div class="mobile-cards">
-                    <div id="bookingsCardsContainer"></div>
-                </div>
+                <!-- Mobile Cards -->
+                <div class="mobile-cards" id="bookingsCardsContainer"></div>
             </div>
         </div>
     </main>
 </div>
 
-<!-- WhatsApp Float Button -->
-<a class="whatsapp-float" id="whatsappFloat" href="https://wa.me/254700000000?text=Hello%20CampusVault%20team" target="_blank" title="Chat with CampusVault">
-    <i class="fab fa-whatsapp"></i>
-</a>
-
-<!-- Quick View Modal -->
+<!-- Modals remain the same -->
 <div id="quickViewModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'quickViewModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 id="qvTitle">Booking Details</h3>
+        <h3 id="qvTitle" style="margin-bottom:12px;">Booking Details</h3>
         <div id="qvBody"></div>
-        <div class="flex-between"><button class="btn btn-outline" onclick="closeModal('quickViewModal')">Close</button></div>
+        <div class="flex-between">
+            <button class="btn btn-outline" onclick="closeModal('quickViewModal')">Close</button>
+            <button class="btn btn-whatsapp" id="qvWhatsAppBtn" onclick="sendWhatsAppFromQV()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+        </div>
     </div>
 </div>
 
-<!-- Edit Modal -->
 <div id="editModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'editModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3><i class="fas fa-pen-alt"></i> Request Edit</h3>
+        <h3 style="margin-bottom:12px;"><i class="fas fa-pen-alt"></i> Request Edit</h3>
         <form id="editForm">
             <input type="hidden" id="editBookingKey">
             <div class="form-group"><label>Full Name</label><input id="editName" required></div>
@@ -340,960 +539,596 @@
     </div>
 </div>
 
-<!-- Photos Modal -->
 <div id="photosModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'photosModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3><i class="fas fa-camera"></i> Verification Photos</h3>
+        <h3 style="margin-bottom:12px;"><i class="fas fa-camera"></i> Verification Photos</h3>
         <div id="photosContainer" class="photo-grid"></div>
         <div class="flex-between">
             <button class="btn btn-outline" onclick="document.getElementById('fileUpload').click()"><i class="fas fa-upload"></i> Upload</button>
-            <button class="btn btn-outline" id="openRealtimeCameraBtn"><i class="fas fa-video"></i> Camera</button>
             <input type="file" id="fileUpload" accept="image/*" multiple style="display:none">
             <button class="btn btn-primary" onclick="closeModal('photosModal')">Close</button>
         </div>
     </div>
 </div>
 
-<!-- iPhone-style Camera Modal -->
-<div id="cameraModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'cameraModal')">
-    <div class="modal-content" onclick="event.stopPropagation()" style="padding:0; max-width:600px; height:100%; background:#000; display:flex; flex-direction:column;">
-        <div style="position:absolute; top:12px; left:16px; right:16px; display:flex; justify-content:space-between; z-index:20; pointer-events:none;">
-            <div style="display:flex; gap:12px; pointer-events:auto;">
-                <button class="iphone-tool" id="flashBtnIphone" title="Flash"><i class="fas fa-bolt"></i></button>
-                <button class="iphone-tool" id="hqToggleIphone" title="High Quality"><span style="font-weight:bold;">HQ</span></button>
-                <button class="iphone-tool" id="enhanceToggleIphone" title="Enhance"><span style="font-weight:bold;">En</span></button>
-            </div>
-            <div style="display:flex; gap:12px; pointer-events:auto;">
-                <button class="iphone-tool" id="timerBtnIphone2" title="Timer"><i class="fas fa-clock"></i></button>
-                <button class="iphone-tool" id="formatToggleIphone" title="Format">JPG</button>
-                <button class="iphone-tool" id="docScanModeBtn" title="Document Scanner"><i class="fas fa-file-invoice"></i></button>
-            </div>
-        </div>
-        <div class="camera-preview">
-            <video id="liveVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
-            <div id="focusRingIphone" style="position:absolute; width:80px; height:80px; border:2px solid #ffcc00; border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; display:none; z-index:10;"></div>
-            <canvas id="docOverlay" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; display:none; z-index:5;"></canvas>
-        </div>
-        <div style="position:absolute; bottom:150px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:12px; z-index:15;">
-            <span class="zoom-preset" data-zoom="0.5">.5x</span><span class="zoom-preset active" data-zoom="1">1x</span><span class="zoom-preset" data-zoom="2">2x</span><span class="zoom-preset" data-zoom="10">10x</span><span class="zoom-preset" data-zoom="100">100x</span>
-        </div>
-        <div style="position:absolute; bottom:130px; left:40px; right:40px; z-index:15;">
-            <input type="range" class="zoom-slider-iphone" id="zoomSliderIphone" min="0.5" max="100" step="0.1" value="1" style="width:100%; accent-color:#ffcc00;">
-        </div>
-        <div class="mode-scroll">
-            <div class="mode-pill active" data-mode="photo">Photo</div>
-            <div class="mode-pill" data-mode="docscan">Doc Scan</div>
-            <div class="mode-pill" data-mode="portrait">Portrait</div>
-            <div class="mode-pill" data-mode="pano">Pano</div>
-            <div class="mode-pill" data-mode="video">Video</div>
-        </div>
-        <div style="height:70px; background:transparent; display:flex; align-items:center; justify-content:space-between; padding:0 40px; z-index:15;">
-            <button class="iphone-tool" id="galleryThumb" style="width:46px; height:46px; border-radius:10px; overflow:hidden; background:gray;">
-                <img id="galleryThumbImg" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
-            </button>
-            <button class="capture-btn-circle" id="captureMainBtn2"></button>
-            <button class="iphone-tool" id="switchCameraIphone2" title="Flip Camera"><i class="fas fa-camera-rotate"></i></button>
-        </div>
-        <div class="photo-review-panel" id="photoReviewPanel">
-            <img id="reviewImage" style="width:100%; border-radius:12px; max-height:60vh; object-fit:contain;">
-            <div class="review-actions">
-                <button class="btn btn-outline" id="retakeBtnIphone2">Retake</button>
-                <button class="btn btn-primary" id="usePhotoBtnIphone2">Use Photo</button>
-            </div>
+<div id="collectionWhatsAppModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'collectionWhatsAppModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 style="margin-bottom:12px;"><i class="fab fa-whatsapp"></i> WhatsApp Confirmation</h3>
+        <div id="collectionWaPreview" class="wa-message-preview"></div>
+        <div class="flex-between">
+            <button class="btn btn-outline" onclick="closeModal('collectionWhatsAppModal')">Cancel</button>
+            <button class="btn btn-whatsapp" onclick="sendCollectionWhatsApp()"><i class="fab fa-whatsapp"></i> Send</button>
         </div>
     </div>
 </div>
 
-<!-- Collection Modal -->
 <div id="collectionModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'collectionModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3><i class="fas fa-signature"></i> Request Collection</h3>
-        <div><label>Staff Signature</label><canvas id="staffCanvas" class="signature-canvas"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('staffCanvas')">Clear</button></div>
-        <div><label>Customer Signature</label><canvas id="customerCanvas" class="signature-canvas"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('customerCanvas')">Clear</button></div>
-        <div class="flex-between"><button class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button class="btn btn-primary" id="submitCollectionReq">Submit</button></div>
+        <h3 style="margin-bottom:12px;"><i class="fas fa-signature"></i> Request Collection</h3>
+        <div><label>Staff Signature</label><canvas id="staffCanvas" class="signature-canvas"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('staffCanvas')" style="margin-top:4px;">Clear</button></div>
+        <div><label>Customer Signature</label><canvas id="customerCanvas" class="signature-canvas"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('customerCanvas')" style="margin-top:4px;">Clear</button></div>
+        <div class="flex-between">
+            <button class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button>
+            <button class="btn btn-primary" id="submitCollectionReq">Submit</button>
+        </div>
     </div>
 </div>
 
-<!-- FAB and its menu -->
-<button class="fab" id="fabBtn" title="Quick actions"><i class="fas fa-plus"></i></button>
-<div class="fab-menu" id="fabMenu">
-    <div class="fab-item" onclick="handleFabAction('new')"><i class="fas fa-plus-circle"></i> New Booking</div>
-    <div class="fab-item" onclick="handleFabAction('refresh')"><i class="fas fa-sync-alt"></i> Refresh Data</div>
-    <div class="fab-item" onclick="handleFabAction('export')"><i class="fas fa-file-excel"></i> Export Excel</div>
+<div id="reassignModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'reassignModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 style="margin-bottom:12px;"><i class="fas fa-user-shield"></i> Reassign (Admin)</h3>
+        <form id="reassignForm">
+            <input type="hidden" id="reassignBookingKey">
+            <div class="form-group"><label>Current</label><input id="reassignCurrent" disabled></div>
+            <div class="form-group"><label>New Staff Email</label><input id="reassignNewEmail" type="email" required placeholder="staff@example.com"></div>
+            <div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('reassignModal')">Cancel</button><button type="submit" class="btn btn-primary">Reassign</button></div>
+        </form>
+    </div>
 </div>
 
+<button class="fab" id="fabBtn"><i class="fas fa-plus"></i></button>
+<div class="fab-menu" id="fabMenu">
+    <div class="fab-item" onclick="handleFabAction('refresh')"><i class="fas fa-sync-alt"></i> Refresh</div>
+    <div class="fab-item" onclick="handleFabAction('export')"><i class="fas fa-file-excel"></i> Export</div>
+</div>
 <button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i class="fas fa-chevron-up"></i></button>
 
 <script>
-// ==================== FIREBASE CONFIG ====================
-const firebaseConfig = {
-    apiKey: "AIzaSyCuCd89dawEHOGrKmcCimw3pBErKYJU_VI",
-    authDomain: "campusvault-connect.firebaseapp.com",
-    databaseURL: "https://campusvault-connect-default-rtdb.firebaseio.com",
-    projectId: "campusvault-connect",
-    storageBucket: "campusvault-connect.firebasestorage.app",
-    messagingSenderId: "185904648786",
-    appId: "1:185904648786:web:390764d552d388b6e2058b"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth(), db = firebase.database(), storage = firebase.storage();
-const bookingsRef = db.ref('bookings');
-const staffRef = db.ref('staff');
-const pendingApprovalsRef = db.ref('pending_approvals');
+    const firebaseConfig = {
+        apiKey: "AIzaSyCuCd89dawEHOGrKmcCimw3pBErKYJU_VI",
+        authDomain: "campusvault-connect.firebaseapp.com",
+        databaseURL: "https://campusvault-connect-default-rtdb.firebaseio.com",
+        projectId: "campusvault-connect",
+        storageBucket: "campusvault-connect.firebasestorage.app",
+        messagingSenderId: "185904648786",
+        appId: "1:185904648786:web:390764d552d388b6e2058b"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth(), db = firebase.database(), storage = firebase.storage();
+    const bookingsRef = db.ref('bookings');
+    const staffRef = db.ref('staff');
+    const pendingApprovalsRef = db.ref('pending_approvals');
 
-let currentStaffEmail = null, allBookings = [], currentPhotoBookingKey = null;
-let recentActivities = [];
-let currentSort = { field: null, order: 'asc' };
-let selectedBookings = new Set();
-let autoRefreshInterval = null;
-let statusChart = null;
+    let currentStaffEmail = null, currentStaffIsAdmin = false, allBookings = [], currentPhotoBookingKey = null;
+    let recentActivities = [];
+    let currentSort = { field: null, order: 'asc' };
+    let autoRefreshInterval = null;
+    let statusChart = null, trendChart = null;
+    let currentQuickViewBooking = null;
+    let currentCollectionWhatsAppBooking = null;
+    let currentCollectionBookingKey = null;
 
-// ==================== OFFLINE/ONLINE ====================
-window.addEventListener('online', () => document.getElementById('offlineBanner').style.display='none');
-window.addEventListener('offline', () => document.getElementById('offlineBanner').style.display='block');
+    window.addEventListener('online', () => document.getElementById('offlineBanner').style.display='none');
+    window.addEventListener('offline', () => document.getElementById('offlineBanner').style.display='block');
 
-// ==================== THEME ====================
-function setTheme(dark) {
-    document.body.classList.toggle('light', !dark);
-    localStorage.setItem('staffTheme', dark ? 'dark' : 'light');
-    document.querySelectorAll('.theme-toggle i').forEach(i => i.className = dark ? 'fas fa-sun' : 'fas fa-moon');
-}
-setTheme(localStorage.getItem('staffTheme') !== 'light');
-document.getElementById('themeToggleMobile').onclick = () => setTheme(document.body.classList.contains('light'));
-
-function showToast(msg, type='success') {
-    const container = document.getElementById('toastContainer');
-    const t = document.createElement('div'); t.className=`toast ${type}`;
-    const icon = type==='success'?'fa-check-circle':(type==='warning'?'fa-exclamation-triangle':(type==='error'?'fa-times-circle':'fa-info-circle'));
-    t.innerHTML = `<i class="fas ${icon}"></i> ${msg}`;
-    container.appendChild(t); setTimeout(()=>t.remove(),3000);
-}
-function playNotificationSound() {
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACAf39/f4B/f3+AgH9/f3+AgIB/f3+Af3+Af39/gH9/f3+Af3+Af39/gH9/f3+AgH9/f38=');
-    audio.play().catch(()=>{});
-}
-
-// ==================== AUTH ====================
-document.getElementById('staffGoogleBtn').onclick = () => {
-    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(async result => {
-        const email = result.user.email, sanitized = email.replace(/\./g, ',');
-        if((await staffRef.child(sanitized).once('value')).exists()) {
-            currentStaffEmail = email;
-            document.getElementById('loginScreen').style.display='none';
-            document.getElementById('staffDashboard').classList.add('active');
-            document.getElementById('userNameDisplay').textContent = result.user.displayName||email;
-            if(result.user.photoURL) {
-                document.getElementById('userAvatar').src = result.user.photoURL;
-                document.getElementById('userAvatar').style.display='block';
-            }
-            loadBookingsRealtime();
-            switchTab('dashboard');
-        } else { auth.signOut(); document.getElementById('staffLoginError').textContent = 'Unauthorized staff email.'; document.getElementById('staffLoginError').style.display='block'; }
-    }).catch(err => { document.getElementById('staffLoginError').textContent = err.message; document.getElementById('staffLoginError').style.display='block'; });
-};
-function logout() { auth.signOut().then(()=>location.reload()); }
-document.getElementById('logoutStaffBtn').onclick = logout;
-
-const sidebar=document.getElementById('sidebar'), overlay=document.getElementById('sidebarOverlay');
-document.getElementById('hamburgerBtn').onclick = ()=>{ sidebar.classList.add('open'); overlay.classList.add('active'); };
-window.closeSidebar = ()=>{ sidebar.classList.remove('open'); overlay.classList.remove('active'); };
-
-// Tab navigation
-document.querySelectorAll('.sidebar nav a').forEach(a => {
-    a.addEventListener('click', (e) => {
-        e.preventDefault();
-        const tab = a.dataset.tab;
-        switchTab(tab);
-        document.querySelectorAll('.sidebar nav a').forEach(n => n.classList.remove('active'));
-        a.classList.add('active');
-    });
-});
-function switchTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-    document.getElementById(`tab-${tab}`).style.display = 'block';
-    if (tab === 'dashboard') updateDashboardStats();
-}
-
-// ==================== CHART ====================
-function initStatusChart(active, collected, pending) {
-    const ctx = document.getElementById('statusChart').getContext('2d');
-    if (statusChart) statusChart.destroy();
-    statusChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Active', 'Collected', 'Pending'],
-            datasets: [{
-                data: [active, collected, pending],
-                backgroundColor: ['#10b981', '#38bdf8', '#f59e0b'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: document.body.classList.contains('light') ? '#0f172a' : '#f1f5f9' }
-                }
-            }
-        }
-    });
-}
-
-// ==================== BOOKINGS RENDERING ====================
-function highlightText(text, query) {
-    if (!query || !text) return text;
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${escaped})`, 'gi');
-    return String(text).replace(regex, '<span class="highlight">$1</span>');
-}
-
-function renderBookingsTable(bookings) {
-    const tbody = document.getElementById('bookingsTableBody');
-    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-    if(!bookings.length) { tbody.innerHTML=`<tr><td colspan="9"><div class="empty-state"><i class="fas fa-inbox"></i><p>No bookings found</p></div></td></tr>`; return; }
-    let html='';
-    for(let b of bookings){
-        const isAssignedToMe = b.assigned_to === currentStaffEmail;
-        const isUnassigned = !b.assigned_to;
-        const canAccept = (isUnassigned && b.status==='active');
-        const canManage = (isAssignedToMe && b.status==='active');
-        const flags = (b.pending_edit?'🔶':'')+(b.pending_collection?'📄':'');
-        const firstPhoto = b.verificationPhotos && b.verificationPhotos.length ? b.verificationPhotos[0].imageData : '';
-        const checked = selectedBookings.has(b._key) ? 'checked' : '';
-        html+=`<tr data-key="${b._key}">
-            <td onclick="event.stopPropagation();"><input type="checkbox" class="row-checkbox" ${checked} onchange="updateBulkSelection()" data-key="${b._key}"></td>
-            <td class="sticky-col">${firstPhoto ? `<img src="${firstPhoto}" style="width:30px; height:30px; border-radius:4px; object-fit:cover;" alt="Booking photo">` : '—'}</td>
-            <td onclick="copyToClipboard('${b.bookingId||b._key.slice(-6)}')" title="Click to copy" style="cursor:pointer;">${highlightText(b.bookingId||b._key.slice(-6), searchQuery)} <i class="fas fa-copy" style="font-size:0.7rem;opacity:0.5;"></i></td>
-            <td>${highlightText(b.name||'—', searchQuery)}</td>
-            <td>${highlightText(b.phone||'—', searchQuery)}</td>
-            <td>${b.itemCount||'?'} (${b.category||'—'})</td>
-            <td>${b.assigned_to?`👤 ${b.assigned_to.split('@')[0]}`:'<span class="badge badge-pending">Unassigned</span>'}</td>
-            <td>${b.status} ${flags?`<small>${flags}</small>`:''}</td>
-            <td onclick="event.stopPropagation();">
-                ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')" title="Accept"><i class="fas fa-check-circle" style="color:var(--success)"></i></button>`:''}
-                ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')" title="Edit"><i class="fas fa-edit"></i></button>`:''}
-                ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')" title="Photos"><i class="fas fa-image"></i></button>`:''}
-                ${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')" title="Collection"><i class="fas fa-truck"></i></button>`:''}
-                <button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}','${b.trackingId||b.bookingId||b._key}')" title="WhatsApp"><i class="fab fa-whatsapp" style="color:#25D366"></i></button>
-            </td>
-        </tr>`;
+    function setTheme(dark) {
+        document.body.classList.toggle('light', !dark);
+        localStorage.setItem('staffTheme', dark ? 'dark' : 'light');
+        document.querySelectorAll('.theme-toggle i').forEach(i => i.className = dark ? 'fas fa-sun' : 'fas fa-moon');
+        updateDashboardCharts();
     }
-    tbody.innerHTML=html;
+    setTheme(localStorage.getItem('staffTheme') !== 'light');
+    document.getElementById('themeToggleMobile').onclick = () => setTheme(document.body.classList.contains('light'));
 
-    // Quick view on row click (except checkboxes/buttons)
-    tbody.querySelectorAll('tr[data-key]').forEach(row => {
-        row.addEventListener('click', (e) => {
-            if (e.target.closest('button') || e.target.type === 'checkbox') return;
-            const key = row.dataset.key;
-            const booking = allBookings.find(b => b._key === key);
-            if (booking) showQuickView(booking);
+    function showToast(msg, type='success') {
+        const container = document.getElementById('toastContainer');
+        const t = document.createElement('div'); t.className=`toast ${type}`;
+        const icon = type==='success'?'fa-check-circle':(type==='warning'?'fa-exclamation-triangle':(type==='error'?'fa-times-circle':'fa-info-circle'));
+        t.innerHTML = `<i class="fas ${icon}"></i> ${msg}`;
+        container.appendChild(t); setTimeout(()=>t.remove(),3000);
+    }
+
+    function updateWelcomeDate() {
+        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    updateWelcomeDate();
+
+    document.getElementById('staffGoogleBtn').onclick = () => {
+        auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(async result => {
+            const email = result.user.email, sanitized = email.replace(/\./g, ',');
+            const staffSnap = await staffRef.child(sanitized).once('value');
+            if (staffSnap.exists()) {
+                const staffData = staffSnap.val();
+                currentStaffEmail = email;
+                currentStaffIsAdmin = !!(staffData.isAdmin === true || staffData.role === 'admin');
+                document.getElementById('loginScreen').style.display='none';
+                document.getElementById('staffDashboard').classList.add('active');
+                document.getElementById('userNameDisplay').textContent = result.user.displayName||email;
+                document.getElementById('welcomeName').textContent = result.user.displayName||email;
+                if (currentStaffIsAdmin) document.getElementById('adminBadge').style.display='inline-block';
+                if (result.user.photoURL) { document.getElementById('userAvatar').src = result.user.photoURL; document.getElementById('userAvatar').style.display='block'; }
+                loadBookingsRealtime();
+                switchTab('dashboard');
+            } else {
+                auth.signOut();
+                document.getElementById('staffLoginError').textContent = 'Unauthorized staff email.';
+                document.getElementById('staffLoginError').style.display='block';
+            }
+        }).catch(err => {
+            document.getElementById('staffLoginError').textContent = err.message;
+            document.getElementById('staffLoginError').style.display='block';
         });
+    };
+    function logout() { auth.signOut().then(()=>location.reload()); }
+    document.getElementById('logoutStaffBtn').onclick = logout;
+
+    const sidebar=document.getElementById('sidebar'), overlay=document.getElementById('sidebarOverlay');
+    document.getElementById('hamburgerBtn').onclick = ()=>{ 
+        sidebar.classList.add('open'); 
+        overlay.classList.add('active'); 
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeSidebar = ()=>{ 
+        sidebar.classList.remove('open'); 
+        overlay.classList.remove('active'); 
+        document.body.style.overflow = '';
+    };
+
+    let touchStartX = 0;
+    document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+    document.addEventListener('touchend', (e) => {
+        if (e.changedTouches[0].screenX - touchStartX > 100 && sidebar.classList.contains('open')) closeSidebar();
     });
-    updateBulkActionsVisibility();
-}
 
-function renderBookingsCards(bookings) {
-    const container=document.getElementById('bookingsCardsContainer');
-    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-    if(!container) return;
-    if(!bookings.length){ container.innerHTML='<div class="empty-state"><i class="fas fa-inbox"></i><p>No bookings found</p></div>'; return; }
-    let html='';
-    for(let b of bookings){
-        const isAssignedToMe = b.assigned_to === currentStaffEmail;
-        const isUnassigned = !b.assigned_to;
-        const canAccept = (isUnassigned && b.status==='active');
-        const canManage = (isAssignedToMe && b.status==='active');
-        const flags = (b.pending_edit?'🔶':'')+(b.pending_collection?'📄':'');
-        const firstPhoto = b.verificationPhotos && b.verificationPhotos.length ? b.verificationPhotos[0].imageData : '';
-        html+=`<div class="data-card" onclick="showQuickView(allBookings.find(x=>x._key==='${b._key}'))">
-            <div class="card-row"><span class="card-label">ID</span><span onclick="event.stopPropagation(); copyToClipboard('${b.bookingId||b._key.slice(-6)}')">${highlightText(b.bookingId||b._key.slice(-6), searchQuery)} <i class="fas fa-copy" style="font-size:0.7rem;opacity:0.5;"></i></span></div>
-            ${firstPhoto ? `<img src="${firstPhoto}" style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; margin-bottom:8px;" alt="Booking photo">` : ''}
-            <div class="card-row"><span class="card-label">Customer</span><span>${highlightText(b.name||'—', searchQuery)}</span></div>
-            <div class="card-actions" onclick="event.stopPropagation();">
-                ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')"><i class="fas fa-check-circle" style="color:var(--success)"></i> Accept</button>`:''}
-                ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')"><i class="fas fa-edit"></i> Edit</button>`:''}
-                ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')"><i class="fas fa-image"></i> Photos</button>`:''}
-                ${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')"><i class="fas fa-truck"></i> Collect</button>`:''}
-                <button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}','${b.trackingId||b.bookingId||b._key}')"><i class="fab fa-whatsapp"></i></button>
-            </div>
-        </div>`;
-    }
-    container.innerHTML=html;
-}
-function updateAssignedCount(bookings) {
-    document.getElementById('myAssignedCount').innerText = bookings.filter(b=>b.assigned_to===currentStaffEmail && b.status==='active').length;
-}
-
-function animateValue(element, start, end, duration) {
-    const range = end - start;
-    const increment = end > start ? 1 : -1;
-    const stepTime = Math.abs(Math.floor(duration / range));
-    let current = start;
-    const timer = setInterval(() => {
-        current += increment;
-        element.textContent = current;
-        if (current == end) clearInterval(timer);
-    }, stepTime);
-}
-
-function updateDashboardStats() {
-    if(!allBookings.length) {
-        document.querySelectorAll('.stat-value .stat-skeleton').forEach(el => el.style.display = 'block');
-        return;
-    }
-    document.querySelectorAll('.stat-value .stat-skeleton').forEach(el => el.style.display = 'none');
-    const total = allBookings.length;
-    const active = allBookings.filter(b=>b.status==='active').length;
-    const collected = allBookings.filter(b=>b.status==='collected').length;
-    const pending = allBookings.filter(b=>b.pending_edit||b.pending_collection).length;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todayBookings = allBookings.filter(b => b.checkIn && b.checkIn.startsWith(todayStr)).length;
-
-    animateValue(document.getElementById('statTotal'), parseInt(document.getElementById('statTotal').textContent) || 0, total, 600);
-    animateValue(document.getElementById('statActive'), parseInt(document.getElementById('statActive').textContent) || 0, active, 600);
-    animateValue(document.getElementById('statCollected'), parseInt(document.getElementById('statCollected').textContent) || 0, collected, 600);
-    animateValue(document.getElementById('statPending'), parseInt(document.getElementById('statPending').textContent) || 0, pending, 600);
-    document.getElementById('statToday').textContent = todayBookings;
-
-    initStatusChart(active, collected, pending);
-
-    const recentList = document.getElementById('recentActivityList');
-    recentList.innerHTML = recentActivities.length ? recentActivities.map(act => `<li>${act}</li>`).join('') : '<li>No recent activity</li>';
-}
-
-// Bulk selection
-function toggleSelectAll() {
-    const selectAll = document.getElementById('selectAll');
-    const checkboxes = document.querySelectorAll('.row-checkbox');
-    checkboxes.forEach(cb => {
-        cb.checked = selectAll.checked;
-        if (selectAll.checked) selectedBookings.add(cb.dataset.key);
-        else selectedBookings.delete(cb.dataset.key);
-    });
-    updateBulkActionsVisibility();
-}
-function updateBulkSelection() {
-    const checkboxes = document.querySelectorAll('.row-checkbox');
-    selectedBookings.clear();
-    checkboxes.forEach(cb => { if (cb.checked) selectedBookings.add(cb.dataset.key); });
-    updateBulkActionsVisibility();
-}
-function updateBulkActionsVisibility() {
-    const div = document.getElementById('bulkActions');
-    if (selectedBookings.size > 0) div.classList.add('visible');
-    else div.classList.remove('visible');
-}
-async function bulkDelete() {
-    if (!confirm(`Delete ${selectedBookings.size} booking(s)?`)) return;
-    for (let key of selectedBookings) await bookingsRef.child(key).remove();
-    showToast('Selected bookings deleted');
-    selectedBookings.clear();
-    updateBulkActionsVisibility();
-}
-async function bulkMarkCollected() {
-    for (let key of selectedBookings) await bookingsRef.child(key).update({ status: 'collected' });
-    showToast('Selected bookings marked as collected');
-    selectedBookings.clear();
-    updateBulkActionsVisibility();
-}
-
-// Copy ID
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => showToast('Copied!', 'info'));
-}
-
-// Table sorting
-document.querySelectorAll('#bookingsTable th[data-sort]').forEach(th => {
-    th.addEventListener('click', () => {
-        const field = th.dataset.sort;
-        if (currentSort.field === field) {
-            currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
-        } else {
-            currentSort.field = field;
-            currentSort.order = 'asc';
-        }
-        document.querySelectorAll('#bookingsTable th i').forEach(i => i.className = 'fas fa-sort');
-        const icon = th.querySelector('i');
-        if (icon) icon.className = `fas fa-sort-${currentSort.order === 'asc' ? 'up' : 'down'}`;
-        sortBookings();
-    });
-});
-
-function sortBookings() {
-    if (!currentSort.field) return;
-    const filtered = getFilteredBookings();
-    filtered.sort((a, b) => {
-        let valA = a[currentSort.field] || '';
-        let valB = b[currentSort.field] || '';
-        if (currentSort.field === 'items') { valA = parseInt(a.itemCount)||0; valB = parseInt(b.itemCount)||0; }
-        else if (currentSort.field === 'assigned') { valA = a.assigned_to||''; valB = b.assigned_to||''; }
-        else { valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase(); }
-        if (valA < valB) return currentSort.order === 'asc' ? -1 : 1;
-        if (valA > valB) return currentSort.order === 'asc' ? 1 : -1;
-        return 0;
-    });
-    renderBookingsTable(filtered);
-    renderBookingsCards(filtered);
-}
-
-// Filtering with debounce
-let searchTimeout;
-document.getElementById('searchInput').addEventListener('input', () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        refreshFilteredUI();
-        if (currentSort.field) sortBookings();
-    }, 300);
-});
-document.getElementById('filterStatus').addEventListener('change', () => {
-    refreshFilteredUI();
-    if (currentSort.field) sortBookings();
-});
-
-function getFilteredBookings() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    const statusFilter = document.getElementById('filterStatus').value;
-    return allBookings.filter(b => {
-        const matchesSearch = !search ||
-            (b.name||'').toLowerCase().includes(search) ||
-            (b.bookingId||'').toLowerCase().includes(search) ||
-            (b.phone||'').toLowerCase().includes(search);
-        const matchesStatus = statusFilter === 'all' ||
-            (statusFilter === 'active' && b.status === 'active') ||
-            (statusFilter === 'collected' && b.status === 'collected') ||
-            (statusFilter === 'pending' && (b.pending_edit || b.pending_collection));
-        return matchesSearch && matchesStatus;
-    });
-}
-function refreshFilteredUI() {
-    const filtered = getFilteredBookings();
-    if (currentSort.field) sortBookings();
-    else {
-        renderBookingsTable(filtered);
-        renderBookingsCards(filtered);
-    }
-}
-
-// Auto-refresh
-function toggleAutoRefresh() {
-    if (autoRefreshInterval) {
-        clearInterval(autoRefreshInterval);
-        autoRefreshInterval = null;
-        document.getElementById('autoRefreshText').textContent = 'Auto: OFF';
-        document.getElementById('autoRefreshToggle').classList.remove('auto-refresh-active');
-    } else {
-        autoRefreshInterval = setInterval(() => {
-            loadBookingsRealtime();
-        }, 30000);
-        document.getElementById('autoRefreshText').textContent = 'Auto: ON (30s)';
-        document.getElementById('autoRefreshToggle').classList.add('auto-refresh-active');
-    }
-}
-
-// Quick View (also updates WhatsApp float)
-function showQuickView(booking) {
-    document.getElementById('qvTitle').innerText = `Booking: ${booking.bookingId||booking._key.slice(-6)}`;
-    document.getElementById('qvBody').innerHTML = `
-        <p><strong>Customer:</strong> ${booking.name||'—'}</p>
-        <p><strong>Phone:</strong> ${booking.phone||'—'}</p>
-        <p><strong>Email:</strong> ${booking.email||'—'}</p>
-        <p><strong>Check‑in:</strong> ${booking.checkIn||'—'}</p>
-        <p><strong>Collection:</strong> ${booking.collect||'—'}</p>
-        <p><strong>Items:</strong> ${booking.itemCount||'?'} (${booking.category||'—'})</p>
-        <p><strong>Assigned to:</strong> ${booking.assigned_to||'Unassigned'}</p>
-        <p><strong>Status:</strong> ${booking.status} ${booking.pending_edit?'🔶 Edit pending':''} ${booking.pending_collection?'📄 Collection pending':''}</p>
-        ${booking.verificationPhotos && booking.verificationPhotos.length ? `<img src="${booking.verificationPhotos[0].imageData}" style="width:100%; border-radius:8px; margin-top:8px;">` : ''}
-    `;
-    document.getElementById('quickViewModal').style.display='flex';
-    updateWhatsAppFloat(booking.phone, booking.name);
-}
-
-// Real-time listener
-function loadBookingsRealtime() {
-    bookingsRef.on('value', snap => {
-        const bookings = [];
-        snap.forEach(child => {
-            const b = child.val();
-            b._key = child.key;
-            bookings.push(b);
-        });
-        if (allBookings.length) {
-            const added = bookings.filter(nb => !allBookings.find(ob => ob._key === nb._key));
-            const changed = bookings.filter(nb => {
-                const old = allBookings.find(ob => ob._key === nb._key);
-                return old && (JSON.stringify(old) !== JSON.stringify(nb));
-            });
-            added.forEach(b => recentActivities.unshift(`New booking: ${b.name||b.bookingId||b._key.slice(-6)}`));
-            changed.forEach(b => recentActivities.unshift(`Updated: ${b.name||b.bookingId||b._key.slice(-6)}`));
-            if (recentActivities.length > 5) recentActivities.length = 5;
-            if (added.length || changed.length) {
-                const msg = [];
-                if (added.length) msg.push(`${added.length} new`);
-                if (changed.length) msg.push(`${changed.length} updated`);
-                showToast(`${msg.join(', ')} booking${msg.length>1?'s':''}`, 'info');
-            }
-        }
-        allBookings = bookings;
-        if (document.getElementById('tab-bookings').style.display !== 'none') {
-            refreshFilteredUI();
-            if (currentSort.field) sortBookings();
-        }
-        updateDashboardStats();
-    });
-}
-
-window.acceptBooking = async (key) => {
-    const booking = allBookings.find(b=>b._key===key);
-    if(!booking || booking.assigned_to){ showToast('Already assigned',true); return; }
-    await bookingsRef.child(key).update({ assigned_to:currentStaffEmail, assigned_at:new Date().toISOString() });
-    showToast('Booking assigned to you');
-    playNotificationSound();
-};
-
-function exportToExcel() {
-    const filtered = getFilteredBookings();
-    const data = filtered.map(b => ({
-        'Booking ID': b.bookingId||b._key.slice(-6),
-        'Customer': b.name||'',
-        'Phone': b.phone||'',
-        'Items': `${b.itemCount||'0'} ${b.category||''}`,
-        'Assigned To': b.assigned_to||'Unassigned',
-        'Status': b.status
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Bookings');
-    XLSX.writeFile(wb, 'bookings_export.xlsx');
-}
-
-window.sendWhatsAppStaff = (phone, name, bookingId, trackingId) => {
-    if(!phone){ showToast('No phone number',true); return; }
-    let cleaned = phone.replace(/\D/g,'');
-    if(cleaned.startsWith('0')) cleaned='254'+cleaned.substring(1);
-    const message = `CAMPUS VAULT BOOKING\n\nHello ${name},\nBooking ID: ${bookingId}\nTracking ID: ${trackingId}\nThank you for choosing Campus Vault.`;
-    window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`, '_blank');
-};
-
-function updateWhatsAppFloat(phone, name) {
-    if (phone) {
-        let cleaned = phone.replace(/\D/g,'');
-        if(cleaned.startsWith('0')) cleaned='254'+cleaned.substring(1);
-        const message = `Hello ${name}, this is CampusVault regarding your booking.`;
-        document.getElementById('whatsappFloat').href = `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
-    } else {
-        document.getElementById('whatsappFloat').href = `https://wa.me/254700000000?text=Hello%20CampusVault%20team`;
-    }
-}
-
-// Keyboard shortcut Ctrl+K
-document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        document.getElementById('searchInput').focus();
-        if (document.getElementById('tab-bookings').style.display === 'none') {
-            switchTab('bookings');
+    document.querySelectorAll('.sidebar nav a').forEach(a => {
+        a.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchTab(a.dataset.tab);
             document.querySelectorAll('.sidebar nav a').forEach(n => n.classList.remove('active'));
-            document.querySelector('.sidebar nav a[data-tab="bookings"]').classList.add('active');
-        }
-    }
-});
-
-// FAB toggle
-document.getElementById('fabBtn').addEventListener('click', () => {
-    document.getElementById('fabBtn').classList.toggle('active');
-    document.getElementById('fabMenu').classList.toggle('show');
-});
-
-function handleFabAction(action) {
-    document.getElementById('fabBtn').classList.remove('active');
-    document.getElementById('fabMenu').classList.remove('show');
-    if (action === 'refresh') { loadBookingsRealtime(); showToast('Data refreshed','info'); }
-    else if (action === 'export') exportToExcel();
-    else if (action === 'new') showToast('New booking feature coming soon','warning');
-}
-
-// Scroll to top button visibility
-window.addEventListener('scroll', () => {
-    document.getElementById('scrollTopBtn').style.display = window.scrollY > 300 ? 'flex' : 'none';
-});
-
-// ==================== EDIT MODAL ====================
-window.openEditModal = (key) => {
-    const booking = allBookings.find(b=>b._key===key);
-    if(!booking) return;
-    document.getElementById('editBookingKey').value = key;
-    document.getElementById('editName').value = booking.name || '';
-    document.getElementById('editPhone').value = booking.phone || '';
-    document.getElementById('editEmail').value = booking.email || '';
-    document.getElementById('editCheckIn').value = booking.checkIn || '';
-    document.getElementById('editCollect').value = booking.collect || '';
-    document.getElementById('editItemCount').value = booking.itemCount || '';
-    document.getElementById('editCategory').value = booking.category || 'Other';
-    document.getElementById('editModal').style.display='flex';
-};
-document.getElementById('editForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const key = document.getElementById('editBookingKey').value;
-    const booking = allBookings.find(b=>b._key===key);
-    if(!booking) return;
-    const request = {
-        bookingKey: key,
-        requestedBy: currentStaffEmail,
-        original: { name: booking.name, phone: booking.phone, email: booking.email, checkIn: booking.checkIn, collect: booking.collect, itemCount: booking.itemCount, category: booking.category },
-        proposed: { name: document.getElementById('editName').value, phone: document.getElementById('editPhone').value, email: document.getElementById('editEmail').value, checkIn: document.getElementById('editCheckIn').value, collect: document.getElementById('editCollect').value, itemCount: parseInt(document.getElementById('editItemCount').value) || 0, category: document.getElementById('editCategory').value },
-        timestamp: new Date().toISOString(), status: 'pending'
-    };
-    await pendingApprovalsRef.push(request);
-    await bookingsRef.child(key).update({ pending_edit: true });
-    showToast('Edit request submitted');
-    closeModal('editModal');
-};
-
-// ==================== PHOTOS MODAL ====================
-window.openPhotosModal = async (bookingKey) => {
-    currentPhotoBookingKey = bookingKey;
-    await loadPhotosForBooking(bookingKey);
-    document.getElementById('photosModal').style.display='flex';
-};
-async function loadPhotosForBooking(bookingKey) {
-    const snap = await bookingsRef.child(`${bookingKey}/verificationPhotos`).once('value');
-    const photos = snap.val() || [];
-    const container = document.getElementById('photosContainer');
-    container.innerHTML = photos.length===0 ? '<p>No photos yet.</p>' :
-        photos.map((p,idx) => `<div class="photo-item"><img src="${p.imageData}" width="100" height="100" alt="Verification photo"><button class="btn-outline btn" onclick="deletePhoto('${bookingKey}',${idx})"><i class="fas fa-trash"></i></button></div>`).join('');
-}
-window.deletePhoto = async (bookingKey, idx) => {
-    if(!confirm('Delete this photo?')) return;
-    const snap = await bookingsRef.child(`${bookingKey}/verificationPhotos`).once('value');
-    let photos = snap.val() || [];
-    photos.splice(idx,1);
-    await bookingsRef.child(`${bookingKey}/verificationPhotos`).set(photos);
-    await loadPhotosForBooking(bookingKey);
-};
-document.getElementById('fileUpload').onchange = async (e) => {
-    const files = e.target.files;
-    if(!files.length || !currentPhotoBookingKey) return;
-    const photosSnap = await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).once('value');
-    let photos = photosSnap.val() || [];
-    for(let file of files){
-        const reader = new FileReader();
-        reader.onload = async (ev) => {
-            photos.push({ imageData: ev.target.result, timestamp: new Date().toISOString(), uploadedBy: currentStaffEmail });
-            await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).set(photos);
-        };
-        reader.readAsDataURL(file);
-    }
-    setTimeout(()=>loadPhotosForBooking(currentPhotoBookingKey), 500);
-    showToast('Photos uploaded');
-};
-
-// ==================== COLLECTION MODAL ====================
-function initSignatureCanvas(canvasId) {
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-    canvas.addEventListener('mousedown', e => { drawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY); });
-    canvas.addEventListener('mousemove', e => { if(drawing){ ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke(); } });
-    canvas.addEventListener('mouseup', ()=> drawing=false);
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing=true; const rect=canvas.getBoundingClientRect(); const touch=e.touches[0]; ctx.beginPath(); ctx.moveTo(touch.clientX-rect.left,touch.clientY-rect.top); });
-    canvas.addEventListener('touchmove', e => { e.preventDefault(); if(drawing){ const rect=canvas.getBoundingClientRect(); const touch=e.touches[0]; ctx.lineTo(touch.clientX-rect.left,touch.clientY-rect.top); ctx.stroke(); } });
-    canvas.addEventListener('touchend', ()=> drawing=false);
-}
-initSignatureCanvas('staffCanvas');
-initSignatureCanvas('customerCanvas');
-window.clearCanvas = (id) => { document.getElementById(id).getContext('2d').clearRect(0,0,canvas.width,canvas.height); };
-window.openCollectionModal = (bookingKey) => {
-    document.getElementById('collectionModal').style.display='flex';
-    window.currentCollectionBookingKey = bookingKey;
-};
-document.getElementById('submitCollectionReq').onclick = async () => {
-    const staffCanvas = document.getElementById('staffCanvas');
-    const customerCanvas = document.getElementById('customerCanvas');
-    const staffSig = staffCanvas.toDataURL();
-    const customerSig = customerCanvas.toDataURL();
-    if(staffSig === customerCanvas.toDataURL() && customerSig === staffCanvas.toDataURL()) { showToast('Please draw both signatures', true); return; }
-    const key = window.currentCollectionBookingKey;
-    const request = { bookingKey: key, requestedBy: currentStaffEmail, staffSignature: staffSig, customerSignature: customerSig, timestamp: new Date().toISOString(), status: 'pending' };
-    await pendingApprovalsRef.push(request);
-    await bookingsRef.child(key).update({ pending_collection: true });
-    showToast('Collection request submitted');
-    closeModal('collectionModal');
-};
-
-// ==================== iPHONE CAMERA ====================
-let cameraState = {
-    stream: null, facingMode: 'environment', flashOn: false,
-    timerOn: false, currentMode: 'photo', currentZoom: 1,
-    photoReviewDataURL: null, captureInProgress: false,
-    hqMode: false, enhanceMode: false, outputFormat: 'jpeg',
-    digitalUpscaleMP: 0, docScanEnabled: false
-};
-
-const videoEl = document.getElementById('liveVideo');
-const focusRing = document.getElementById('focusRingIphone');
-const photoReviewPanel = document.getElementById('photoReviewPanel');
-const reviewImg = document.getElementById('reviewImage');
-const galleryThumbImg = document.getElementById('galleryThumbImg');
-const docOverlay = document.getElementById('docOverlay');
-
-document.querySelectorAll('.mode-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-        document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        cameraState.currentMode = pill.dataset.mode;
-        docOverlay.style.display = (pill.dataset.mode === 'docscan') ? 'block' : 'none';
-        cameraState.docScanEnabled = (pill.dataset.mode === 'docscan');
-    });
-});
-
-document.getElementById('docScanModeBtn').addEventListener('click', () => {
-    cameraState.docScanEnabled = !cameraState.docScanEnabled;
-    docOverlay.style.display = cameraState.docScanEnabled ? 'block' : 'none';
-});
-
-document.querySelectorAll('.zoom-preset').forEach(p => {
-    p.addEventListener('click', () => {
-        cameraState.currentZoom = parseFloat(p.dataset.zoom);
-        if (cameraState.currentZoom >= 2) cameraState.digitalUpscaleMP = Math.round(12 * cameraState.currentZoom);
-        else cameraState.digitalUpscaleMP = 0;
-        document.getElementById('zoomSliderIphone').value = cameraState.currentZoom;
-        applyDigitalZoom();
-        document.querySelectorAll('.zoom-preset').forEach(btn => btn.classList.remove('active'));
-        p.classList.add('active');
-    });
-});
-const zoomSlider = document.getElementById('zoomSliderIphone');
-zoomSlider.addEventListener('input', () => {
-    cameraState.currentZoom = parseFloat(zoomSlider.value);
-    applyDigitalZoom();
-    document.querySelectorAll('.zoom-preset').forEach(btn => {
-        btn.classList.toggle('active', Math.abs(parseFloat(btn.dataset.zoom) - cameraState.currentZoom) < 0.05);
-    });
-});
-function applyDigitalZoom() {
-    if (!cameraState.stream) return;
-    const track = cameraState.stream.getVideoTracks()[0];
-    if (track?.getCapabilities?.()?.zoom) track.applyConstraints({ advanced: [{ zoom: cameraState.currentZoom }] }).catch(()=>{});
-    else { videoEl.style.transform = `scale(${cameraState.currentZoom})`; videoEl.style.transformOrigin = 'center center'; }
-}
-
-document.getElementById('flashBtnIphone').addEventListener('click', async () => {
-    cameraState.flashOn = !cameraState.flashOn;
-    const track = cameraState.stream?.getVideoTracks()[0];
-    if (track) { try { await track.applyConstraints({ advanced: [{ torch: cameraState.flashOn }] }); document.getElementById('flashBtnIphone').style.color = cameraState.flashOn ? '#ffcc00' : '#fff'; } catch(e) {} }
-});
-
-document.getElementById('hqToggleIphone').addEventListener('click', () => {
-    cameraState.hqMode = !cameraState.hqMode;
-    const btn = document.getElementById('hqToggleIphone');
-    btn.style.backgroundColor = cameraState.hqMode ? '#ffcc00' : 'rgba(0,0,0,0.5)';
-    btn.style.color = cameraState.hqMode ? '#000' : '#fff';
-});
-document.getElementById('enhanceToggleIphone').addEventListener('click', () => {
-    cameraState.enhanceMode = !cameraState.enhanceMode;
-    const btn = document.getElementById('enhanceToggleIphone');
-    btn.style.backgroundColor = cameraState.enhanceMode ? '#ffcc00' : 'rgba(0,0,0,0.5)';
-    btn.style.color = cameraState.enhanceMode ? '#000' : '#fff';
-});
-document.getElementById('formatToggleIphone').addEventListener('click', () => {
-    cameraState.outputFormat = cameraState.outputFormat === 'jpeg' ? 'png' : 'jpeg';
-    document.getElementById('formatToggleIphone').textContent = cameraState.outputFormat === 'jpeg' ? 'JPG' : 'PNG';
-});
-document.getElementById('timerBtnIphone2').addEventListener('click', () => {
-    cameraState.timerOn = !cameraState.timerOn;
-    const btn = document.getElementById('timerBtnIphone2');
-    btn.style.backgroundColor = cameraState.timerOn ? '#ffcc00' : 'rgba(0,0,0,0.5)';
-    btn.style.color = cameraState.timerOn ? '#000' : '#fff';
-});
-
-videoEl.addEventListener('click', (e) => {
-    const rect = videoEl.getBoundingClientRect();
-    focusRing.style.left = `${e.clientX - rect.left}px`;
-    focusRing.style.top = `${e.clientY - rect.top}px`;
-    focusRing.style.display = 'block';
-    setTimeout(() => focusRing.style.display = 'none', 800);
-    if (cameraState.stream) {
-        const track = cameraState.stream.getVideoTracks()[0];
-        if (track) track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x: (e.clientX-rect.left)/rect.width, y: (e.clientY-rect.top)/rect.height }] }] }).catch(()=>{});
-    }
-});
-function updateGalleryThumb(dataUrl) { galleryThumbImg.src = dataUrl; galleryThumbImg.style.display = 'block'; }
-
-document.getElementById('captureMainBtn2').addEventListener('click', () => {
-    if (cameraState.timerOn) startTimerCapture();
-    else capturePhoto();
-});
-async function startTimerCapture() {
-    cameraState.captureInProgress = true;
-    const countdownEl = document.createElement('div');
-    countdownEl.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:30; font-size:5rem; color:white;';
-    document.querySelector('.camera-preview').appendChild(countdownEl);
-    for (let i = 3; i > 0; i--) { countdownEl.textContent = i; await new Promise(r => setTimeout(r, 1000)); }
-    countdownEl.remove();
-    capturePhoto();
-    cameraState.captureInProgress = false;
-}
-async function capturePhoto() {
-    if (cameraState.hqMode && window.ImageCapture) await captureHighQuality();
-    else captureStandard();
-}
-async function captureHighQuality() {
-    const track = cameraState.stream?.getVideoTracks()[0];
-    if (!track) return;
-    try {
-        const imageCapture = new ImageCapture(track);
-        const blob = await imageCapture.takePhoto();
-        const reader = new FileReader();
-        reader.onload = () => processCapturedImage(reader.result);
-        reader.readAsDataURL(blob);
-    } catch (e) { captureStandard(); }
-}
-function captureStandard() {
-    const canvas = document.createElement('canvas');
-    const vw = videoEl.videoWidth || 1920, vh = videoEl.videoHeight || 1080;
-    let outWidth = vw, outHeight = vh;
-    if (cameraState.digitalUpscaleMP > 0) {
-        const targetPixels = cameraState.digitalUpscaleMP * 1e6;
-        const scale = Math.sqrt(targetPixels / (vw * vh));
-        outWidth = Math.round(vw * scale); outHeight = Math.round(vh * scale);
-    }
-    canvas.width = outWidth; canvas.height = outHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-    if (outWidth !== vw || outHeight !== vh) {
-        const stepCanvas = document.createElement('canvas');
-        stepCanvas.width = Math.round(outWidth/2); stepCanvas.height = Math.round(outHeight/2);
-        stepCanvas.getContext('2d').drawImage(videoEl, 0, 0, stepCanvas.width, stepCanvas.height);
-        ctx.drawImage(stepCanvas, 0, 0, outWidth, outHeight);
-    } else ctx.drawImage(videoEl, 0, 0);
-    if (cameraState.docScanEnabled) {
-        const cropMargin = 0.1;
-        const cropCanvas = document.createElement('canvas');
-        cropCanvas.width = outWidth * (1-2*cropMargin); cropCanvas.height = outHeight * (1-2*cropMargin);
-        cropCanvas.getContext('2d').drawImage(canvas, outWidth*cropMargin, outHeight*cropMargin, cropCanvas.width, cropCanvas.height, 0, 0, cropCanvas.width, cropCanvas.height);
-        canvas.width = cropCanvas.width; canvas.height = cropCanvas.height;
-        canvas.getContext('2d').drawImage(cropCanvas, 0, 0);
-    }
-    if (cameraState.enhanceMode) applyEnhance(ctx, canvas.width, canvas.height);
-    const mime = cameraState.outputFormat === 'png' ? 'image/png' : 'image/jpeg';
-    const quality = cameraState.outputFormat === 'png' ? undefined : 1.0;
-    cameraState.photoReviewDataURL = canvas.toDataURL(mime, quality);
-    reviewImg.src = cameraState.photoReviewDataURL;
-    updateGalleryThumb(cameraState.photoReviewDataURL);
-    photoReviewPanel.style.display = 'flex';
-    videoEl.style.display = 'none';
-}
-function processCapturedImage(dataUrl) {
-    const img = new Image();
-    img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width; canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        if (cameraState.enhanceMode) applyEnhance(ctx, img.width, img.height);
-        const mime = cameraState.outputFormat === 'png' ? 'image/png' : 'image/jpeg';
-        const quality = cameraState.outputFormat === 'png' ? undefined : 1.0;
-        cameraState.photoReviewDataURL = canvas.toDataURL(mime, quality);
-        reviewImg.src = cameraState.photoReviewDataURL;
-        updateGalleryThumb(cameraState.photoReviewDataURL);
-        photoReviewPanel.style.display = 'flex';
-        videoEl.style.display = 'none';
-    };
-    img.src = dataUrl;
-}
-function applyEnhance(ctx, w, h) {
-    const imageData = ctx.getImageData(0, 0, w, h), data = imageData.data;
-    const output = new Uint8ClampedArray(data.length);
-    const kernelSize = 5, half = Math.floor(kernelSize/2);
-    for (let y = half; y < h-half; y++) for (let x = half; x < w-half; x++) {
-        let rArr=[], gArr=[], bArr=[];
-        for (let ky=-half; ky<=half; ky++) for (let kx=-half; kx<=half; kx++) {
-            const idx = ((y+ky)*w+(x+kx))*4;
-            rArr.push(data[idx]); gArr.push(data[idx+1]); bArr.push(data[idx+2]);
-        }
-        rArr.sort((a,b)=>a-b); gArr.sort((a,b)=>a-b); bArr.sort((a,b)=>a-b);
-        const mid = Math.floor(rArr.length/2), outIdx = (y*w+x)*4;
-        output[outIdx]=rArr[mid]; output[outIdx+1]=gArr[mid]; output[outIdx+2]=bArr[mid]; output[outIdx+3]=255;
-    }
-    imageData.data.set(output); ctx.putImageData(imageData, 0, 0);
-    const newData = ctx.getImageData(0, 0, w, h).data;
-    let minR=255,minG=255,minB=255,maxR=0,maxG=0,maxB=0;
-    for (let i=0; i<newData.length; i+=4) {
-        minR=Math.min(minR,newData[i]); maxR=Math.max(maxR,newData[i]);
-        minG=Math.min(minG,newData[i+1]); maxG=Math.max(maxG,newData[i+1]);
-        minB=Math.min(minB,newData[i+2]); maxB=Math.max(maxB,newData[i+2]);
-    }
-    const scaleR=255/(maxR-minR||1), scaleG=255/(maxG-minG||1), scaleB=255/(maxB-minB||1);
-    for (let i=0; i<newData.length; i+=4) {
-        newData[i]=(newData[i]-minR)*scaleR; newData[i+1]=(newData[i+1]-minG)*scaleG; newData[i+2]=(newData[i+2]-minB)*scaleB;
-    }
-    imageData.data.set(newData); ctx.putImageData(imageData, 0, 0);
-    const sharpData = ctx.getImageData(0, 0, w, h).data;
-    const kernel = [0,-1,0,-1,5,-1,0,-1,0], sharpOut = new Uint8ClampedArray(sharpData.length);
-    for (let y=1; y<h-1; y++) for (let x=1; x<w-1; x++) {
-        let r=0,g=0,b=0;
-        for (let ky=-1; ky<=1; ky++) for (let kx=-1; kx<=1; kx++) {
-            const idx = ((y+ky)*w+(x+kx))*4, kVal = kernel[(ky+1)*3+(kx+1)];
-            r+=sharpData[idx]*kVal; g+=sharpData[idx+1]*kVal; b+=sharpData[idx+2]*kVal;
-        }
-        const outIdx = (y*w+x)*4;
-        sharpOut[outIdx]=Math.min(255,Math.max(0,r)); sharpOut[outIdx+1]=Math.min(255,Math.max(0,g));
-        sharpOut[outIdx+2]=Math.min(255,Math.max(0,b)); sharpOut[outIdx+3]=255;
-    }
-    imageData.data.set(sharpOut); ctx.putImageData(imageData, 0, 0);
-}
-
-document.getElementById('retakeBtnIphone2').onclick = () => { videoEl.style.display='block'; photoReviewPanel.style.display='none'; cameraState.photoReviewDataURL=null; };
-document.getElementById('usePhotoBtnIphone2').onclick = async () => {
-    if (!cameraState.photoReviewDataURL) return;
-    const snap = await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).once('value');
-    let photos = snap.val() || [];
-    photos.push({ imageData: cameraState.photoReviewDataURL, timestamp: new Date().toISOString(), uploadedBy: currentStaffEmail });
-    await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).set(photos);
-    showToast('Photo saved');
-    closeCameraModal();
-};
-document.getElementById('switchCameraIphone2').onclick = async () => { cameraState.facingMode = cameraState.facingMode==='environment'?'user':'environment'; await startCameraStream(); };
-
-async function startCameraStream() {
-    if (cameraState.stream) cameraState.stream.getTracks().forEach(t => t.stop());
-    try {
-        cameraState.stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: cameraState.facingMode, width: { ideal: 4096 }, height: { ideal: 2160 }, zoom: cameraState.currentZoom },
-            audio: false
+            a.classList.add('active');
+            if (window.innerWidth <= 768) closeSidebar();
         });
-        videoEl.srcObject = cameraState.stream;
-        videoEl.style.transform = '';
-        applyDigitalZoom();
-    } catch (e) { showToast('Camera access denied', true); }
-}
-function closeCameraModal() {
-    if (cameraState.stream) { cameraState.stream.getTracks().forEach(t => t.stop()); cameraState.stream = null; }
-    videoEl.srcObject = null;
-    photoReviewPanel.style.display = 'none'; videoEl.style.display = 'block';
-    document.getElementById('cameraModal').style.display = 'none';
-}
-document.getElementById('openRealtimeCameraBtn').onclick = async () => {
-    await startCameraStream();
-    document.getElementById('cameraModal').style.display = 'flex';
-    photoReviewPanel.style.display = 'none'; videoEl.style.display = 'block';
-};
+    });
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        const tabEl = document.getElementById(`tab-${tab}`);
+        if (tabEl) { tabEl.style.display = 'block'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        if (tab === 'dashboard') updateDashboardStats();
+        if (tab === 'bookings') { refreshFilteredUI(); if (currentSort.field) sortBookings(); }
+    }
 
-// ==================== CLOSE MODALS ====================
-function closeModal(id) {
-    if (id === 'cameraModal') closeCameraModal();
-    else document.getElementById(id).style.display = 'none';
-}
-window.closeModal = closeModal;
-function closeModalOnBg(e, id) { if(e.target===e.currentTarget) closeModal(id); }
-window.closeModalOnBg = closeModalOnBg;
+    function updateDashboardCharts() {
+        const isLight = document.body.classList.contains('light');
+        const active = allBookings.filter(b => b.status === 'active').length;
+        const collected = allBookings.filter(b => b.status === 'collected').length;
+        const pending = allBookings.filter(b => b.pending_edit || b.pending_collection).length;
 
-// ==================== PWA ====================
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+        const ctx1 = document.getElementById('statusChart')?.getContext('2d');
+        if (ctx1) {
+            if (statusChart) statusChart.destroy();
+            statusChart = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Active', 'Collected', 'Pending'],
+                    datasets: [{ data: [active, collected, pending], backgroundColor: ['#10b981', '#38bdf8', '#f59e0b'], borderColor: isLight ? '#fff' : '#1e293b', borderWidth: 2 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: true, cutout: '60%',
+                    plugins: { legend: { position:'bottom', labels:{ color: isLight?'#0f172a':'#f1f5f9', padding:12, font:{size:11} } } }
+                }
+            });
+        }
+
+        const ctx2 = document.getElementById('trendChart')?.getContext('2d');
+        if (ctx2) {
+            if (trendChart) trendChart.destroy();
+            const days = [], counts = [];
+            for (let i=6; i>=0; i--) {
+                const d = new Date(); d.setDate(d.getDate()-i);
+                days.push(d.toLocaleDateString('en-US',{weekday:'short'}));
+                counts.push(allBookings.filter(b => b.checkIn && b.checkIn.startsWith(d.toISOString().split('T')[0])).length);
+            }
+            trendChart = new Chart(ctx2, {
+                type: 'line',
+                data: { labels: days, datasets: [{ data: counts, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { ticks: { color: isLight?'#475569':'#cbd5e1', font:{size:9} } }, y: { beginAtZero: true, ticks: { stepSize:1, color: isLight?'#475569':'#cbd5e1', font:{size:9} } } }
+                }
+            });
+        }
+    }
+
+    function getStatusBadge(status) {
+        const map = { 'active': 'badge-active', 'collected': 'badge-collected', 'pending': 'badge-pending' };
+        return `<span class="badge ${map[status]||'badge-pending'}">${status}</span>`;
+    }
+
+    function renderBookingsTable(bookings) {
+        const tbody = document.getElementById('bookingsTableBody');
+        if (!bookings.length) { tbody.innerHTML=`<tr><td colspan="8" style="text-align:center; padding:30px;"><i class="fas fa-inbox" style="font-size:2rem; opacity:0.3;"></i><p style="opacity:0.5; margin-top:8px;">No bookings found</p></td></tr>`; return; }
+        let html='';
+        for (let b of bookings) {
+            const canAccept = (!b.assigned_to && b.status==='active' && currentStaffIsAdmin);
+            const canManage = (b.assigned_to === currentStaffEmail && b.status==='active');
+            const canReassign = (b.assigned_to && b.status==='active' && currentStaffIsAdmin);
+            const firstPhoto = b.verificationPhotos?.length ? b.verificationPhotos[0].imageData : '';
+            html+=`<tr data-key="${b._key}">
+                <td class="sticky-col">${firstPhoto?`<img src="${firstPhoto}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;">`:'—'}</td>
+                <td style="font-family:monospace; cursor:pointer;" onclick="copyToClipboard('${b.bookingId||b._key.slice(-6)}')">${b.bookingId||b._key.slice(-6)}</td>
+                <td>${b.name||'—'}</td>
+                <td>${b.phone||'—'}</td>
+                <td>${b.itemCount||'?'} ${b.category||''}</td>
+                <td>${b.assigned_to?b.assigned_to.split('@')[0]:'<span style="opacity:0.5;">—</span>'}</td>
+                <td>${getStatusBadge(b.status)} ${b.pending_edit?'🔶':''}${b.pending_collection?'📄':''}${b.collection_approved?'✅':''}</td>
+                <td onclick="event.stopPropagation();" style="white-space:nowrap;">
+                    ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')" title="Assign to me"><i class="fas fa-check-circle" style="color:#10b981;"></i></button>`:''}
+                    ${canReassign?`<button class="action-icon" onclick="openReassignModal('${b._key}')" title="Reassign"><i class="fas fa-user-shield"></i></button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')" title="Edit"><i class="fas fa-edit"></i></button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')" title="Photos"><i class="fas fa-image"></i></button>`:''}
+                    ${canManage&&b.collection_approved?`<button class="action-icon whatsapp-approved" onclick="openCollectionWhatsAppModal('${b._key}')" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>`:''}
+                    ${canManage&&!b.collection_approved&&!b.pending_collection?`<button class="action-icon" onclick="openCollectionModal('${b._key}')" title="Request collection"><i class="fas fa-truck"></i></button>`:''}
+                    ${canManage&&b.pending_collection?`<span class="badge badge-pending">⏳</span>`:''}
+                </td>
+            </tr>`;
+        }
+        tbody.innerHTML=html;
+        tbody.querySelectorAll('tr[data-key]').forEach(row => {
+            row.addEventListener('click', (e) => {
+                if (e.target.closest('button') || e.target.closest('td:last-child')) return;
+                const booking = allBookings.find(b => b._key === row.dataset.key);
+                if (booking) showQuickView(booking);
+            });
+        });
+    }
+
+    function renderBookingsCards(bookings) {
+        const container = document.getElementById('bookingsCardsContainer');
+        if (!container) return;
+        if (!bookings.length) { container.innerHTML='<div style="text-align:center; padding:30px;"><i class="fas fa-inbox" style="font-size:2rem; opacity:0.3;"></i><p style="opacity:0.5; margin-top:8px;">No bookings found</p></div>'; return; }
+        let html='';
+        for (let b of bookings) {
+            const canAccept = (!b.assigned_to && b.status==='active' && currentStaffIsAdmin);
+            const canManage = (b.assigned_to === currentStaffEmail && b.status==='active');
+            const canReassign = (b.assigned_to && b.status==='active' && currentStaffIsAdmin);
+            const firstPhoto = b.verificationPhotos?.length ? b.verificationPhotos[0].imageData : '';
+            html+=`<div class="booking-card" onclick="showQuickView(allBookings.find(x=>x._key==='${b._key}'))">
+                <div class="booking-card-header">
+                    ${firstPhoto?`<img src="${firstPhoto}" class="booking-card-photo" alt="Photo">`:`<div class="booking-card-photo" style="display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="opacity:0.3;"></i></div>`}
+                    <div class="booking-card-title">
+                        <h4>${b.name||'Unknown'}</h4>
+                        <span class="booking-id">#${b.bookingId||b._key.slice(-6)}</span>
+                    </div>
+                    <div>${getStatusBadge(b.status)}</div>
+                </div>
+                <div class="booking-card-details">
+                    <div class="booking-detail">
+                        <span class="booking-detail-label">📱 Phone</span>
+                        <span class="booking-detail-value">${b.phone||'—'}</span>
+                    </div>
+                    <div class="booking-detail">
+                        <span class="booking-detail-label">📦 Items</span>
+                        <span class="booking-detail-value">${b.itemCount||'?'} ${b.category||''}</span>
+                    </div>
+                    <div class="booking-detail">
+                        <span class="booking-detail-label">👤 Staff</span>
+                        <span class="booking-detail-value">${b.assigned_to?b.assigned_to.split('@')[0]:'Unassigned'}</span>
+                    </div>
+                    <div class="booking-detail">
+                        <span class="booking-detail-label">📅 Date</span>
+                        <span class="booking-detail-value">${b.checkIn||'—'}</span>
+                    </div>
+                </div>
+                ${b.pending_edit||b.pending_collection?`<div class="booking-card-status">${b.pending_edit?'🔶 Edit Pending ':''}${b.pending_collection?'📄 Collection Pending ':''}${b.collection_approved?'✅ Approved':''}</div>`:''}
+                <div class="booking-card-actions" onclick="event.stopPropagation();">
+                    ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')"><i class="fas fa-check-circle" style="color:#10b981;"></i> Accept</button>`:''}
+                    ${canReassign?`<button class="action-icon" onclick="openReassignModal('${b._key}')"><i class="fas fa-user-shield"></i> Reassign</button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')"><i class="fas fa-edit"></i> Edit</button>`:''}
+                    ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')"><i class="fas fa-image"></i> Photos</button>`:''}
+                    ${canManage&&b.collection_approved?`<button class="action-icon whatsapp-approved" onclick="openCollectionWhatsAppModal('${b._key}')"><i class="fab fa-whatsapp"></i> WhatsApp</button>`:''}
+                    ${canManage&&!b.collection_approved&&!b.pending_collection?`<button class="action-icon" onclick="openCollectionModal('${b._key}')"><i class="fas fa-truck"></i> Collect</button>`:''}
+                </div>
+            </div>`;
+        }
+        container.innerHTML=html;
+    }
+
+    function updateAssignedCount(bookings) {
+        document.getElementById('myAssignedCount').innerText = bookings.filter(b=>b.assigned_to===currentStaffEmail && b.status==='active').length;
+    }
+
+    function updateDashboardStats() {
+        if (!allBookings.length) return;
+        const total = allBookings.length;
+        const active = allBookings.filter(b=>b.status==='active').length;
+        const collected = allBookings.filter(b=>b.status==='collected').length;
+        const pending = allBookings.filter(b=>b.pending_edit||b.pending_collection).length;
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayBookings = allBookings.filter(b => b.checkIn && b.checkIn.startsWith(todayStr)).length;
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statActive').textContent = active;
+        document.getElementById('statCollected').textContent = collected;
+        document.getElementById('statPending').textContent = pending;
+        document.getElementById('statToday').textContent = todayBookings;
+        updateDashboardCharts();
+        document.getElementById('recentActivityList').innerHTML = recentActivities.length ? recentActivities.slice(0,5).map(act => `<li class="activity-item"><div class="activity-dot"></div>${act} <span class="activity-time">now</span></li>`).join('') : '<li class="activity-item"><div class="activity-dot"></div>No recent activity <span class="activity-time">—</span></li>';
+    }
+
+    function copyToClipboard(text) { navigator.clipboard.writeText(text).then(()=>showToast('Copied!','info')); }
+
+    document.querySelectorAll('#bookingsTable th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+            const field = th.dataset.sort;
+            if (currentSort.field === field) currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+            else { currentSort.field = field; currentSort.order = 'asc'; }
+            sortBookings();
+        });
+    });
+    function sortBookings() {
+        if (!currentSort.field) return;
+        const filtered = getFilteredBookings();
+        filtered.sort((a,b) => {
+            let valA = a[currentSort.field]||'', valB = b[currentSort.field]||'';
+            if (currentSort.field==='items') { valA = parseInt(a.itemCount)||0; valB = parseInt(b.itemCount)||0; }
+            else { valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase(); }
+            if (valA<valB) return currentSort.order==='asc'?-1:1;
+            if (valA>valB) return currentSort.order==='asc'?1:-1;
+            return 0;
+        });
+        renderBoth(filtered);
+    }
+
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', ()=>{ clearTimeout(searchTimeout); searchTimeout = setTimeout(refreshFilteredUI,300); });
+    document.getElementById('filterStatus').addEventListener('change', refreshFilteredUI);
+    function getFilteredBookings() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const statusFilter = document.getElementById('filterStatus').value;
+        return allBookings.filter(b => {
+            const matchesSearch = !search || (b.name||'').toLowerCase().includes(search) || (b.bookingId||'').toLowerCase().includes(search) || (b.phone||'').toLowerCase().includes(search);
+            const matchesStatus = statusFilter==='all' || (statusFilter==='active' && b.status==='active') || (statusFilter==='collected' && b.status==='collected') || (statusFilter==='pending' && (b.pending_edit||b.pending_collection));
+            return matchesSearch && matchesStatus;
+        });
+    }
+    function refreshFilteredUI() {
+        const filtered = getFilteredBookings();
+        updateAssignedCount(filtered);
+        if (currentSort.field) sortBookings();
+        else renderBoth(filtered);
+    }
+    function renderBoth(bookings) {
+        renderBookingsTable(bookings);
+        renderBookingsCards(bookings);
+    }
+
+    function toggleAutoRefresh() {
+        if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; document.getElementById('autoRefreshText').textContent = 'Auto'; }
+        else { autoRefreshInterval = setInterval(()=>loadBookingsRealtime(), 30000); document.getElementById('autoRefreshText').textContent = 'Auto (30s)'; }
+    }
+
+    function showQuickView(booking) {
+        currentQuickViewBooking = booking;
+        document.getElementById('qvTitle').innerHTML = `<i class="fas fa-info-circle"></i> Booking: ${booking.bookingId||booking._key.slice(-6)}`;
+        document.getElementById('qvBody').innerHTML = `
+            <div style="display:grid; gap:10px;">
+                <div><strong>Customer:</strong> ${booking.name||'—'}</div>
+                <div><strong>Phone:</strong> ${booking.phone||'—'}</div>
+                <div><strong>Email:</strong> ${booking.email||'—'}</div>
+                <div><strong>Check‑in:</strong> ${booking.checkIn||'—'}</div>
+                <div><strong>Collection:</strong> ${booking.collect||'—'}</div>
+                <div><strong>Items:</strong> ${booking.itemCount||'?'} (${booking.category||'—'})</div>
+                <div><strong>Status:</strong> ${getStatusBadge(booking.status)} ${booking.collection_approved?'✅':''}</div>
+            </div>
+            ${booking.verificationPhotos?.length?`<img src="${booking.verificationPhotos[0].imageData}" style="width:100%; border-radius:8px; margin-top:12px;">`:''}
+        `;
+        document.getElementById('quickViewModal').style.display='flex';
+    }
+    function sendWhatsAppFromQV() {
+        if (currentQuickViewBooking) { openCollectionWhatsAppModal(currentQuickViewBooking._key); closeModal('quickViewModal'); }
+    }
+
+    function loadBookingsRealtime() {
+        bookingsRef.on('value', snap => {
+            const bookings = [];
+            snap.forEach(child => { const b = child.val(); b._key = child.key; bookings.push(b); });
+            if (allBookings.length) {
+                const added = bookings.filter(nb => !allBookings.find(ob=>ob._key===nb._key));
+                const changed = bookings.filter(nb => { const old = allBookings.find(ob=>ob._key===nb._key); return old && JSON.stringify(old)!==JSON.stringify(nb); });
+                added.forEach(b => recentActivities.unshift(`New: ${b.name||b._key.slice(-6)}`));
+                changed.forEach(b => recentActivities.unshift(`Updated: ${b.name||b._key.slice(-6)}`));
+                if (recentActivities.length > 10) recentActivities.length = 10;
+            }
+            allBookings = bookings;
+            if (document.getElementById('tab-bookings').style.display !== 'none') refreshFilteredUI();
+            updateDashboardStats();
+        });
+    }
+
+    window.acceptBooking = async (key) => {
+        if (!currentStaffIsAdmin) { showToast('Only admins can assign','warning'); return; }
+        await bookingsRef.child(key).update({ assigned_to:currentStaffEmail, assigned_at:new Date().toISOString() });
+        showToast('Booking assigned to you');
+    };
+    window.openReassignModal = (key) => {
+        if (!currentStaffIsAdmin) { showToast('Only admins can reassign','warning'); return; }
+        const booking = allBookings.find(b=>b._key===key);
+        if (!booking) return;
+        document.getElementById('reassignBookingKey').value = key;
+        document.getElementById('reassignCurrent').value = booking.assigned_to || 'Unassigned';
+        document.getElementById('reassignModal').style.display='flex';
+    };
+    document.getElementById('reassignForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('reassignBookingKey').value;
+        const newEmail = document.getElementById('reassignNewEmail').value.trim();
+        if (!newEmail) { showToast('Enter staff email','warning'); return; }
+        const sanitized = newEmail.replace(/\./g,',');
+        const staffSnap = await staffRef.child(sanitized).once('value');
+        if (!staffSnap.exists()) { showToast('Not a registered staff member','error'); return; }
+        await bookingsRef.child(key).update({ assigned_to:newEmail, assigned_at:new Date().toISOString() });
+        showToast(`Reassigned to ${newEmail}`);
+        closeModal('reassignModal');
+    };
+
+    function exportToExcel() {
+        const filtered = getFilteredBookings();
+        const data = filtered.map(b=>({ 'Booking ID': b.bookingId||b._key.slice(-6), 'Customer': b.name||'', 'Phone': b.phone||'', 'Items': `${b.itemCount||'0'} ${b.category||''}`, 'Staff': b.assigned_to||'Unassigned', 'Status': b.status }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Bookings');
+        XLSX.writeFile(wb, 'bookings_export.xlsx');
+        showToast('Exported!');
+    }
+
+    function formatPhoneForWhatsApp(phone) {
+        if (!phone) return null;
+        let cleaned = phone.replace(/\D/g,'');
+        if (cleaned.startsWith('0')) cleaned = '254'+cleaned.substring(1);
+        if (!cleaned.startsWith('254')) cleaned = '254'+cleaned;
+        return cleaned;
+    }
+
+    function generateCollectionMessage(booking) {
+        const bookingId = booking.bookingId || booking._key.slice(-6);
+        return `✅ *COLLECTION CONFIRMATION*\n\nHello ${booking.name||'Customer'},\n\nYour items are ready for collection!\n\n📦 Booking: ${bookingId}\n📋 Items: ${booking.itemCount||'?'} ${booking.category||'items'}\n📅 Stored: ${booking.checkIn||'—'}\n📅 Collect by: ${booking.collect||'—'}\n\n📍 Campus Vault Storage\n⏰ Mon-Fri: 8AM-6PM, Sat: 9AM-2PM\n\n🔐 Bring your Student ID and Booking ID.\n\nThank you! 🙏`;
+    }
+
+    window.openCollectionWhatsAppModal = (key) => {
+        const booking = allBookings.find(b=>b._key===key);
+        if (!booking || !booking.collection_approved) { showToast('Collection not approved yet','warning'); return; }
+        currentCollectionWhatsAppBooking = booking;
+        document.getElementById('collectionWaPreview').textContent = generateCollectionMessage(booking);
+        document.getElementById('collectionWhatsAppModal').style.display='flex';
+    };
+    window.sendCollectionWhatsApp = () => {
+        if (!currentCollectionWhatsAppBooking) return;
+        const phone = currentCollectionWhatsAppBooking.phone;
+        if (!phone) { showToast('No phone number','warning'); return; }
+        const cleaned = formatPhoneForWhatsApp(phone);
+        if (!cleaned) return;
+        window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(generateCollectionMessage(currentCollectionWhatsAppBooking))}`, '_blank');
+        closeModal('collectionWhatsAppModal');
+        showToast('WhatsApp opened');
+    };
+
+    document.getElementById('fabBtn').addEventListener('click', ()=>{ 
+        document.getElementById('fabBtn').classList.toggle('active'); 
+        document.getElementById('fabMenu').classList.toggle('show'); 
+    });
+    function handleFabAction(action) {
+        document.getElementById('fabBtn').classList.remove('active');
+        document.getElementById('fabMenu').classList.remove('show');
+        if (action==='refresh') { loadBookingsRealtime(); showToast('Refreshed','info'); }
+        else if (action==='export') exportToExcel();
+    }
+    window.addEventListener('scroll', ()=>{ document.getElementById('scrollTopBtn').style.display = window.scrollY>300?'flex':'none'; });
+
+    window.openEditModal = (key) => {
+        const booking = allBookings.find(b=>b._key===key);
+        if (!booking) return;
+        document.getElementById('editBookingKey').value = key;
+        document.getElementById('editName').value = booking.name||'';
+        document.getElementById('editPhone').value = booking.phone||'';
+        document.getElementById('editEmail').value = booking.email||'';
+        document.getElementById('editCheckIn').value = booking.checkIn||'';
+        document.getElementById('editCollect').value = booking.collect||'';
+        document.getElementById('editItemCount').value = booking.itemCount||'';
+        document.getElementById('editCategory').value = booking.category||'Other';
+        document.getElementById('editModal').style.display='flex';
+    };
+    document.getElementById('editForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const key = document.getElementById('editBookingKey').value;
+        await pendingApprovalsRef.push({
+            bookingKey: key, requestedBy: currentStaffEmail,
+            proposed: { name:document.getElementById('editName').value, phone:document.getElementById('editPhone').value, email:document.getElementById('editEmail').value, checkIn:document.getElementById('editCheckIn').value, collect:document.getElementById('editCollect').value, itemCount:parseInt(document.getElementById('editItemCount').value)||0, category:document.getElementById('editCategory').value },
+            timestamp: new Date().toISOString(), status:'pending'
+        });
+        await bookingsRef.child(key).update({ pending_edit:true });
+        showToast('Edit request submitted');
+        closeModal('editModal');
+    };
+
+    window.openPhotosModal = async (bookingKey) => { currentPhotoBookingKey=bookingKey; await loadPhotosForBooking(bookingKey); document.getElementById('photosModal').style.display='flex'; };
+    async function loadPhotosForBooking(bookingKey) {
+        const snap = await bookingsRef.child(`${bookingKey}/verificationPhotos`).once('value');
+        const photos = snap.val()||[];
+        document.getElementById('photosContainer').innerHTML = photos.length===0?'<p>No photos yet.</p>':photos.map((p,idx)=>`<div class="photo-item"><img src="${p.imageData}" style="width:100px;height:100px;"><button class="btn-outline btn" onclick="deletePhoto('${bookingKey}',${idx})"><i class="fas fa-trash"></i></button></div>`).join('');
+    }
+    window.deletePhoto = async (bookingKey, idx) => {
+        if (!confirm('Delete this photo?')) return;
+        const snap = await bookingsRef.child(`${bookingKey}/verificationPhotos`).once('value');
+        let photos = snap.val()||[];
+        photos.splice(idx,1);
+        await bookingsRef.child(`${bookingKey}/verificationPhotos`).set(photos);
+        await loadPhotosForBooking(bookingKey);
+    };
+    document.getElementById('fileUpload').onchange = async (e) => {
+        const files = e.target.files;
+        if (!files.length||!currentPhotoBookingKey) return;
+        const snap = await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).once('value');
+        let photos = snap.val()||[];
+        let loaded=0;
+        for (let file of files) {
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                photos.push({ imageData:ev.target.result, timestamp:new Date().toISOString(), uploadedBy:currentStaffEmail });
+                loaded++;
+                if (loaded===files.length) { await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).set(photos); await loadPhotosForBooking(currentPhotoBookingKey); showToast('Photos uploaded'); }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    function initSignatureCanvas(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.lineCap='round';
+        let drawing=false;
+        const startDraw = (x, y) => { drawing=true; ctx.beginPath(); ctx.moveTo(x,y); };
+        const moveDraw = (x, y) => { if(drawing){ ctx.lineTo(x,y); ctx.stroke(); } };
+        const getPos = (e) => { const rect=canvas.getBoundingClientRect(); return { x: (e.touches?e.touches[0]:e).clientX-rect.left, y: (e.touches?e.touches[0]:e).clientY-rect.top }; };
+        canvas.addEventListener('mousedown', e => { const p=getPos(e); startDraw(p.x,p.y); });
+        canvas.addEventListener('mousemove', e => { const p=getPos(e); moveDraw(p.x,p.y); });
+        canvas.addEventListener('mouseup', ()=>drawing=false);
+        canvas.addEventListener('mouseleave', ()=>drawing=false);
+        canvas.addEventListener('touchstart', e => { e.preventDefault(); const p=getPos(e); startDraw(p.x,p.y); }, {passive:false});
+        canvas.addEventListener('touchmove', e => { e.preventDefault(); const p=getPos(e); moveDraw(p.x,p.y); }, {passive:false});
+        canvas.addEventListener('touchend', ()=>drawing=false);
+    }
+    initSignatureCanvas('staffCanvas');
+    initSignatureCanvas('customerCanvas');
+    window.clearCanvas = (id) => { const c=document.getElementById(id); if(c) c.getContext('2d').clearRect(0,0,c.width,c.height); };
+    window.openCollectionModal = (bookingKey) => { currentCollectionBookingKey=bookingKey; clearCanvas('staffCanvas'); clearCanvas('customerCanvas'); document.getElementById('collectionModal').style.display='flex'; };
+    document.getElementById('submitCollectionReq').onclick = async () => {
+        const staffSig = document.getElementById('staffCanvas').toDataURL();
+        const customerSig = document.getElementById('customerCanvas').toDataURL();
+        if (!currentCollectionBookingKey) return;
+        await pendingApprovalsRef.push({
+            bookingKey: currentCollectionBookingKey, requestedBy: currentStaffEmail,
+            staffSignature: staffSig, customerSignature: customerSig,
+            timestamp: new Date().toISOString(), status:'pending'
+        });
+        await bookingsRef.child(currentCollectionBookingKey).update({ pending_collection:true });
+        showToast('Collection request submitted');
+        closeModal('collectionModal');
+    };
+
+    function closeModal(id) { document.getElementById(id).style.display='none'; }
+    window.closeModal = closeModal;
+    function closeModalOnBg(e,id) { if(e.target===e.currentTarget) closeModal(id); }
+    window.closeModalOnBg = closeModalOnBg;
 </script>
 </body>
 </html>
