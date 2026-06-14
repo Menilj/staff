@@ -12,8 +12,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
-        /* … (all previous CSS kept exactly the same) … */
+        /* ---------- BASE ---------- */
         * { margin:0; padding:0; box-sizing:border-box; }
         :root {
             --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --text-secondary: #cbd5e1;
@@ -21,6 +24,7 @@
             --danger: #ef4444; --border: #334155; --shadow: 0 2px 4px rgba(0,0,0,0.2);
             --shadow-md: 0 6px 12px rgba(0,0,0,0.3); --radius: 10px; --radius-sm: 6px;
             --transition: 0.2s ease; --sidebar-width: 260px; --font: 'Inter', sans-serif;
+            --whatsapp-green: #25D366;
         }
         body.light {
             --bg: #f1f5f9; --surface: #ffffff; --text: #0f172a; --text-secondary: #475569;
@@ -30,24 +34,24 @@
         body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; transition: background 0.3s, color 0.3s; }
 
         .login-overlay { position:fixed; inset:0; background:linear-gradient(135deg,#0b1e33,#1e3a5f); display:flex; align-items:center; justify-content:center; z-index:9999; }
-        .login-card { background:var(--surface); border-radius:20px; padding:32px; width:90%; max-width:400px; text-align:center; box-shadow:0 25px 50px rgba(0,0,0,0.3); }
+        .login-card { background:var(--surface); border-radius:20px; padding:32px; width:90%; max-width:400px; text-align:center; box-shadow:0 25px 50px rgba(0,0,0,0.3); animation: fadeInUp 0.4s ease; }
         .login-card h2 { font-weight:800; font-size:2rem; color:var(--primary); }
         .google-btn { width:100%; padding:14px; border-radius:30px; border:2px solid var(--border); background:var(--surface); font-weight:600; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:var(--transition); margin-top:24px; color:var(--text); }
-        .google-btn:hover { background:var(--bg); border-color:var(--primary); }
+        .google-btn:hover { background:var(--bg); border-color:var(--primary); transform: translateY(-1px); }
         .login-error { color:var(--danger); margin-top:12px; display:none; }
 
         .dashboard { display:none; min-height:100vh; }
-        .dashboard.active { display:flex; }
+        .dashboard.active { display:flex; animation: fadeIn 0.3s ease; }
         .sidebar { width:var(--sidebar-width); background:linear-gradient(180deg,#0b1e33,#1e293b); color:#fff; position:fixed; top:0; left:0; height:100vh; z-index:200; transition:transform 0.3s ease; box-shadow:4px 0 20px rgba(0,0,0,0.2); overflow-y:auto; }
         .sidebar .brand { padding:24px 20px; font-weight:800; font-size:1.4rem; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,0.1); }
         .sidebar .brand i { color:var(--accent); }
         .sidebar nav { padding:20px 12px; }
         .sidebar nav a { display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:var(--radius); color:#cbd5e1; text-decoration:none; font-weight:500; transition:var(--transition); margin-bottom:4px; font-size:0.95rem; }
-        .sidebar nav a:hover, .sidebar nav a.active { background:rgba(255,255,255,0.1); color:#fff; }
+        .sidebar nav a:hover, .sidebar nav a.active { background:rgba(255,255,255,0.1); color:#fff; transform: translateX(4px); }
         .sidebar-footer { padding:20px; border-top:1px solid rgba(255,255,255,0.1); }
         .user-info { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
         .user-avatar { width:40px; height:40px; border-radius:50%; border:2px solid var(--accent); }
-        .logout-btn { width:100%; background:rgba(255,255,255,0.1); border:none; color:#fff; padding:10px; border-radius:var(--radius-sm); cursor:pointer; font-weight:600; }
+        .logout-btn { width:100%; background:rgba(255,255,255,0.1); border:none; color:#fff; padding:10px; border-radius:var(--radius-sm); cursor:pointer; font-weight:600; transition:var(--transition); }
         .logout-btn:hover { background:rgba(255,255,255,0.2); }
 
         .main { flex:1; margin-left:var(--sidebar-width); padding:24px; transition:margin-left 0.3s ease; min-height:100vh; }
@@ -57,56 +61,105 @@
         .theme-toggle i { font-size:1rem; }
         .theme-toggle:hover { background:var(--border); }
 
-        .card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--border); overflow:hidden; margin-bottom:24px; }
+        .offline-banner { position:fixed; top:0; left:0; right:0; background:var(--danger); color:white; text-align:center; padding:8px; z-index:9999; font-weight:600; display:none; }
+
+        .card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow); border:1px solid var(--border); overflow:hidden; margin-bottom:24px; transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: var(--shadow-md); }
         .card-header { padding:16px 20px; border-bottom:1px solid var(--border); font-weight:700; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
         .table-responsive { overflow-x:auto; -webkit-overflow-scrolling:touch; position:relative; max-height:60vh; overflow-y:auto; }
         table { width:100%; border-collapse:collapse; font-size:0.85rem; white-space:nowrap; }
-        th { background:var(--bg); padding:12px 12px; text-align:left; font-weight:600; color:var(--text-secondary); border-bottom:2px solid var(--border); position:sticky; top:0; z-index:1; }
-        td { padding:10px 12px; border-bottom:1px solid var(--border); }
+        th { background:var(--bg); padding:12px 12px; text-align:left; font-weight:600; color:var(--text-secondary); border-bottom:2px solid var(--border); position:sticky; top:0; z-index:2; cursor:pointer; user-select:none; }
+        th:hover { background:var(--border); }
+        th i { margin-left:4px; font-size:0.7rem; }
+        td { padding:10px 12px; border-bottom:1px solid var(--border); transition: background 0.15s; }
         tr:hover td { background:var(--bg); }
+        .sticky-col { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+        tr:hover .sticky-col { background: var(--bg); }
+
         .badge { padding:4px 10px; border-radius:12px; font-size:0.7rem; font-weight:600; display:inline-block; }
         .badge-active { background:#d1fae5; color:#065f46; }
         .badge-pending { background:#fef3c7; color:#92400e; }
         .badge-assigned { background:#dbeafe; color:#1e40af; }
         .action-icon { background:none; border:none; font-size:1rem; cursor:pointer; padding:6px 8px; border-radius:6px; transition:0.2s; margin:0 2px; color:var(--text-secondary); }
-        .action-icon:hover { background:var(--bg); color:var(--primary); }
+        .action-icon:hover { background:var(--bg); color:var(--primary); transform: scale(1.1); }
 
-        .modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:flex-end; justify-content:center; z-index:1100; padding:0; }
-        .modal-content { background:var(--surface); border-radius:20px 20px 0 0; width:100%; max-width:550px; max-height:85vh; overflow-y:auto; padding:1.5rem; border:1px solid var(--border); box-shadow:0 -10px 30px rgba(0,0,0,0.5); }
+        .modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:flex-end; justify-content:center; z-index:1100; padding:0; animation: fadeIn 0.2s ease; }
+        .modal-content { background:var(--surface); border-radius:20px 20px 0 0; width:100%; max-width:550px; max-height:85vh; overflow-y:auto; padding:1.5rem; border:1px solid var(--border); box-shadow:0 -10px 30px rgba(0,0,0,0.5); animation: slideUp 0.3s ease; }
         @media (max-width:700px) {
             .modal { align-items:flex-end; }
             .modal-content { border-radius:20px 20px 0 0; max-width:100%; width:100%; margin:0; padding:1.5rem 1.25rem; }
-            .modal-content h3 { font-size:1.2rem; }
-            .form-group label { font-size:0.9rem; }
-            .form-group input, .form-group select, .form-group textarea { font-size:16px !important; padding:12px; }
-            .btn { font-size:0.9rem; padding:12px 16px; }
-            .flex-between { flex-direction:column; gap:10px; }
-            .flex-between .btn { width:100%; }
-            .signature-canvas { height:120px; }
-            .photo-grid { justify-content:center; }
-            .photo-item { width:90px; }
-            .photo-item img { width:90px; height:90px; }
         }
         .form-group { margin-bottom:1rem; }
         label { font-weight:500; font-size:0.8rem; display:block; margin-bottom:6px; }
-        input, select, textarea { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-family:inherit; font-size:0.9rem; }
+        input, select, textarea { width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-family:inherit; font-size:0.9rem; transition: border-color 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color:var(--primary); outline:none; }
         .photo-grid { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0; }
-        .photo-item { background:var(--bg); border-radius:12px; overflow:hidden; text-align:center; border:1px solid var(--border); }
+        .photo-item { background:var(--bg); border-radius:12px; overflow:hidden; text-align:center; border:1px solid var(--border); transition: transform 0.2s; }
+        .photo-item:hover { transform: scale(1.02); }
         .photo-item img { object-fit:cover; }
         .signature-canvas { border:2px solid var(--border); border-radius:12px; background:white; width:100%; height:140px; touch-action:none; margin:8px 0; }
         .flex-between { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:16px; }
         .btn { padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; border:none; font-size:0.85rem; transition:0.2s; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
         .btn-primary { background:var(--primary); color:white; }
+        .btn-primary:hover { filter: brightness(1.1); }
+        .btn-danger { background:var(--danger); color:white; }
         .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
-        .toast { position:fixed; bottom:20px; right:20px; background:var(--surface); border-left:4px solid var(--success); padding:12px 20px; border-radius:8px; box-shadow:var(--shadow-md); z-index:1200; font-size:0.85rem; animation:slideIn 0.2s ease; }
+        .btn-outline:hover { background:var(--bg); }
+        .toast-container { position:fixed; bottom:20px; right:20px; display:flex; flex-direction:column-reverse; gap:8px; z-index:1200; }
+        .toast { background:var(--surface); border-left:4px solid var(--success); padding:12px 20px; border-radius:8px; box-shadow:var(--shadow-md); font-size:0.85rem; animation: slideIn 0.2s ease; }
+        .toast.info { border-left-color: var(--primary); }
+        .toast.warning { border-left-color: var(--warning); }
+        .toast.error { border-left-color: var(--danger); }
         @keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes fadeInUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: var(--surface); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border); box-shadow: var(--shadow); transition: transform 0.2s; position: relative; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card .stat-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+        .stat-card .stat-label { color: var(--text-secondary); font-size: 0.8rem; }
+        .stat-skeleton { background: var(--border); height: 2rem; width: 60%; border-radius: 4px; animation: shimmer 1.5s infinite; }
+
+        .chart-container { position: relative; width: 100%; max-width: 300px; margin: 0 auto; }
+        .highlight { background-color: #fef08a; color: #000; border-radius: 2px; padding: 0 2px; }
+
+        .recent-activity { list-style: none; padding: 0; margin-top: 16px; }
+        .recent-activity li { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 0.8rem; display: flex; justify-content: space-between; }
+        .recent-activity li:last-child { border-bottom: none; }
+
+        .fab { position:fixed; bottom:20px; right:20px; width:56px; height:56px; border-radius:50%; background:var(--primary); color:white; border:none; box-shadow:var(--shadow-md); font-size:1.5rem; cursor:pointer; z-index:100; display:none; align-items:center; justify-content:center; transition:0.2s; }
+        .fab.active { transform: rotate(45deg); }
+        .fab-menu { position:fixed; bottom:80px; right:20px; display:none; flex-direction:column; gap:12px; z-index:99; }
+        .fab-menu.show { display:flex; }
+        .fab-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px 16px; cursor:pointer; font-weight:600; display:flex; align-items:center; gap:8px; box-shadow:var(--shadow); transition:0.2s; }
+        .fab-item:hover { background:var(--primary); color:white; }
+
+        .whatsapp-float { position:fixed; bottom:20px; left:20px; width:56px; height:56px; border-radius:50%; background:var(--whatsapp-green); color:white; border:none; box-shadow:var(--shadow-md); font-size:1.8rem; cursor:pointer; z-index:100; display:flex; align-items:center; justify-content:center; transition:0.2s; text-decoration:none; }
+        .whatsapp-float:hover { transform: scale(1.1); }
+
+        .scroll-top-btn { position:fixed; bottom:90px; right:20px; width:40px; height:40px; border-radius:50%; background:var(--surface); border:1px solid var(--border); color:var(--text); display:none; align-items:center; justify-content:center; cursor:pointer; z-index:100; box-shadow:var(--shadow); }
+
+        .empty-state { text-align:center; padding:40px; color:var(--text-secondary); }
+        .empty-state i { font-size: 3rem; opacity:0.5; }
+
+        .loading-skeleton { background: var(--border); border-radius:4px; height:20px; width:80%; margin:6px 0; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 
         .desktop-table { display:block; } .mobile-cards { display:none; }
         .data-cards { display:flex; flex-direction:column; gap:12px; padding:16px; }
-        .data-card { background:var(--surface); border-radius:var(--radius); padding:16px; border:1px solid var(--border); box-shadow:var(--shadow); }
+        .data-card { background:var(--surface); border-radius:var(--radius); padding:16px; border:1px solid var(--border); box-shadow:var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
+        .data-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
         .data-card .card-row { display:flex; justify-content:space-between; margin-bottom:8px; flex-wrap:wrap; }
         .data-card .card-label { font-weight:600; color:var(--text-secondary); font-size:0.8rem; }
         .card-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+
+        .bulk-actions { display: none; gap: 8px; }
+        .bulk-actions.visible { display: flex; }
+        .copied { color: var(--success); }
+        .auto-refresh-active { background: var(--success); }
+
         @media (max-width:700px) {
             .sidebar { transform:translateX(-100%); }
             .sidebar.open { transform:translateX(0); }
@@ -116,25 +169,35 @@
             .sidebar-overlay.active { display:block; }
             .desktop-table { display:none; }
             .mobile-cards { display:block; }
+            .fab { display:flex; }
+            .scroll-top-btn { display:flex; }
         }
 
-        /* ---- Camera Modern UI ---- */
-        .camera-container { position:relative; width:100%; max-height:70vh; background:#000; border-radius:16px; overflow:hidden; }
-        #liveVideo { width:100%; height:auto; display:block; }
-        .camera-controls-top { position:absolute; top:12px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:center; z-index:10; }
-        .cam-btn { width:42px; height:42px; border-radius:50%; background:rgba(0,0,0,0.5); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.3); color:#fff; font-size:1.1rem; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s; }
-        .cam-btn:active { background:rgba(0,0,0,0.8); }
-        .camera-controls-bottom { position:absolute; bottom:20px; left:12px; right:12px; display:flex; align-items:center; justify-content:space-around; z-index:10; }
-        .capture-btn { width:70px; height:70px; border-radius:50%; background:white; border:4px solid rgba(255,255,255,0.8); cursor:pointer; transition:transform 0.1s; }
-        .capture-btn:active { transform:scale(0.92); }
-        .zoom-slider-container { display:flex; align-items:center; gap:8px; }
-        .zoom-slider { width:100px; accent-color:var(--primary); }
-        .focus-ring { position:absolute; width:60px; height:60px; border:2px solid yellow; border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; display:none; z-index:9; transition:opacity 0.3s; }
-        .grid-overlay { position:absolute; inset:0; background-image:linear-gradient(to right, rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.2) 1px, transparent 1px); background-size:33.33% 33.33%; pointer-events:none; display:none; z-index:5; }
-        .countdown-overlay { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); z-index:15; font-size:5rem; color:white; font-weight:bold; }
+        @media print {
+            .sidebar, .topbar-mobile, .fab, .search-filter-bar, .btn, .action-icon, .scroll-top-btn, .fab-menu, .offline-banner, .whatsapp-float { display:none; }
+            .main { margin-left:0; }
+            .card { box-shadow:none; border:1px solid #ccc; }
+        }
+
+        /* iPhone Camera Styles (unchanged) */
+        .iphone-tool { width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); color: #fff; font-size: 1rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .iphone-tool:active { background: rgba(0,0,0,0.8); }
+        .zoom-preset { color: rgba(255,255,255,0.7); font-size: 0.9rem; font-weight: 500; cursor: pointer; padding: 2px 8px; border-radius: 4px; transition: color 0.2s; }
+        .zoom-preset.active { color: #ffcc00; font-weight: 700; }
+        .mode-scroll { -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; padding:12px 16px; display:flex; gap:20px; justify-content:center; overflow-x:auto; background:transparent; position:absolute; bottom:70px; left:0; right:0; z-index:15; }
+        .mode-pill { color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 500; white-space: nowrap; padding: 6px 14px; border-radius: 16px; cursor: pointer; transition: 0.2s; scroll-snap-align: center; }
+        .mode-pill.active { color: #fff; background: rgba(255,255,255,0.2); font-weight: 600; }
+        .capture-btn-circle { width: 68px; height: 68px; border-radius: 50%; background: #fff; border: 4px solid rgba(255,255,255,0.8); box-shadow: 0 0 10px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.1s; }
+        .capture-btn-circle:active { transform: scale(0.92); }
+        .photo-review-panel { position: absolute; bottom: 0; left: 0; right: 0; background: var(--surface); padding: 16px; display: none; flex-direction: column; align-items: center; border-radius: 20px 20px 0 0; z-index: 25; }
+        .review-actions { display: flex; gap: 12px; margin-top: 12px; }
+        .review-actions .btn { min-width: 100px; }
+        .camera-preview { width:100%; flex:1; display:flex; align-items:center; justify-content:center; position:relative; }
     </style>
 </head>
 <body>
+<div class="offline-banner" id="offlineBanner"><i class="fas fa-wifi-slash"></i> You are offline</div>
+<div class="toast-container" id="toastContainer"></div>
 <div class="login-overlay" id="loginScreen">
     <div class="login-card">
         <h2><i class="fas fa-user-tie"></i> Staff Portal</h2>
@@ -149,11 +212,12 @@
     <aside class="sidebar" id="sidebar">
         <div class="brand"><i class="fas fa-user-tie"></i> CampusVault</div>
         <nav>
-            <a href="#" class="active" data-tab="bookings"><i class="fas fa-calendar-check"></i> Bookings</a>
+            <a href="#" class="active" data-tab="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a>
+            <a href="#" data-tab="bookings"><i class="fas fa-calendar-check"></i> Bookings</a>
         </nav>
         <div class="sidebar-footer">
             <div class="user-info">
-                <img class="user-avatar" id="userAvatar" src="" style="display:none;">
+                <img class="user-avatar" id="userAvatar" src="" style="display:none;" alt="User avatar">
                 <span id="userNameDisplay">Staff</span>
             </div>
             <button class="logout-btn" id="logoutStaffBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -168,17 +232,71 @@
             </div>
         </div>
 
-        <div class="tab-content active" id="tab-bookings">
+        <!-- Dashboard Tab -->
+        <div class="tab-content" id="tab-dashboard">
+            <h2 style="margin-bottom:16px;"><i class="fas fa-chart-pie"></i> Overview</h2>
+            <div class="stats-grid" id="statsContainer">
+                <div class="stat-card"><div class="stat-value" id="statTotal"><span class="stat-skeleton"></span></div><div class="stat-label">Total Bookings</div></div>
+                <div class="stat-card"><div class="stat-value" id="statActive"><span class="stat-skeleton"></span></div><div class="stat-label">Active</div></div>
+                <div class="stat-card"><div class="stat-value" id="statCollected"><span class="stat-skeleton"></span></div><div class="stat-label">Collected</div></div>
+                <div class="stat-card"><div class="stat-value" id="statPending"><span class="stat-skeleton"></span></div><div class="stat-label">Pending Actions</div></div>
+                <div class="stat-card"><div class="stat-value" id="statToday">0</div><div class="stat-label">Today's Bookings</div></div>
+            </div>
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-header"><i class="fas fa-chart-pie"></i> Booking Status</div>
+                <div style="padding:20px; display:flex; justify-content:center;">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><i class="fas fa-clock"></i> Recent Activity</div>
+                <ul id="recentActivityList" class="recent-activity"><li>No recent activity</li></ul>
+            </div>
+        </div>
+
+        <!-- Bookings Tab -->
+        <div class="tab-content" id="tab-bookings" style="display:none;">
             <div class="card">
                 <div class="card-header">
-                    <span><i class="fas fa-boxes"></i> Active Bookings</span>
-                    <span class="badge badge-assigned">Assigned to me: <span id="myAssignedCount">0</span></span>
+                    <span><i class="fas fa-boxes"></i> Bookings</span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge badge-assigned">Assigned to me: <span id="myAssignedCount">0</span></span>
+                        <button class="btn btn-outline" id="autoRefreshToggle" onclick="toggleAutoRefresh()" title="Auto-refresh every 30s"><i class="fas fa-sync-alt"></i> <span id="autoRefreshText">Auto: OFF</span></button>
+                    </div>
+                </div>
+                <div class="search-filter-bar">
+                    <input type="text" id="searchInput" placeholder="Search name, ID, phone... (Ctrl+K)" aria-label="Search bookings">
+                    <select id="filterStatus" aria-label="Filter by status">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="collected">Collected</option>
+                        <option value="pending">Pending Actions</option>
+                    </select>
+                    <div class="bulk-actions" id="bulkActions">
+                        <button class="btn btn-danger" onclick="bulkDelete()"><i class="fas fa-trash"></i> Delete Selected</button>
+                        <button class="btn btn-primary" onclick="bulkMarkCollected()"><i class="fas fa-check"></i> Mark Collected</button>
+                    </div>
+                    <button class="btn excel-export-btn" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
                 </div>
                 <div class="desktop-table">
                     <div class="table-responsive">
                         <table id="bookingsTable">
-                            <thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Assigned</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody id="bookingsTableBody"><tr><td colspan="7">Loading bookings...</td></tr></tbody>
+                            <thead>
+                                <tr>
+                                    <th style="width:30px;"><input type="checkbox" id="selectAll" title="Select All" onclick="toggleSelectAll()"></th>
+                                    <th data-sort="photo" class="sticky-col">Photo</th>
+                                    <th data-sort="bookingId">ID <i class="fas fa-sort"></i></th>
+                                    <th data-sort="name">Customer <i class="fas fa-sort"></i></th>
+                                    <th data-sort="phone">Phone <i class="fas fa-sort"></i></th>
+                                    <th data-sort="items">Items <i class="fas fa-sort"></i></th>
+                                    <th data-sort="assigned">Assigned <i class="fas fa-sort"></i></th>
+                                    <th data-sort="status">Status <i class="fas fa-sort"></i></th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bookingsTableBody"><tr><td colspan="9"><div class="loading-skeleton"></div><div class="loading-skeleton" style="width:60%"></div><div class="loading-skeleton" style="width:40%"></div></td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -190,10 +308,24 @@
     </main>
 </div>
 
-<!-- Modals (edit, photos, camera, collection) -->
+<!-- WhatsApp Float Button -->
+<a class="whatsapp-float" id="whatsappFloat" href="https://wa.me/254700000000?text=Hello%20CampusVault%20team" target="_blank" title="Chat with CampusVault">
+    <i class="fab fa-whatsapp"></i>
+</a>
+
+<!-- Quick View Modal -->
+<div id="quickViewModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'quickViewModal')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 id="qvTitle">Booking Details</h3>
+        <div id="qvBody"></div>
+        <div class="flex-between"><button class="btn btn-outline" onclick="closeModal('quickViewModal')">Close</button></div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
 <div id="editModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'editModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3><i class="fas fa-pen-alt"></i> Request Edit (Admin Approval)</h3>
+        <h3><i class="fas fa-pen-alt"></i> Request Edit</h3>
         <form id="editForm">
             <input type="hidden" id="editBookingKey">
             <div class="form-group"><label>Full Name</label><input id="editName" required></div>
@@ -208,483 +340,960 @@
     </div>
 </div>
 
+<!-- Photos Modal -->
 <div id="photosModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'photosModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3><i class="fas fa-camera"></i> Verification Photos</h3>
         <div id="photosContainer" class="photo-grid"></div>
         <div class="flex-between">
-            <button class="btn btn-outline" onclick="document.getElementById('fileUpload').click()"><i class="fas fa-upload"></i> Upload File</button>
-            <button class="btn btn-outline" id="openRealtimeCameraBtn"><i class="fas fa-video"></i> Live Camera</button>
+            <button class="btn btn-outline" onclick="document.getElementById('fileUpload').click()"><i class="fas fa-upload"></i> Upload</button>
+            <button class="btn btn-outline" id="openRealtimeCameraBtn"><i class="fas fa-video"></i> Camera</button>
             <input type="file" id="fileUpload" accept="image/*" multiple style="display:none">
             <button class="btn btn-primary" onclick="closeModal('photosModal')">Close</button>
         </div>
     </div>
 </div>
 
-<!-- MODERN CAMERA MODAL -->
+<!-- iPhone-style Camera Modal -->
 <div id="cameraModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'cameraModal')">
-    <div class="modal-content" onclick="event.stopPropagation()" style="padding:0; max-width:600px;">
-        <div class="camera-container">
-            <video id="liveVideo" autoplay playsinline></video>
-            <div class="grid-overlay" id="gridOverlay"></div>
-            <div class="focus-ring" id="focusRing"></div>
-            <div class="countdown-overlay" id="countdownOverlay"></div>
-
-            <!-- Top controls -->
-            <div class="camera-controls-top">
-                <button class="cam-btn" id="flashBtn" title="Flash"><i class="fas fa-bolt"></i></button>
-                <div style="display:flex; gap:8px;">
-                    <button class="cam-btn" id="gridBtn" title="Grid"><i class="fas fa-border-all"></i></button>
-                    <button class="cam-btn" id="timerBtn" title="Timer"><i class="fas fa-clock"></i></button>
-                </div>
-                <button class="cam-btn" id="switchCameraBtn" title="Switch Camera"><i class="fas fa-camera-rotate"></i></button>
+    <div class="modal-content" onclick="event.stopPropagation()" style="padding:0; max-width:600px; height:100%; background:#000; display:flex; flex-direction:column;">
+        <div style="position:absolute; top:12px; left:16px; right:16px; display:flex; justify-content:space-between; z-index:20; pointer-events:none;">
+            <div style="display:flex; gap:12px; pointer-events:auto;">
+                <button class="iphone-tool" id="flashBtnIphone" title="Flash"><i class="fas fa-bolt"></i></button>
+                <button class="iphone-tool" id="hqToggleIphone" title="High Quality"><span style="font-weight:bold;">HQ</span></button>
+                <button class="iphone-tool" id="enhanceToggleIphone" title="Enhance"><span style="font-weight:bold;">En</span></button>
             </div>
-
-            <!-- Bottom controls -->
-            <div class="camera-controls-bottom">
-                <div class="zoom-slider-container">
-                    <i class="fas fa-search-minus" style="color:white;"></i>
-                    <input type="range" id="zoomSlider" class="zoom-slider" min="1" max="3" step="0.1" value="1" style="display:none;">
-                    <i class="fas fa-search-plus" style="color:white;"></i>
-                </div>
-                <button class="capture-btn" id="capturePhotoBtn" title="Capture"></button>
-                <button class="cam-btn" id="galleryPreviewBtn" style="background:transparent; border:none;" onclick="document.getElementById('fileUpload').click()">
-                    <i class="fas fa-images"></i>
-                </button>
+            <div style="display:flex; gap:12px; pointer-events:auto;">
+                <button class="iphone-tool" id="timerBtnIphone2" title="Timer"><i class="fas fa-clock"></i></button>
+                <button class="iphone-tool" id="formatToggleIphone" title="Format">JPG</button>
+                <button class="iphone-tool" id="docScanModeBtn" title="Document Scanner"><i class="fas fa-file-invoice"></i></button>
             </div>
         </div>
-
-        <!-- Photo review area (hidden by default) -->
-        <div id="photoReview" style="display:none; padding:1rem; background:var(--surface);">
-            <img id="reviewImage" style="width:100%; border-radius:12px;">
-            <div class="flex-between" style="margin-top:12px;">
-                <button class="btn btn-outline" id="retakePhotoBtnModern">Retake</button>
-                <button class="btn btn-primary" id="confirmPhotoBtnModern">Use Photo</button>
+        <div class="camera-preview">
+            <video id="liveVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+            <div id="focusRingIphone" style="position:absolute; width:80px; height:80px; border:2px solid #ffcc00; border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; display:none; z-index:10;"></div>
+            <canvas id="docOverlay" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; display:none; z-index:5;"></canvas>
+        </div>
+        <div style="position:absolute; bottom:150px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:12px; z-index:15;">
+            <span class="zoom-preset" data-zoom="0.5">.5x</span><span class="zoom-preset active" data-zoom="1">1x</span><span class="zoom-preset" data-zoom="2">2x</span><span class="zoom-preset" data-zoom="10">10x</span><span class="zoom-preset" data-zoom="100">100x</span>
+        </div>
+        <div style="position:absolute; bottom:130px; left:40px; right:40px; z-index:15;">
+            <input type="range" class="zoom-slider-iphone" id="zoomSliderIphone" min="0.5" max="100" step="0.1" value="1" style="width:100%; accent-color:#ffcc00;">
+        </div>
+        <div class="mode-scroll">
+            <div class="mode-pill active" data-mode="photo">Photo</div>
+            <div class="mode-pill" data-mode="docscan">Doc Scan</div>
+            <div class="mode-pill" data-mode="portrait">Portrait</div>
+            <div class="mode-pill" data-mode="pano">Pano</div>
+            <div class="mode-pill" data-mode="video">Video</div>
+        </div>
+        <div style="height:70px; background:transparent; display:flex; align-items:center; justify-content:space-between; padding:0 40px; z-index:15;">
+            <button class="iphone-tool" id="galleryThumb" style="width:46px; height:46px; border-radius:10px; overflow:hidden; background:gray;">
+                <img id="galleryThumbImg" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
+            </button>
+            <button class="capture-btn-circle" id="captureMainBtn2"></button>
+            <button class="iphone-tool" id="switchCameraIphone2" title="Flip Camera"><i class="fas fa-camera-rotate"></i></button>
+        </div>
+        <div class="photo-review-panel" id="photoReviewPanel">
+            <img id="reviewImage" style="width:100%; border-radius:12px; max-height:60vh; object-fit:contain;">
+            <div class="review-actions">
+                <button class="btn btn-outline" id="retakeBtnIphone2">Retake</button>
+                <button class="btn btn-primary" id="usePhotoBtnIphone2">Use Photo</button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Collection Modal -->
 <div id="collectionModal" class="modal" style="display:none;" onclick="closeModalOnBg(event,'collectionModal')">
     <div class="modal-content" onclick="event.stopPropagation()">
         <h3><i class="fas fa-signature"></i> Request Collection</h3>
-        <div><label>Staff Signature (draw)</label><canvas id="staffCanvas" class="signature-canvas" width="500" height="140"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('staffCanvas')">Clear</button></div>
-        <div><label>Customer Signature (draw)</label><canvas id="customerCanvas" class="signature-canvas" width="500" height="140"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('customerCanvas')">Clear</button></div>
-        <div class="flex-between"><button class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button class="btn btn-primary" id="submitCollectionReq">Submit Request</button></div>
+        <div><label>Staff Signature</label><canvas id="staffCanvas" class="signature-canvas"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('staffCanvas')">Clear</button></div>
+        <div><label>Customer Signature</label><canvas id="customerCanvas" class="signature-canvas"></canvas><button type="button" class="btn-outline btn" onclick="clearCanvas('customerCanvas')">Clear</button></div>
+        <div class="flex-between"><button class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button class="btn btn-primary" id="submitCollectionReq">Submit</button></div>
     </div>
 </div>
 
+<!-- FAB and its menu -->
+<button class="fab" id="fabBtn" title="Quick actions"><i class="fas fa-plus"></i></button>
+<div class="fab-menu" id="fabMenu">
+    <div class="fab-item" onclick="handleFabAction('new')"><i class="fas fa-plus-circle"></i> New Booking</div>
+    <div class="fab-item" onclick="handleFabAction('refresh')"><i class="fas fa-sync-alt"></i> Refresh Data</div>
+    <div class="fab-item" onclick="handleFabAction('export')"><i class="fas fa-file-excel"></i> Export Excel</div>
+</div>
+
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i class="fas fa-chevron-up"></i></button>
+
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCuCd89dawEHOGrKmcCimw3pBErKYJU_VI",
-        authDomain: "campusvault-connect.firebaseapp.com",
-        databaseURL: "https://campusvault-connect-default-rtdb.firebaseio.com",
-        projectId: "campusvault-connect",
-        storageBucket: "campusvault-connect.firebasestorage.app",
-        messagingSenderId: "185904648786",
-        appId: "1:185904648786:web:390764d552d388b6e2058b"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth(), db = firebase.database();
-    const staffRef = db.ref('staff'), bookingsRef = db.ref('bookings');
-    const pendingApprovalsRef = db.ref('pending_approvals');
+// ==================== FIREBASE CONFIG ====================
+const firebaseConfig = {
+    apiKey: "AIzaSyCuCd89dawEHOGrKmcCimw3pBErKYJU_VI",
+    authDomain: "campusvault-connect.firebaseapp.com",
+    databaseURL: "https://campusvault-connect-default-rtdb.firebaseio.com",
+    projectId: "campusvault-connect",
+    storageBucket: "campusvault-connect.firebasestorage.app",
+    messagingSenderId: "185904648786",
+    appId: "1:185904648786:web:390764d552d388b6e2058b"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth(), db = firebase.database(), storage = firebase.storage();
+const bookingsRef = db.ref('bookings');
+const staffRef = db.ref('staff');
+const pendingApprovalsRef = db.ref('pending_approvals');
 
-    let currentStaffEmail = null, allBookings = [];
-    let currentPhotoBookingKey = null;
+let currentStaffEmail = null, allBookings = [], currentPhotoBookingKey = null;
+let recentActivities = [];
+let currentSort = { field: null, order: 'asc' };
+let selectedBookings = new Set();
+let autoRefreshInterval = null;
+let statusChart = null;
 
-    // Theme
-    function setTheme(dark) {
-        document.body.classList.toggle('light', !dark);
-        localStorage.setItem('staffTheme', dark ? 'dark' : 'light');
-        document.querySelectorAll('.theme-toggle i').forEach(i => i.className = dark ? 'fas fa-sun' : 'fas fa-moon');
-        document.querySelectorAll('.theme-toggle span').forEach(s => s.textContent = dark ? 'Light' : 'Dark');
-    }
-    setTheme(localStorage.getItem('staffTheme') !== 'light');
-    document.getElementById('themeToggleMobile').onclick = () => setTheme(document.body.classList.contains('light'));
+// ==================== OFFLINE/ONLINE ====================
+window.addEventListener('online', () => document.getElementById('offlineBanner').style.display='none');
+window.addEventListener('offline', () => document.getElementById('offlineBanner').style.display='block');
 
-    function showToast(msg, isError=false) {
-        const t = document.createElement('div'); t.className='toast';
-        t.innerHTML = `<i class="fas ${isError?'fa-exclamation-triangle':'fa-check-circle'}"></i> ${msg}`;
-        document.body.appendChild(t); setTimeout(()=>t.remove(),3000);
-    }
+// ==================== THEME ====================
+function setTheme(dark) {
+    document.body.classList.toggle('light', !dark);
+    localStorage.setItem('staffTheme', dark ? 'dark' : 'light');
+    document.querySelectorAll('.theme-toggle i').forEach(i => i.className = dark ? 'fas fa-sun' : 'fas fa-moon');
+}
+setTheme(localStorage.getItem('staffTheme') !== 'light');
+document.getElementById('themeToggleMobile').onclick = () => setTheme(document.body.classList.contains('light'));
 
-    // Auth
-    document.getElementById('staffGoogleBtn').onclick = () => {
-        auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(async result => {
-            const email = result.user.email, sanitized = email.replace(/\./g, ',');
-            if((await staffRef.child(sanitized).once('value')).exists()) {
-                currentStaffEmail = email;
-                document.getElementById('loginScreen').style.display='none';
-                document.getElementById('staffDashboard').classList.add('active');
-                document.getElementById('userNameDisplay').textContent = result.user.displayName||email;
-                if(result.user.photoURL) {
-                    document.getElementById('userAvatar').src = result.user.photoURL;
-                    document.getElementById('userAvatar').style.display='block';
+function showToast(msg, type='success') {
+    const container = document.getElementById('toastContainer');
+    const t = document.createElement('div'); t.className=`toast ${type}`;
+    const icon = type==='success'?'fa-check-circle':(type==='warning'?'fa-exclamation-triangle':(type==='error'?'fa-times-circle':'fa-info-circle'));
+    t.innerHTML = `<i class="fas ${icon}"></i> ${msg}`;
+    container.appendChild(t); setTimeout(()=>t.remove(),3000);
+}
+function playNotificationSound() {
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACAf39/f4B/f3+AgH9/f3+AgIB/f3+Af3+Af39/gH9/f3+Af3+Af39/gH9/f3+AgH9/f38=');
+    audio.play().catch(()=>{});
+}
+
+// ==================== AUTH ====================
+document.getElementById('staffGoogleBtn').onclick = () => {
+    auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(async result => {
+        const email = result.user.email, sanitized = email.replace(/\./g, ',');
+        if((await staffRef.child(sanitized).once('value')).exists()) {
+            currentStaffEmail = email;
+            document.getElementById('loginScreen').style.display='none';
+            document.getElementById('staffDashboard').classList.add('active');
+            document.getElementById('userNameDisplay').textContent = result.user.displayName||email;
+            if(result.user.photoURL) {
+                document.getElementById('userAvatar').src = result.user.photoURL;
+                document.getElementById('userAvatar').style.display='block';
+            }
+            loadBookingsRealtime();
+            switchTab('dashboard');
+        } else { auth.signOut(); document.getElementById('staffLoginError').textContent = 'Unauthorized staff email.'; document.getElementById('staffLoginError').style.display='block'; }
+    }).catch(err => { document.getElementById('staffLoginError').textContent = err.message; document.getElementById('staffLoginError').style.display='block'; });
+};
+function logout() { auth.signOut().then(()=>location.reload()); }
+document.getElementById('logoutStaffBtn').onclick = logout;
+
+const sidebar=document.getElementById('sidebar'), overlay=document.getElementById('sidebarOverlay');
+document.getElementById('hamburgerBtn').onclick = ()=>{ sidebar.classList.add('open'); overlay.classList.add('active'); };
+window.closeSidebar = ()=>{ sidebar.classList.remove('open'); overlay.classList.remove('active'); };
+
+// Tab navigation
+document.querySelectorAll('.sidebar nav a').forEach(a => {
+    a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = a.dataset.tab;
+        switchTab(tab);
+        document.querySelectorAll('.sidebar nav a').forEach(n => n.classList.remove('active'));
+        a.classList.add('active');
+    });
+});
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.getElementById(`tab-${tab}`).style.display = 'block';
+    if (tab === 'dashboard') updateDashboardStats();
+}
+
+// ==================== CHART ====================
+function initStatusChart(active, collected, pending) {
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    if (statusChart) statusChart.destroy();
+    statusChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Collected', 'Pending'],
+            datasets: [{
+                data: [active, collected, pending],
+                backgroundColor: ['#10b981', '#38bdf8', '#f59e0b'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: document.body.classList.contains('light') ? '#0f172a' : '#f1f5f9' }
                 }
-                loadBookingsRealtime();
-            } else { auth.signOut(); document.getElementById('staffLoginError').textContent = '❌ Unauthorized staff email.'; document.getElementById('staffLoginError').style.display='block'; }
-        }).catch(err => { document.getElementById('staffLoginError').textContent = err.message; document.getElementById('staffLoginError').style.display='block'; });
-    };
-    function logout() { auth.signOut().then(()=>location.reload()); }
-    document.getElementById('logoutStaffBtn').onclick = logout;
-
-    const sidebar=document.getElementById('sidebar'), overlay=document.getElementById('sidebarOverlay');
-    document.getElementById('hamburgerBtn').onclick = ()=>{ sidebar.classList.add('open'); overlay.classList.add('active'); };
-    window.closeSidebar = ()=>{ sidebar.classList.remove('open'); overlay.classList.remove('active'); };
-
-    // Bookings rendering (unchanged)
-    function renderBookingsTable(bookings) {
-        const tbody = document.getElementById('bookingsTableBody');
-        if(!bookings.length) { tbody.innerHTML='<tr><td colspan="7">No bookings.</td></tr>'; return; }
-        let html='';
-        for(let b of bookings){
-            const isAssignedToMe = b.assigned_to === currentStaffEmail;
-            const isUnassigned = !b.assigned_to;
-            const canAccept = (isUnassigned && b.status==='active');
-            const canManage = (isAssignedToMe && b.status==='active');
-            const flags = (b.pending_edit?'🔶 Edit Pending ':'')+(b.pending_collection?'📄 Collect Pending':'');
-            html+=`<tr>
-                <td>${b.bookingId||b._key.slice(-6)}</td><td>${b.name||'—'}</td><td>${b.phone||'—'}</td>
-                <td>${b.itemCount||'?'} (${b.category||'—'})</td>
-                <td>${b.assigned_to?`👤 ${b.assigned_to.split('@')[0]}`:'<span class="badge badge-pending">Unassigned</span>'}</td>
-                <td>${b.status} ${flags?`<br><small>${flags}</small>`:''}</td>
-                <td>
-                    ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')" title="Accept"><i class="fas fa-check-circle" style="color:var(--success)"></i> Accept</button>`:''}
-                    ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')" title="Edit"><i class="fas fa-edit"></i> Edit</button>`:''}
-                    ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')" title="Photos"><i class="fas fa-image"></i> Photos</button>`:''}
-                    ${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')" title="Collection"><i class="fas fa-truck"></i> Collect</button>`:''}
-                    <button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}','${b.trackingId||b.bookingId||b._key}')" title="WhatsApp"><i class="fab fa-whatsapp" style="color:#25D366"></i> Chat</button>
-                </td>
-            </tr>`;
-        }
-        tbody.innerHTML=html;
-    }
-    function renderBookingsCards(bookings) {
-        const container=document.getElementById('bookingsCardsContainer');
-        if(!container) return;
-        if(!bookings.length){ container.innerHTML='<p style="padding:16px;">No bookings.</p>'; return; }
-        let html='';
-        for(let b of bookings){
-            const isAssignedToMe = b.assigned_to === currentStaffEmail;
-            const isUnassigned = !b.assigned_to;
-            const canAccept = (isUnassigned && b.status==='active');
-            const canManage = (isAssignedToMe && b.status==='active');
-            const flags = (b.pending_edit?'🔶 Edit Pending ':'')+(b.pending_collection?'📄 Collect Pending':'');
-            html+=`<div class="data-card">
-                <div class="card-row"><span class="card-label">ID</span><span>${b.bookingId||b._key.slice(-6)}</span></div>
-                <div class="card-row"><span class="card-label">Customer</span><span>${b.name||'—'}</span></div>
-                <div class="card-row"><span class="card-label">Phone</span><span>${b.phone||'—'}</span></div>
-                <div class="card-row"><span class="card-label">Items</span><span>${b.itemCount||'?'} (${b.category||'—'})</span></div>
-                <div class="card-row"><span class="card-label">Assigned</span><span>${b.assigned_to?`👤 ${b.assigned_to.split('@')[0]}`:'<span class="badge badge-pending">Unassigned</span>'}</span></div>
-                <div class="card-row"><span class="card-label">Status</span><span>${b.status} ${flags?`<small>${flags}</small>`:''}</span></div>
-                <div class="card-actions">
-                    ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')"><i class="fas fa-check-circle" style="color:var(--success)"></i> Accept</button>`:''}
-                    ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')"><i class="fas fa-edit"></i> Edit</button>`:''}
-                    ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')"><i class="fas fa-image"></i> Photos</button>`:''}
-                    ${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')"><i class="fas fa-truck"></i> Collect</button>`:''}
-                    <button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}','${b.trackingId||b.bookingId||b._key}')"><i class="fab fa-whatsapp" style="color:#25D366"></i> Chat</button>
-                </div>
-            </div>`;
-        }
-        container.innerHTML=html;
-    }
-    function updateAssignedCount(bookings) {
-        document.getElementById('myAssignedCount').innerText = bookings.filter(b=>b.assigned_to===currentStaffEmail && b.status==='active').length;
-    }
-    function refreshBookingsUI(bookings) { renderBookingsTable(bookings); renderBookingsCards(bookings); updateAssignedCount(bookings); }
-
-    window.acceptBooking = async (key) => {
-        const booking = allBookings.find(b=>b._key===key);
-        if(!booking || booking.assigned_to){ showToast('Already assigned',true); return; }
-        await bookingsRef.child(key).update({ assigned_to:currentStaffEmail, assigned_at:new Date().toISOString() });
-        showToast('Booking assigned to you');
-    };
-
-    window.sendWhatsAppStaff = (phone, name, bookingId, trackingId) => {
-        if(!phone){ showToast('No phone number',true); return; }
-        let cleaned = phone.replace(/\D/g,'');
-        if(cleaned.startsWith('0')) cleaned='254'+cleaned.substring(1);
-        const message = `CAMPUS VAULT BOOKING CONFIRMATION\n\nHello ${name},\n\nYour luggage storage reservation has been successfully received.\n\n📌 Booking ID: ${bookingId}\n🔍 Tracking ID: ${trackingId}\n\nPlease keep these details safely as they will be required when collecting your items.\n\n✅ Booking is FREE ✅ Payment is made upon collection ✅ Items are labelled, documented, and securely stored ✅ A signed storage agreement will be completed during handover\n\nIf you require pickup assistance, kindly contact us before your preferred pickup time.\n\n📲 WhatsApp: 0116375166\n\nThank you for choosing Campus Vault. Your Belongings. Our Responsibility. 🔒 :::`;
-        window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`, '_blank');
-    };
-
-    // Edit request (unchanged)
-    window.openEditModal = (key) => { /* ... same as before ... */ };
-    document.getElementById('editForm').onsubmit = async (e) => { /* ... same as before ... */ };
-
-    // Photos modal (unchanged except for fileUpload now used by modern camera preview)
-    window.openPhotosModal = async (bookingKey) => { currentPhotoBookingKey = bookingKey; await loadPhotosForBooking(bookingKey); document.getElementById('photosModal').style.display = 'flex'; };
-    async function loadPhotosForBooking(bookingKey) { /* ... same as before ... */ }
-    window.deletePhoto = async (bookingKey, idx) => { /* ... same as before ... */ };
-    document.getElementById('fileUpload').onchange = async (e) => { /* ... same upload logic, but also used by camera gallery button */ };
-
-    // ---- ENHANCED CAMERA SYSTEM ----
-    let currentStream = null;
-    let currentFacingMode = 'environment'; // 'user' for front
-    let flashOn = false;
-    let gridOn = false;
-    let timerOn = false;
-    let currentZoom = 1;
-    let capabilities = { torch: false, zoom: false };
-
-    const video = document.getElementById('liveVideo');
-    const focusRing = document.getElementById('focusRing');
-    const gridOverlay = document.getElementById('gridOverlay');
-    const countdownOverlay = document.getElementById('countdownOverlay');
-    const photoReview = document.getElementById('photoReview');
-    const reviewImage = document.getElementById('reviewImage');
-
-    document.getElementById('openRealtimeCameraBtn').onclick = async () => {
-        await startModernCamera();
-        document.getElementById('cameraModal').style.display = 'flex';
-        document.getElementById('photoReview').style.display = 'none';
-        video.style.display = 'block';
-    };
-
-    async function startModernCamera() {
-        stopCamera();
-        try {
-            const constraints = {
-                video: {
-                    facingMode: currentFacingMode,
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 },
-                    zoom: currentZoom // will be overridden by applyConstraints later
-                },
-                audio: false
-            };
-            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-            video.srcObject = currentStream;
-            video.onloadedmetadata = () => {
-                video.play();
-                updateCapabilities();
-                applyZoom(currentZoom);
-            };
-        } catch (err) {
-            showToast('Camera access denied. Please grant permission.', true);
-        }
-    }
-
-    async function updateCapabilities() {
-        if (!currentStream) return;
-        const videoTrack = currentStream.getVideoTracks()[0];
-        if (!videoTrack) return;
-        const trackCapabilities = videoTrack.getCapabilities ? videoTrack.getCapabilities() : null;
-        if (trackCapabilities) {
-            capabilities.torch = 'torch' in trackCapabilities;
-            capabilities.zoom = trackCapabilities.zoom ? true : false;
-            if (capabilities.zoom) {
-                document.getElementById('zoomSlider').style.display = 'inline-block';
-                document.getElementById('zoomSlider').max = trackCapabilities.zoom.max || 3;
-                document.getElementById('zoomSlider').min = trackCapabilities.zoom.min || 1;
             }
         }
-        // Torch: check if track supports torch
-        try {
-            await videoTrack.applyConstraints({ advanced: [{ torch: flashOn }] });
-            document.getElementById('flashBtn').style.display = 'inline-flex';
-        } catch (e) {
-            document.getElementById('flashBtn').style.display = 'none';
-        }
+    });
+}
+
+// ==================== BOOKINGS RENDERING ====================
+function highlightText(text, query) {
+    if (!query || !text) return text;
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    return String(text).replace(regex, '<span class="highlight">$1</span>');
+}
+
+function renderBookingsTable(bookings) {
+    const tbody = document.getElementById('bookingsTableBody');
+    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+    if(!bookings.length) { tbody.innerHTML=`<tr><td colspan="9"><div class="empty-state"><i class="fas fa-inbox"></i><p>No bookings found</p></div></td></tr>`; return; }
+    let html='';
+    for(let b of bookings){
+        const isAssignedToMe = b.assigned_to === currentStaffEmail;
+        const isUnassigned = !b.assigned_to;
+        const canAccept = (isUnassigned && b.status==='active');
+        const canManage = (isAssignedToMe && b.status==='active');
+        const flags = (b.pending_edit?'🔶':'')+(b.pending_collection?'📄':'');
+        const firstPhoto = b.verificationPhotos && b.verificationPhotos.length ? b.verificationPhotos[0].imageData : '';
+        const checked = selectedBookings.has(b._key) ? 'checked' : '';
+        html+=`<tr data-key="${b._key}">
+            <td onclick="event.stopPropagation();"><input type="checkbox" class="row-checkbox" ${checked} onchange="updateBulkSelection()" data-key="${b._key}"></td>
+            <td class="sticky-col">${firstPhoto ? `<img src="${firstPhoto}" style="width:30px; height:30px; border-radius:4px; object-fit:cover;" alt="Booking photo">` : '—'}</td>
+            <td onclick="copyToClipboard('${b.bookingId||b._key.slice(-6)}')" title="Click to copy" style="cursor:pointer;">${highlightText(b.bookingId||b._key.slice(-6), searchQuery)} <i class="fas fa-copy" style="font-size:0.7rem;opacity:0.5;"></i></td>
+            <td>${highlightText(b.name||'—', searchQuery)}</td>
+            <td>${highlightText(b.phone||'—', searchQuery)}</td>
+            <td>${b.itemCount||'?'} (${b.category||'—'})</td>
+            <td>${b.assigned_to?`👤 ${b.assigned_to.split('@')[0]}`:'<span class="badge badge-pending">Unassigned</span>'}</td>
+            <td>${b.status} ${flags?`<small>${flags}</small>`:''}</td>
+            <td onclick="event.stopPropagation();">
+                ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')" title="Accept"><i class="fas fa-check-circle" style="color:var(--success)"></i></button>`:''}
+                ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')" title="Edit"><i class="fas fa-edit"></i></button>`:''}
+                ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')" title="Photos"><i class="fas fa-image"></i></button>`:''}
+                ${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')" title="Collection"><i class="fas fa-truck"></i></button>`:''}
+                <button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}','${b.trackingId||b.bookingId||b._key}')" title="WhatsApp"><i class="fab fa-whatsapp" style="color:#25D366"></i></button>
+            </td>
+        </tr>`;
     }
+    tbody.innerHTML=html;
 
-    function stopCamera() {
-        if (currentStream) {
-            currentStream.getTracks().forEach(track => track.stop());
-            currentStream = null;
-        }
-        video.srcObject = null;
+    // Quick view on row click (except checkboxes/buttons)
+    tbody.querySelectorAll('tr[data-key]').forEach(row => {
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('button') || e.target.type === 'checkbox') return;
+            const key = row.dataset.key;
+            const booking = allBookings.find(b => b._key === key);
+            if (booking) showQuickView(booking);
+        });
+    });
+    updateBulkActionsVisibility();
+}
+
+function renderBookingsCards(bookings) {
+    const container=document.getElementById('bookingsCardsContainer');
+    const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+    if(!container) return;
+    if(!bookings.length){ container.innerHTML='<div class="empty-state"><i class="fas fa-inbox"></i><p>No bookings found</p></div>'; return; }
+    let html='';
+    for(let b of bookings){
+        const isAssignedToMe = b.assigned_to === currentStaffEmail;
+        const isUnassigned = !b.assigned_to;
+        const canAccept = (isUnassigned && b.status==='active');
+        const canManage = (isAssignedToMe && b.status==='active');
+        const flags = (b.pending_edit?'🔶':'')+(b.pending_collection?'📄':'');
+        const firstPhoto = b.verificationPhotos && b.verificationPhotos.length ? b.verificationPhotos[0].imageData : '';
+        html+=`<div class="data-card" onclick="showQuickView(allBookings.find(x=>x._key==='${b._key}'))">
+            <div class="card-row"><span class="card-label">ID</span><span onclick="event.stopPropagation(); copyToClipboard('${b.bookingId||b._key.slice(-6)}')">${highlightText(b.bookingId||b._key.slice(-6), searchQuery)} <i class="fas fa-copy" style="font-size:0.7rem;opacity:0.5;"></i></span></div>
+            ${firstPhoto ? `<img src="${firstPhoto}" style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; margin-bottom:8px;" alt="Booking photo">` : ''}
+            <div class="card-row"><span class="card-label">Customer</span><span>${highlightText(b.name||'—', searchQuery)}</span></div>
+            <div class="card-actions" onclick="event.stopPropagation();">
+                ${canAccept?`<button class="action-icon" onclick="acceptBooking('${b._key}')"><i class="fas fa-check-circle" style="color:var(--success)"></i> Accept</button>`:''}
+                ${canManage?`<button class="action-icon" onclick="openEditModal('${b._key}')"><i class="fas fa-edit"></i> Edit</button>`:''}
+                ${canManage?`<button class="action-icon" onclick="openPhotosModal('${b._key}')"><i class="fas fa-image"></i> Photos</button>`:''}
+                ${canManage?`<button class="action-icon" onclick="openCollectionModal('${b._key}')"><i class="fas fa-truck"></i> Collect</button>`:''}
+                <button class="action-icon" onclick="sendWhatsAppStaff('${b.phone}','${b.name}','${b.bookingId||b._key}','${b.trackingId||b.bookingId||b._key}')"><i class="fab fa-whatsapp"></i></button>
+            </div>
+        </div>`;
     }
+    container.innerHTML=html;
+}
+function updateAssignedCount(bookings) {
+    document.getElementById('myAssignedCount').innerText = bookings.filter(b=>b.assigned_to===currentStaffEmail && b.status==='active').length;
+}
 
-    // Flash toggle
-    document.getElementById('flashBtn').addEventListener('click', async () => {
-        if (!currentStream) return;
-        const videoTrack = currentStream.getVideoTracks()[0];
-        if (!videoTrack) return;
-        flashOn = !flashOn;
-        try {
-            await videoTrack.applyConstraints({ advanced: [{ torch: flashOn }] });
-            document.getElementById('flashBtn').querySelector('i').className = flashOn ? 'fas fa-bolt' : 'fas fa-bolt-lightning';
-        } catch (e) {
-            showToast('Torch not supported', true);
-        }
-    });
+function animateValue(element, start, end, duration) {
+    const range = end - start;
+    const increment = end > start ? 1 : -1;
+    const stepTime = Math.abs(Math.floor(duration / range));
+    let current = start;
+    const timer = setInterval(() => {
+        current += increment;
+        element.textContent = current;
+        if (current == end) clearInterval(timer);
+    }, stepTime);
+}
 
-    // Grid toggle
-    document.getElementById('gridBtn').addEventListener('click', () => {
-        gridOn = !gridOn;
-        gridOverlay.style.display = gridOn ? 'block' : 'none';
-    });
-
-    // Timer toggle
-    document.getElementById('timerBtn').addEventListener('click', () => {
-        timerOn = !timerOn;
-        document.getElementById('timerBtn').style.opacity = timerOn ? '0.6' : '1';
-    });
-
-    // Switch camera
-    document.getElementById('switchCameraBtn').addEventListener('click', async () => {
-        currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
-        await startModernCamera();
-    });
-
-    // Zoom slider
-    document.getElementById('zoomSlider').addEventListener('input', (e) => {
-        currentZoom = parseFloat(e.target.value);
-        applyZoom(currentZoom);
-    });
-
-    async function applyZoom(zoomValue) {
-        if (!currentStream) return;
-        const videoTrack = currentStream.getVideoTracks()[0];
-        if (videoTrack && capabilities.zoom) {
-            try {
-                await videoTrack.applyConstraints({ advanced: [{ zoom: zoomValue }] });
-            } catch (e) { /* ignore */ }
-        }
+function updateDashboardStats() {
+    if(!allBookings.length) {
+        document.querySelectorAll('.stat-value .stat-skeleton').forEach(el => el.style.display = 'block');
+        return;
     }
+    document.querySelectorAll('.stat-value .stat-skeleton').forEach(el => el.style.display = 'none');
+    const total = allBookings.length;
+    const active = allBookings.filter(b=>b.status==='active').length;
+    const collected = allBookings.filter(b=>b.status==='collected').length;
+    const pending = allBookings.filter(b=>b.pending_edit||b.pending_collection).length;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayBookings = allBookings.filter(b => b.checkIn && b.checkIn.startsWith(todayStr)).length;
 
-    // Tap to focus
-    video.addEventListener('click', async (e) => {
-        if (!currentStream) return;
-        const videoTrack = currentStream.getVideoTracks()[0];
-        if (!videoTrack) return;
-        const rect = video.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width;
-        const y = (e.clientY - rect.top) / rect.height;
+    animateValue(document.getElementById('statTotal'), parseInt(document.getElementById('statTotal').textContent) || 0, total, 600);
+    animateValue(document.getElementById('statActive'), parseInt(document.getElementById('statActive').textContent) || 0, active, 600);
+    animateValue(document.getElementById('statCollected'), parseInt(document.getElementById('statCollected').textContent) || 0, collected, 600);
+    animateValue(document.getElementById('statPending'), parseInt(document.getElementById('statPending').textContent) || 0, pending, 600);
+    document.getElementById('statToday').textContent = todayBookings;
 
-        // Show focus ring animation
-        focusRing.style.left = `${e.clientX - rect.left}px`;
-        focusRing.style.top = `${e.clientY - rect.top}px`;
-        focusRing.style.display = 'block';
-        setTimeout(() => focusRing.style.display = 'none', 1000);
+    initStatusChart(active, collected, pending);
 
-        // Apply manual focus region (if supported)
-        try {
-            await videoTrack.applyConstraints({
-                advanced: [{ pointsOfInterest: [{ x, y }] }]
-            });
-        } catch (e) { /* ignore if not supported */ }
+    const recentList = document.getElementById('recentActivityList');
+    recentList.innerHTML = recentActivities.length ? recentActivities.map(act => `<li>${act}</li>`).join('') : '<li>No recent activity</li>';
+}
+
+// Bulk selection
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+        if (selectAll.checked) selectedBookings.add(cb.dataset.key);
+        else selectedBookings.delete(cb.dataset.key);
     });
+    updateBulkActionsVisibility();
+}
+function updateBulkSelection() {
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    selectedBookings.clear();
+    checkboxes.forEach(cb => { if (cb.checked) selectedBookings.add(cb.dataset.key); });
+    updateBulkActionsVisibility();
+}
+function updateBulkActionsVisibility() {
+    const div = document.getElementById('bulkActions');
+    if (selectedBookings.size > 0) div.classList.add('visible');
+    else div.classList.remove('visible');
+}
+async function bulkDelete() {
+    if (!confirm(`Delete ${selectedBookings.size} booking(s)?`)) return;
+    for (let key of selectedBookings) await bookingsRef.child(key).remove();
+    showToast('Selected bookings deleted');
+    selectedBookings.clear();
+    updateBulkActionsVisibility();
+}
+async function bulkMarkCollected() {
+    for (let key of selectedBookings) await bookingsRef.child(key).update({ status: 'collected' });
+    showToast('Selected bookings marked as collected');
+    selectedBookings.clear();
+    updateBulkActionsVisibility();
+}
 
-    // Capture photo with optional timer
-    document.getElementById('capturePhotoBtn').addEventListener('click', () => {
-        if (timerOn) {
-            startCountdown(3);
+// Copy ID
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied!', 'info'));
+}
+
+// Table sorting
+document.querySelectorAll('#bookingsTable th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+        const field = th.dataset.sort;
+        if (currentSort.field === field) {
+            currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
         } else {
-            capturePhoto();
+            currentSort.field = field;
+            currentSort.order = 'asc';
         }
+        document.querySelectorAll('#bookingsTable th i').forEach(i => i.className = 'fas fa-sort');
+        const icon = th.querySelector('i');
+        if (icon) icon.className = `fas fa-sort-${currentSort.order === 'asc' ? 'up' : 'down'}`;
+        sortBookings();
     });
+});
 
-    async function startCountdown(seconds) {
-        countdownOverlay.style.display = 'flex';
-        for (let i = seconds; i > 0; i--) {
-            countdownOverlay.textContent = i;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-        countdownOverlay.style.display = 'none';
-        capturePhoto();
+function sortBookings() {
+    if (!currentSort.field) return;
+    const filtered = getFilteredBookings();
+    filtered.sort((a, b) => {
+        let valA = a[currentSort.field] || '';
+        let valB = b[currentSort.field] || '';
+        if (currentSort.field === 'items') { valA = parseInt(a.itemCount)||0; valB = parseInt(b.itemCount)||0; }
+        else if (currentSort.field === 'assigned') { valA = a.assigned_to||''; valB = b.assigned_to||''; }
+        else { valA = String(valA).toLowerCase(); valB = String(valB).toLowerCase(); }
+        if (valA < valB) return currentSort.order === 'asc' ? -1 : 1;
+        if (valA > valB) return currentSort.order === 'asc' ? 1 : -1;
+        return 0;
+    });
+    renderBookingsTable(filtered);
+    renderBookingsCards(filtered);
+}
+
+// Filtering with debounce
+let searchTimeout;
+document.getElementById('searchInput').addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        refreshFilteredUI();
+        if (currentSort.field) sortBookings();
+    }, 300);
+});
+document.getElementById('filterStatus').addEventListener('change', () => {
+    refreshFilteredUI();
+    if (currentSort.field) sortBookings();
+});
+
+function getFilteredBookings() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value;
+    return allBookings.filter(b => {
+        const matchesSearch = !search ||
+            (b.name||'').toLowerCase().includes(search) ||
+            (b.bookingId||'').toLowerCase().includes(search) ||
+            (b.phone||'').toLowerCase().includes(search);
+        const matchesStatus = statusFilter === 'all' ||
+            (statusFilter === 'active' && b.status === 'active') ||
+            (statusFilter === 'collected' && b.status === 'collected') ||
+            (statusFilter === 'pending' && (b.pending_edit || b.pending_collection));
+        return matchesSearch && matchesStatus;
+    });
+}
+function refreshFilteredUI() {
+    const filtered = getFilteredBookings();
+    if (currentSort.field) sortBookings();
+    else {
+        renderBookingsTable(filtered);
+        renderBookingsCards(filtered);
     }
+}
 
-    function capturePhoto() {
-        if (!currentStream) return;
-        const videoTrack = currentStream.getVideoTracks()[0];
-        const settings = videoTrack.getSettings ? videoTrack.getSettings() : null;
-        const width = settings?.width || video.videoWidth;
-        const height = settings?.height || video.videoHeight;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, width, height);
-
-        const imageData = canvas.toDataURL('image/jpeg', 0.95);
-        reviewImage.src = imageData;
-        photoReview.style.display = 'block';
-        video.style.display = 'none';
-        // hide camera controls while reviewing
-        document.querySelector('.camera-controls-top').style.display = 'none';
-        document.querySelector('.camera-controls-bottom').style.display = 'none';
+// Auto-refresh
+function toggleAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        document.getElementById('autoRefreshText').textContent = 'Auto: OFF';
+        document.getElementById('autoRefreshToggle').classList.remove('auto-refresh-active');
+    } else {
+        autoRefreshInterval = setInterval(() => {
+            loadBookingsRealtime();
+        }, 30000);
+        document.getElementById('autoRefreshText').textContent = 'Auto: ON (30s)';
+        document.getElementById('autoRefreshToggle').classList.add('auto-refresh-active');
     }
+}
 
-    // Retake button in review
-    document.getElementById('retakePhotoBtnModern').addEventListener('click', () => {
-        video.style.display = 'block';
-        photoReview.style.display = 'none';
-        document.querySelector('.camera-controls-top').style.display = 'flex';
-        document.querySelector('.camera-controls-bottom').style.display = 'flex';
-    });
+// Quick View (also updates WhatsApp float)
+function showQuickView(booking) {
+    document.getElementById('qvTitle').innerText = `Booking: ${booking.bookingId||booking._key.slice(-6)}`;
+    document.getElementById('qvBody').innerHTML = `
+        <p><strong>Customer:</strong> ${booking.name||'—'}</p>
+        <p><strong>Phone:</strong> ${booking.phone||'—'}</p>
+        <p><strong>Email:</strong> ${booking.email||'—'}</p>
+        <p><strong>Check‑in:</strong> ${booking.checkIn||'—'}</p>
+        <p><strong>Collection:</strong> ${booking.collect||'—'}</p>
+        <p><strong>Items:</strong> ${booking.itemCount||'?'} (${booking.category||'—'})</p>
+        <p><strong>Assigned to:</strong> ${booking.assigned_to||'Unassigned'}</p>
+        <p><strong>Status:</strong> ${booking.status} ${booking.pending_edit?'🔶 Edit pending':''} ${booking.pending_collection?'📄 Collection pending':''}</p>
+        ${booking.verificationPhotos && booking.verificationPhotos.length ? `<img src="${booking.verificationPhotos[0].imageData}" style="width:100%; border-radius:8px; margin-top:8px;">` : ''}
+    `;
+    document.getElementById('quickViewModal').style.display='flex';
+    updateWhatsAppFloat(booking.phone, booking.name);
+}
 
-    // Confirm photo button
-    document.getElementById('confirmPhotoBtnModern').addEventListener('click', async () => {
-        const imageData = reviewImage.src;
-        if (!imageData || imageData === '') return;
-        const snap = await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).once('value');
-        let photos = snap.val() || [];
-        photos.push({ imageData, timestamp: new Date().toISOString(), uploadedBy: currentStaffEmail });
-        await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).set(photos);
-        await loadPhotosForBooking(currentPhotoBookingKey);
-        showToast('Photo captured and saved');
-        closeModal('cameraModal');
-    });
-
-    // Gallery button inside camera (opens file upload)
-    document.getElementById('galleryPreviewBtn').addEventListener('click', () => {
-        document.getElementById('fileUpload').click();
-    });
-
-    // Collection signatures (unchanged)
-    function initSignatureCanvas(canvasId) { /* ... same as before ... */ }
-    window.clearCanvas = (id) => { /* ... */ };
-    window.openCollectionModal = (bookingKey) => { /* ... */ };
-    document.getElementById('submitCollectionReq').onclick = async () => { /* ... */ };
-
-    // Real-time bookings
-    function loadBookingsRealtime() {
-        bookingsRef.on('value', (snap)=>{
-            const bookings = [];
-            snap.forEach(child=>{ const b=child.val(); b._key=child.key; bookings.push(b); });
-            allBookings = bookings;
-            refreshBookingsUI(bookings);
+// Real-time listener
+function loadBookingsRealtime() {
+    bookingsRef.on('value', snap => {
+        const bookings = [];
+        snap.forEach(child => {
+            const b = child.val();
+            b._key = child.key;
+            bookings.push(b);
         });
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).style.display='none';
-        if (id === 'cameraModal') {
-            stopCamera();
-            // Reset UI
-            document.querySelector('.camera-controls-top').style.display = 'flex';
-            document.querySelector('.camera-controls-bottom').style.display = 'flex';
-            video.style.display = 'block';
-            photoReview.style.display = 'none';
+        if (allBookings.length) {
+            const added = bookings.filter(nb => !allBookings.find(ob => ob._key === nb._key));
+            const changed = bookings.filter(nb => {
+                const old = allBookings.find(ob => ob._key === nb._key);
+                return old && (JSON.stringify(old) !== JSON.stringify(nb));
+            });
+            added.forEach(b => recentActivities.unshift(`New booking: ${b.name||b.bookingId||b._key.slice(-6)}`));
+            changed.forEach(b => recentActivities.unshift(`Updated: ${b.name||b.bookingId||b._key.slice(-6)}`));
+            if (recentActivities.length > 5) recentActivities.length = 5;
+            if (added.length || changed.length) {
+                const msg = [];
+                if (added.length) msg.push(`${added.length} new`);
+                if (changed.length) msg.push(`${changed.length} updated`);
+                showToast(`${msg.join(', ')} booking${msg.length>1?'s':''}`, 'info');
+            }
         }
-    }
-    function closeModalOnBg(e, id) { if(e.target===e.currentTarget) closeModal(id); }
-    window.closeModal = closeModal;
-    window.closeModalOnBg = closeModalOnBg;
+        allBookings = bookings;
+        if (document.getElementById('tab-bookings').style.display !== 'none') {
+            refreshFilteredUI();
+            if (currentSort.field) sortBookings();
+        }
+        updateDashboardStats();
+    });
+}
 
-    // Service Worker & Install Prompt
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker registered!', reg))
-                .catch(err => console.error('Service Worker failed: ', err));
-        });
+window.acceptBooking = async (key) => {
+    const booking = allBookings.find(b=>b._key===key);
+    if(!booking || booking.assigned_to){ showToast('Already assigned',true); return; }
+    await bookingsRef.child(key).update({ assigned_to:currentStaffEmail, assigned_at:new Date().toISOString() });
+    showToast('Booking assigned to you');
+    playNotificationSound();
+};
+
+function exportToExcel() {
+    const filtered = getFilteredBookings();
+    const data = filtered.map(b => ({
+        'Booking ID': b.bookingId||b._key.slice(-6),
+        'Customer': b.name||'',
+        'Phone': b.phone||'',
+        'Items': `${b.itemCount||'0'} ${b.category||''}`,
+        'Assigned To': b.assigned_to||'Unassigned',
+        'Status': b.status
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Bookings');
+    XLSX.writeFile(wb, 'bookings_export.xlsx');
+}
+
+window.sendWhatsAppStaff = (phone, name, bookingId, trackingId) => {
+    if(!phone){ showToast('No phone number',true); return; }
+    let cleaned = phone.replace(/\D/g,'');
+    if(cleaned.startsWith('0')) cleaned='254'+cleaned.substring(1);
+    const message = `CAMPUS VAULT BOOKING\n\nHello ${name},\nBooking ID: ${bookingId}\nTracking ID: ${trackingId}\nThank you for choosing Campus Vault.`;
+    window.open(`https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`, '_blank');
+};
+
+function updateWhatsAppFloat(phone, name) {
+    if (phone) {
+        let cleaned = phone.replace(/\D/g,'');
+        if(cleaned.startsWith('0')) cleaned='254'+cleaned.substring(1);
+        const message = `Hello ${name}, this is CampusVault regarding your booking.`;
+        document.getElementById('whatsappFloat').href = `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
+    } else {
+        document.getElementById('whatsappFloat').href = `https://wa.me/254700000000?text=Hello%20CampusVault%20team`;
     }
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
+}
+
+// Keyboard shortcut Ctrl+K
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
-        deferredPrompt = e;
-        triggerInstall();
-    });
-    function triggerInstall() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+        document.getElementById('searchInput').focus();
+        if (document.getElementById('tab-bookings').style.display === 'none') {
+            switchTab('bookings');
+            document.querySelectorAll('.sidebar nav a').forEach(n => n.classList.remove('active'));
+            document.querySelector('.sidebar nav a[data-tab="bookings"]').classList.add('active');
         }
     }
+});
+
+// FAB toggle
+document.getElementById('fabBtn').addEventListener('click', () => {
+    document.getElementById('fabBtn').classList.toggle('active');
+    document.getElementById('fabMenu').classList.toggle('show');
+});
+
+function handleFabAction(action) {
+    document.getElementById('fabBtn').classList.remove('active');
+    document.getElementById('fabMenu').classList.remove('show');
+    if (action === 'refresh') { loadBookingsRealtime(); showToast('Data refreshed','info'); }
+    else if (action === 'export') exportToExcel();
+    else if (action === 'new') showToast('New booking feature coming soon','warning');
+}
+
+// Scroll to top button visibility
+window.addEventListener('scroll', () => {
+    document.getElementById('scrollTopBtn').style.display = window.scrollY > 300 ? 'flex' : 'none';
+});
+
+// ==================== EDIT MODAL ====================
+window.openEditModal = (key) => {
+    const booking = allBookings.find(b=>b._key===key);
+    if(!booking) return;
+    document.getElementById('editBookingKey').value = key;
+    document.getElementById('editName').value = booking.name || '';
+    document.getElementById('editPhone').value = booking.phone || '';
+    document.getElementById('editEmail').value = booking.email || '';
+    document.getElementById('editCheckIn').value = booking.checkIn || '';
+    document.getElementById('editCollect').value = booking.collect || '';
+    document.getElementById('editItemCount').value = booking.itemCount || '';
+    document.getElementById('editCategory').value = booking.category || 'Other';
+    document.getElementById('editModal').style.display='flex';
+};
+document.getElementById('editForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const key = document.getElementById('editBookingKey').value;
+    const booking = allBookings.find(b=>b._key===key);
+    if(!booking) return;
+    const request = {
+        bookingKey: key,
+        requestedBy: currentStaffEmail,
+        original: { name: booking.name, phone: booking.phone, email: booking.email, checkIn: booking.checkIn, collect: booking.collect, itemCount: booking.itemCount, category: booking.category },
+        proposed: { name: document.getElementById('editName').value, phone: document.getElementById('editPhone').value, email: document.getElementById('editEmail').value, checkIn: document.getElementById('editCheckIn').value, collect: document.getElementById('editCollect').value, itemCount: parseInt(document.getElementById('editItemCount').value) || 0, category: document.getElementById('editCategory').value },
+        timestamp: new Date().toISOString(), status: 'pending'
+    };
+    await pendingApprovalsRef.push(request);
+    await bookingsRef.child(key).update({ pending_edit: true });
+    showToast('Edit request submitted');
+    closeModal('editModal');
+};
+
+// ==================== PHOTOS MODAL ====================
+window.openPhotosModal = async (bookingKey) => {
+    currentPhotoBookingKey = bookingKey;
+    await loadPhotosForBooking(bookingKey);
+    document.getElementById('photosModal').style.display='flex';
+};
+async function loadPhotosForBooking(bookingKey) {
+    const snap = await bookingsRef.child(`${bookingKey}/verificationPhotos`).once('value');
+    const photos = snap.val() || [];
+    const container = document.getElementById('photosContainer');
+    container.innerHTML = photos.length===0 ? '<p>No photos yet.</p>' :
+        photos.map((p,idx) => `<div class="photo-item"><img src="${p.imageData}" width="100" height="100" alt="Verification photo"><button class="btn-outline btn" onclick="deletePhoto('${bookingKey}',${idx})"><i class="fas fa-trash"></i></button></div>`).join('');
+}
+window.deletePhoto = async (bookingKey, idx) => {
+    if(!confirm('Delete this photo?')) return;
+    const snap = await bookingsRef.child(`${bookingKey}/verificationPhotos`).once('value');
+    let photos = snap.val() || [];
+    photos.splice(idx,1);
+    await bookingsRef.child(`${bookingKey}/verificationPhotos`).set(photos);
+    await loadPhotosForBooking(bookingKey);
+};
+document.getElementById('fileUpload').onchange = async (e) => {
+    const files = e.target.files;
+    if(!files.length || !currentPhotoBookingKey) return;
+    const photosSnap = await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).once('value');
+    let photos = photosSnap.val() || [];
+    for(let file of files){
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            photos.push({ imageData: ev.target.result, timestamp: new Date().toISOString(), uploadedBy: currentStaffEmail });
+            await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).set(photos);
+        };
+        reader.readAsDataURL(file);
+    }
+    setTimeout(()=>loadPhotosForBooking(currentPhotoBookingKey), 500);
+    showToast('Photos uploaded');
+};
+
+// ==================== COLLECTION MODAL ====================
+function initSignatureCanvas(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    canvas.addEventListener('mousedown', e => { drawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY); });
+    canvas.addEventListener('mousemove', e => { if(drawing){ ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke(); } });
+    canvas.addEventListener('mouseup', ()=> drawing=false);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing=true; const rect=canvas.getBoundingClientRect(); const touch=e.touches[0]; ctx.beginPath(); ctx.moveTo(touch.clientX-rect.left,touch.clientY-rect.top); });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); if(drawing){ const rect=canvas.getBoundingClientRect(); const touch=e.touches[0]; ctx.lineTo(touch.clientX-rect.left,touch.clientY-rect.top); ctx.stroke(); } });
+    canvas.addEventListener('touchend', ()=> drawing=false);
+}
+initSignatureCanvas('staffCanvas');
+initSignatureCanvas('customerCanvas');
+window.clearCanvas = (id) => { document.getElementById(id).getContext('2d').clearRect(0,0,canvas.width,canvas.height); };
+window.openCollectionModal = (bookingKey) => {
+    document.getElementById('collectionModal').style.display='flex';
+    window.currentCollectionBookingKey = bookingKey;
+};
+document.getElementById('submitCollectionReq').onclick = async () => {
+    const staffCanvas = document.getElementById('staffCanvas');
+    const customerCanvas = document.getElementById('customerCanvas');
+    const staffSig = staffCanvas.toDataURL();
+    const customerSig = customerCanvas.toDataURL();
+    if(staffSig === customerCanvas.toDataURL() && customerSig === staffCanvas.toDataURL()) { showToast('Please draw both signatures', true); return; }
+    const key = window.currentCollectionBookingKey;
+    const request = { bookingKey: key, requestedBy: currentStaffEmail, staffSignature: staffSig, customerSignature: customerSig, timestamp: new Date().toISOString(), status: 'pending' };
+    await pendingApprovalsRef.push(request);
+    await bookingsRef.child(key).update({ pending_collection: true });
+    showToast('Collection request submitted');
+    closeModal('collectionModal');
+};
+
+// ==================== iPHONE CAMERA ====================
+let cameraState = {
+    stream: null, facingMode: 'environment', flashOn: false,
+    timerOn: false, currentMode: 'photo', currentZoom: 1,
+    photoReviewDataURL: null, captureInProgress: false,
+    hqMode: false, enhanceMode: false, outputFormat: 'jpeg',
+    digitalUpscaleMP: 0, docScanEnabled: false
+};
+
+const videoEl = document.getElementById('liveVideo');
+const focusRing = document.getElementById('focusRingIphone');
+const photoReviewPanel = document.getElementById('photoReviewPanel');
+const reviewImg = document.getElementById('reviewImage');
+const galleryThumbImg = document.getElementById('galleryThumbImg');
+const docOverlay = document.getElementById('docOverlay');
+
+document.querySelectorAll('.mode-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+        document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        cameraState.currentMode = pill.dataset.mode;
+        docOverlay.style.display = (pill.dataset.mode === 'docscan') ? 'block' : 'none';
+        cameraState.docScanEnabled = (pill.dataset.mode === 'docscan');
+    });
+});
+
+document.getElementById('docScanModeBtn').addEventListener('click', () => {
+    cameraState.docScanEnabled = !cameraState.docScanEnabled;
+    docOverlay.style.display = cameraState.docScanEnabled ? 'block' : 'none';
+});
+
+document.querySelectorAll('.zoom-preset').forEach(p => {
+    p.addEventListener('click', () => {
+        cameraState.currentZoom = parseFloat(p.dataset.zoom);
+        if (cameraState.currentZoom >= 2) cameraState.digitalUpscaleMP = Math.round(12 * cameraState.currentZoom);
+        else cameraState.digitalUpscaleMP = 0;
+        document.getElementById('zoomSliderIphone').value = cameraState.currentZoom;
+        applyDigitalZoom();
+        document.querySelectorAll('.zoom-preset').forEach(btn => btn.classList.remove('active'));
+        p.classList.add('active');
+    });
+});
+const zoomSlider = document.getElementById('zoomSliderIphone');
+zoomSlider.addEventListener('input', () => {
+    cameraState.currentZoom = parseFloat(zoomSlider.value);
+    applyDigitalZoom();
+    document.querySelectorAll('.zoom-preset').forEach(btn => {
+        btn.classList.toggle('active', Math.abs(parseFloat(btn.dataset.zoom) - cameraState.currentZoom) < 0.05);
+    });
+});
+function applyDigitalZoom() {
+    if (!cameraState.stream) return;
+    const track = cameraState.stream.getVideoTracks()[0];
+    if (track?.getCapabilities?.()?.zoom) track.applyConstraints({ advanced: [{ zoom: cameraState.currentZoom }] }).catch(()=>{});
+    else { videoEl.style.transform = `scale(${cameraState.currentZoom})`; videoEl.style.transformOrigin = 'center center'; }
+}
+
+document.getElementById('flashBtnIphone').addEventListener('click', async () => {
+    cameraState.flashOn = !cameraState.flashOn;
+    const track = cameraState.stream?.getVideoTracks()[0];
+    if (track) { try { await track.applyConstraints({ advanced: [{ torch: cameraState.flashOn }] }); document.getElementById('flashBtnIphone').style.color = cameraState.flashOn ? '#ffcc00' : '#fff'; } catch(e) {} }
+});
+
+document.getElementById('hqToggleIphone').addEventListener('click', () => {
+    cameraState.hqMode = !cameraState.hqMode;
+    const btn = document.getElementById('hqToggleIphone');
+    btn.style.backgroundColor = cameraState.hqMode ? '#ffcc00' : 'rgba(0,0,0,0.5)';
+    btn.style.color = cameraState.hqMode ? '#000' : '#fff';
+});
+document.getElementById('enhanceToggleIphone').addEventListener('click', () => {
+    cameraState.enhanceMode = !cameraState.enhanceMode;
+    const btn = document.getElementById('enhanceToggleIphone');
+    btn.style.backgroundColor = cameraState.enhanceMode ? '#ffcc00' : 'rgba(0,0,0,0.5)';
+    btn.style.color = cameraState.enhanceMode ? '#000' : '#fff';
+});
+document.getElementById('formatToggleIphone').addEventListener('click', () => {
+    cameraState.outputFormat = cameraState.outputFormat === 'jpeg' ? 'png' : 'jpeg';
+    document.getElementById('formatToggleIphone').textContent = cameraState.outputFormat === 'jpeg' ? 'JPG' : 'PNG';
+});
+document.getElementById('timerBtnIphone2').addEventListener('click', () => {
+    cameraState.timerOn = !cameraState.timerOn;
+    const btn = document.getElementById('timerBtnIphone2');
+    btn.style.backgroundColor = cameraState.timerOn ? '#ffcc00' : 'rgba(0,0,0,0.5)';
+    btn.style.color = cameraState.timerOn ? '#000' : '#fff';
+});
+
+videoEl.addEventListener('click', (e) => {
+    const rect = videoEl.getBoundingClientRect();
+    focusRing.style.left = `${e.clientX - rect.left}px`;
+    focusRing.style.top = `${e.clientY - rect.top}px`;
+    focusRing.style.display = 'block';
+    setTimeout(() => focusRing.style.display = 'none', 800);
+    if (cameraState.stream) {
+        const track = cameraState.stream.getVideoTracks()[0];
+        if (track) track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x: (e.clientX-rect.left)/rect.width, y: (e.clientY-rect.top)/rect.height }] }] }).catch(()=>{});
+    }
+});
+function updateGalleryThumb(dataUrl) { galleryThumbImg.src = dataUrl; galleryThumbImg.style.display = 'block'; }
+
+document.getElementById('captureMainBtn2').addEventListener('click', () => {
+    if (cameraState.timerOn) startTimerCapture();
+    else capturePhoto();
+});
+async function startTimerCapture() {
+    cameraState.captureInProgress = true;
+    const countdownEl = document.createElement('div');
+    countdownEl.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:30; font-size:5rem; color:white;';
+    document.querySelector('.camera-preview').appendChild(countdownEl);
+    for (let i = 3; i > 0; i--) { countdownEl.textContent = i; await new Promise(r => setTimeout(r, 1000)); }
+    countdownEl.remove();
+    capturePhoto();
+    cameraState.captureInProgress = false;
+}
+async function capturePhoto() {
+    if (cameraState.hqMode && window.ImageCapture) await captureHighQuality();
+    else captureStandard();
+}
+async function captureHighQuality() {
+    const track = cameraState.stream?.getVideoTracks()[0];
+    if (!track) return;
+    try {
+        const imageCapture = new ImageCapture(track);
+        const blob = await imageCapture.takePhoto();
+        const reader = new FileReader();
+        reader.onload = () => processCapturedImage(reader.result);
+        reader.readAsDataURL(blob);
+    } catch (e) { captureStandard(); }
+}
+function captureStandard() {
+    const canvas = document.createElement('canvas');
+    const vw = videoEl.videoWidth || 1920, vh = videoEl.videoHeight || 1080;
+    let outWidth = vw, outHeight = vh;
+    if (cameraState.digitalUpscaleMP > 0) {
+        const targetPixels = cameraState.digitalUpscaleMP * 1e6;
+        const scale = Math.sqrt(targetPixels / (vw * vh));
+        outWidth = Math.round(vw * scale); outHeight = Math.round(vh * scale);
+    }
+    canvas.width = outWidth; canvas.height = outHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    if (outWidth !== vw || outHeight !== vh) {
+        const stepCanvas = document.createElement('canvas');
+        stepCanvas.width = Math.round(outWidth/2); stepCanvas.height = Math.round(outHeight/2);
+        stepCanvas.getContext('2d').drawImage(videoEl, 0, 0, stepCanvas.width, stepCanvas.height);
+        ctx.drawImage(stepCanvas, 0, 0, outWidth, outHeight);
+    } else ctx.drawImage(videoEl, 0, 0);
+    if (cameraState.docScanEnabled) {
+        const cropMargin = 0.1;
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = outWidth * (1-2*cropMargin); cropCanvas.height = outHeight * (1-2*cropMargin);
+        cropCanvas.getContext('2d').drawImage(canvas, outWidth*cropMargin, outHeight*cropMargin, cropCanvas.width, cropCanvas.height, 0, 0, cropCanvas.width, cropCanvas.height);
+        canvas.width = cropCanvas.width; canvas.height = cropCanvas.height;
+        canvas.getContext('2d').drawImage(cropCanvas, 0, 0);
+    }
+    if (cameraState.enhanceMode) applyEnhance(ctx, canvas.width, canvas.height);
+    const mime = cameraState.outputFormat === 'png' ? 'image/png' : 'image/jpeg';
+    const quality = cameraState.outputFormat === 'png' ? undefined : 1.0;
+    cameraState.photoReviewDataURL = canvas.toDataURL(mime, quality);
+    reviewImg.src = cameraState.photoReviewDataURL;
+    updateGalleryThumb(cameraState.photoReviewDataURL);
+    photoReviewPanel.style.display = 'flex';
+    videoEl.style.display = 'none';
+}
+function processCapturedImage(dataUrl) {
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        if (cameraState.enhanceMode) applyEnhance(ctx, img.width, img.height);
+        const mime = cameraState.outputFormat === 'png' ? 'image/png' : 'image/jpeg';
+        const quality = cameraState.outputFormat === 'png' ? undefined : 1.0;
+        cameraState.photoReviewDataURL = canvas.toDataURL(mime, quality);
+        reviewImg.src = cameraState.photoReviewDataURL;
+        updateGalleryThumb(cameraState.photoReviewDataURL);
+        photoReviewPanel.style.display = 'flex';
+        videoEl.style.display = 'none';
+    };
+    img.src = dataUrl;
+}
+function applyEnhance(ctx, w, h) {
+    const imageData = ctx.getImageData(0, 0, w, h), data = imageData.data;
+    const output = new Uint8ClampedArray(data.length);
+    const kernelSize = 5, half = Math.floor(kernelSize/2);
+    for (let y = half; y < h-half; y++) for (let x = half; x < w-half; x++) {
+        let rArr=[], gArr=[], bArr=[];
+        for (let ky=-half; ky<=half; ky++) for (let kx=-half; kx<=half; kx++) {
+            const idx = ((y+ky)*w+(x+kx))*4;
+            rArr.push(data[idx]); gArr.push(data[idx+1]); bArr.push(data[idx+2]);
+        }
+        rArr.sort((a,b)=>a-b); gArr.sort((a,b)=>a-b); bArr.sort((a,b)=>a-b);
+        const mid = Math.floor(rArr.length/2), outIdx = (y*w+x)*4;
+        output[outIdx]=rArr[mid]; output[outIdx+1]=gArr[mid]; output[outIdx+2]=bArr[mid]; output[outIdx+3]=255;
+    }
+    imageData.data.set(output); ctx.putImageData(imageData, 0, 0);
+    const newData = ctx.getImageData(0, 0, w, h).data;
+    let minR=255,minG=255,minB=255,maxR=0,maxG=0,maxB=0;
+    for (let i=0; i<newData.length; i+=4) {
+        minR=Math.min(minR,newData[i]); maxR=Math.max(maxR,newData[i]);
+        minG=Math.min(minG,newData[i+1]); maxG=Math.max(maxG,newData[i+1]);
+        minB=Math.min(minB,newData[i+2]); maxB=Math.max(maxB,newData[i+2]);
+    }
+    const scaleR=255/(maxR-minR||1), scaleG=255/(maxG-minG||1), scaleB=255/(maxB-minB||1);
+    for (let i=0; i<newData.length; i+=4) {
+        newData[i]=(newData[i]-minR)*scaleR; newData[i+1]=(newData[i+1]-minG)*scaleG; newData[i+2]=(newData[i+2]-minB)*scaleB;
+    }
+    imageData.data.set(newData); ctx.putImageData(imageData, 0, 0);
+    const sharpData = ctx.getImageData(0, 0, w, h).data;
+    const kernel = [0,-1,0,-1,5,-1,0,-1,0], sharpOut = new Uint8ClampedArray(sharpData.length);
+    for (let y=1; y<h-1; y++) for (let x=1; x<w-1; x++) {
+        let r=0,g=0,b=0;
+        for (let ky=-1; ky<=1; ky++) for (let kx=-1; kx<=1; kx++) {
+            const idx = ((y+ky)*w+(x+kx))*4, kVal = kernel[(ky+1)*3+(kx+1)];
+            r+=sharpData[idx]*kVal; g+=sharpData[idx+1]*kVal; b+=sharpData[idx+2]*kVal;
+        }
+        const outIdx = (y*w+x)*4;
+        sharpOut[outIdx]=Math.min(255,Math.max(0,r)); sharpOut[outIdx+1]=Math.min(255,Math.max(0,g));
+        sharpOut[outIdx+2]=Math.min(255,Math.max(0,b)); sharpOut[outIdx+3]=255;
+    }
+    imageData.data.set(sharpOut); ctx.putImageData(imageData, 0, 0);
+}
+
+document.getElementById('retakeBtnIphone2').onclick = () => { videoEl.style.display='block'; photoReviewPanel.style.display='none'; cameraState.photoReviewDataURL=null; };
+document.getElementById('usePhotoBtnIphone2').onclick = async () => {
+    if (!cameraState.photoReviewDataURL) return;
+    const snap = await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).once('value');
+    let photos = snap.val() || [];
+    photos.push({ imageData: cameraState.photoReviewDataURL, timestamp: new Date().toISOString(), uploadedBy: currentStaffEmail });
+    await bookingsRef.child(`${currentPhotoBookingKey}/verificationPhotos`).set(photos);
+    showToast('Photo saved');
+    closeCameraModal();
+};
+document.getElementById('switchCameraIphone2').onclick = async () => { cameraState.facingMode = cameraState.facingMode==='environment'?'user':'environment'; await startCameraStream(); };
+
+async function startCameraStream() {
+    if (cameraState.stream) cameraState.stream.getTracks().forEach(t => t.stop());
+    try {
+        cameraState.stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: cameraState.facingMode, width: { ideal: 4096 }, height: { ideal: 2160 }, zoom: cameraState.currentZoom },
+            audio: false
+        });
+        videoEl.srcObject = cameraState.stream;
+        videoEl.style.transform = '';
+        applyDigitalZoom();
+    } catch (e) { showToast('Camera access denied', true); }
+}
+function closeCameraModal() {
+    if (cameraState.stream) { cameraState.stream.getTracks().forEach(t => t.stop()); cameraState.stream = null; }
+    videoEl.srcObject = null;
+    photoReviewPanel.style.display = 'none'; videoEl.style.display = 'block';
+    document.getElementById('cameraModal').style.display = 'none';
+}
+document.getElementById('openRealtimeCameraBtn').onclick = async () => {
+    await startCameraStream();
+    document.getElementById('cameraModal').style.display = 'flex';
+    photoReviewPanel.style.display = 'none'; videoEl.style.display = 'block';
+};
+
+// ==================== CLOSE MODALS ====================
+function closeModal(id) {
+    if (id === 'cameraModal') closeCameraModal();
+    else document.getElementById(id).style.display = 'none';
+}
+window.closeModal = closeModal;
+function closeModalOnBg(e, id) { if(e.target===e.currentTarget) closeModal(id); }
+window.closeModalOnBg = closeModalOnBg;
+
+// ==================== PWA ====================
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
 </script>
 </body>
 </html>
