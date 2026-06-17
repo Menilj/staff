@@ -107,7 +107,6 @@
     .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; margin-bottom: 12px; }
     .card-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-weight: 700; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 0.85rem; }
 
-    /* Booking Grid */
     .booking-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
     .booking-card {
       background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
@@ -152,6 +151,17 @@
     .btn-approve { background: var(--success); color: #fff; }
     .btn-reject { background: var(--danger); color: #fff; }
     .btn-merge { background: var(--warning); color: #000; }
+    .btn-resubmit { background: #f59e0b !important; color: #000 !important; font-weight: 700 !important; }
+
+    .rejected-notice {
+      grid-column: 1 / -1;
+      background: rgba(239,68,68,0.15);
+      border-left: 4px solid var(--danger);
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
 
     .preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; z-index: 2000; animation: fadeIn 0.2s ease; }
     .preview-content { background: var(--surface); border-radius: 20px 20px 0 0; padding: 16px 12px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; border: 2px solid var(--accent); animation: slideUp 0.3s ease; -webkit-overflow-scrolling: touch; }
@@ -201,6 +211,21 @@
     .toast.error { border-left-color: var(--danger); }
     @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } }
 
+    .table-responsive { overflow-x: auto; max-height: 60vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .desktop-table { display: block; }
+    @media (max-width: 768px) {
+      .desktop-table { display: none; }
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 600px; }
+    th {
+      background: var(--surface); padding: 8px 10px; text-align: left;
+      font-weight: 700; color: var(--text-secondary); border-bottom: 2px solid var(--border);
+      position: sticky; top: 0; font-size: 0.65rem; text-transform: uppercase; z-index: 1;
+    }
+    td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.75rem; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 12px; }
     .stat-card { background: var(--surface); border-radius: 10px; padding: 10px; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.15s; }
     .stat-card:active { transform: scale(0.97); background: var(--bg); }
@@ -208,19 +233,11 @@
     .stat-value { font-size: 1.1rem; font-weight: 800; line-height: 1.2; }
     .stat-label { color: var(--text-secondary); font-size: 0.58rem; font-weight: 600; text-transform: uppercase; }
 
-    /* Improved Insights */
     .insights-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
-    .insight-metric-card {
-      background: var(--surface); border-radius: var(--radius); padding: 14px;
-      border: 1px solid var(--border); box-shadow: var(--shadow);
-    }
+    .insight-metric-card { background: var(--surface); border-radius: var(--radius); padding: 14px; border: 1px solid var(--border); box-shadow: var(--shadow); }
     .insight-metric-card h4 { font-size: 0.78rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
     .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.75rem; }
     .metric-row:last-child { border-bottom: none; }
-    .metric-value-large { font-size: 1.5rem; font-weight: 800; }
-    .metric-change { font-size: 0.7rem; font-weight: 600; }
-    .metric-change.up { color: var(--success); }
-    .metric-change.down { color: var(--danger); }
 
     .chart-card { background: var(--surface); border-radius: var(--radius); padding: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 10px; }
     .chart-card h3 { font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; }
@@ -281,12 +298,13 @@
   <aside class="sidebar" id="sidebar">
     <div class="brand"><i class="fas fa-shield-halved"></i> CampusVault</div>
     <nav id="sidebarNav">
-      <a href="#" class="active" data-tab="dashboard"><i class="fas fa-chart-pie"></i> Dashboard <span class="live-indicator"><span class="live-dot"></span></span></a>
+      <a href="#" class="active" data-tab="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a>
       <a href="#" data-tab="insights"><i class="fas fa-chart-line"></i> Insights</a>
       <a href="#" data-tab="my-bookings"><i class="fas fa-calendar-check"></i> My Bookings</a>
       <a href="#" data-tab="receive"><i class="fas fa-camera"></i> My Received <span class="nav-badge" id="receiveBadge" style="display:none;">0</span></a>
       <a href="#" data-tab="collections"><i class="fas fa-people-carry"></i> My Collections <span class="nav-badge" id="collectBadge" style="display:none;">0</span></a>
       <a href="#" data-tab="all-bookings"><i class="fas fa-boxes"></i> All Bookings</a>
+      <a href="#" data-tab="my-approvals"><i class="fas fa-list-check"></i> My Requests <span class="nav-badge" id="myApprovalsBadge" style="display:none;">0</span></a>
       <a href="#" data-tab="approvals" id="approvalsNav" style="display:none;"><i class="fas fa-check-circle"></i> Approvals <span class="nav-badge" id="approvalBadge" style="display:none;">0</span></a>
     </nav>
     <div class="sidebar-footer">
@@ -304,7 +322,7 @@
   <main class="main">
     <div class="topbar-mobile">
       <button class="hamburger" id="hamburgerBtn"><i class="fas fa-bars"></i></button>
-      <span class="topbar-title">CampusVault <span class="live-dot"></span></span>
+      <span class="topbar-title">CampusVault</span>
       <button class="theme-toggle" id="themeToggleMobile"><i class="fas fa-sun"></i> Light</button>
     </div>
 
@@ -327,90 +345,82 @@
           <div class="stat-card" onclick="switchTab('collections')"><div class="stat-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-people-carry"></i></div><div><div class="stat-value" id="statCollected">0</div><div class="stat-label">My Collected</div></div></div>
         </div>
         <div class="chart-row">
-          <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> Performance</h3><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
-          <div class="chart-card"><h3><i class="fas fa-chart-line"></i> Real-time Trend</h3><canvas id="trendChart" style="max-height:160px;"></canvas></div>
+          <div class="chart-card"><h3>Performance</h3><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+          <div class="chart-card"><h3>Trend</h3><canvas id="trendChart" style="max-height:160px;"></canvas></div>
         </div>
-        <div class="chart-card"><h3><i class="fas fa-clock"></i> Recent Activity</h3><div id="recentActivityFeed" style="max-height:200px;overflow-y:auto;"></div></div>
+        <div class="chart-card"><h3>Recent Activity</h3><div id="recentActivityFeed" style="max-height:200px;overflow-y:auto;"></div></div>
       </div>
 
       <!-- INSIGHTS -->
       <div class="tab-content" id="tab-insights">
-        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-chart-line"></i> My Analytics</h2>
+        <h2 style="margin-bottom:12px;">My Analytics</h2>
         <div class="insights-grid">
-          <div class="insight-metric-card">
-            <h4><i class="fas fa-calendar-check" style="color:var(--success);"></i> Today's Performance</h4>
-            <div class="metric-row"><span>Received</span><span id="insightTodayReceived" style="font-weight:700;">0</span></div>
-            <div class="metric-row"><span>Collected</span><span id="insightTodayCollected" style="font-weight:700;">0</span></div>
-            <div class="metric-row"><span>Pending</span><span id="insightTodayPending" style="font-weight:700;">0</span></div>
-            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-              <div style="font-size:0.7rem;color:var(--text-secondary);">Avg Receive Time</div>
-              <div style="font-size:1.2rem;font-weight:800;" id="insightAvgTime">—</div>
-            </div>
-          </div>
-          <div class="insight-metric-card">
-            <h4><i class="fas fa-chart-bar" style="color:var(--primary);"></i> Weekly Stats</h4>
-            <div class="metric-row"><span>Received</span><span id="insightWeekReceived" style="font-weight:700;">0</span></div>
-            <div class="metric-row"><span>Collected</span><span id="insightWeekCollected" style="font-weight:700;">0</span></div>
-            <div class="metric-row"><span>Completion Rate</span><span id="insightWeekRate" style="font-weight:700;">0%</span></div>
-            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-              <div style="font-size:0.7rem;color:var(--text-secondary);">Best Day</div>
-              <div style="font-size:1.2rem;font-weight:800;" id="insightBestDay">—</div>
-            </div>
-          </div>
-          <div class="insight-metric-card">
-            <h4><i class="fas fa-trophy" style="color:#f59e0b;"></i> Rankings</h4>
-            <div class="metric-row"><span>Items Handled</span><span id="insightTotalItems" style="font-weight:700;">0</span></div>
-            <div class="metric-row"><span>Categories</span><span id="insightCategories" style="font-weight:700;">0</span></div>
-            <div class="metric-row"><span>Top Category</span><span id="insightTopCategory" style="font-weight:700;">—</span></div>
-            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-              <div style="font-size:0.7rem;color:var(--text-secondary);">Streak</div>
-              <div style="font-size:1.2rem;font-weight:800;" id="insightStreak">0 days 🔥</div>
-            </div>
-          </div>
+          <div class="insight-metric-card"><h4>Today</h4><div class="metric-row"><span>Received</span><span id="insightTodayReceived">0</span></div><div class="metric-row"><span>Collected</span><span id="insightTodayCollected">0</span></div><div class="metric-row"><span>Pending</span><span id="insightTodayPending">0</span></div></div>
+          <div class="insight-metric-card"><h4>Weekly</h4><div class="metric-row"><span>Received</span><span id="insightWeekReceived">0</span></div><div class="metric-row"><span>Collected</span><span id="insightWeekCollected">0</span></div><div class="metric-row"><span>Rate</span><span id="insightWeekRate">0%</span></div></div>
         </div>
-        <div class="chart-row">
-          <div class="chart-card"><h3><i class="fas fa-chart-bar"></i> Weekly Activity</h3><canvas id="weeklyChart" style="max-height:180px;"></canvas></div>
-          <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> Categories</h3><div class="chart-container"><canvas id="categoryChart"></canvas></div></div>
-        </div>
-        <div class="chart-card"><h3><i class="fas fa-clock"></i> Hourly Distribution</h3><canvas id="hourlyChart" style="max-height:150px;"></canvas></div>
       </div>
 
       <!-- MY BOOKINGS -->
       <div class="tab-content" id="tab-my-bookings">
-        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-calendar-check"></i> My Assigned Bookings</h2>
+        <h2 style="margin-bottom:12px;">My Assigned Bookings</h2>
         <div class="booking-grid" id="myBookingsGrid"></div>
         <div class="empty-panel" id="myBookingsEmpty" style="display:none;"><i class="fas fa-calendar-check"></i><p>No assigned bookings</p></div>
       </div>
 
       <!-- MY RECEIVED -->
       <div class="tab-content" id="tab-receive">
-        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-camera"></i> My Received Items</h2>
+        <h2 style="margin-bottom:12px;">My Received Items</h2>
         <div class="mobile-cards"><div id="receivedCardsContainer"></div></div>
-        <div class="empty-panel" id="receivedEmpty" style="display:none;"><i class="fas fa-camera"></i><p>No items received by you</p></div>
+        <div class="empty-panel" id="receivedEmpty" style="display:none;"><i class="fas fa-camera"></i><p>No items received</p></div>
       </div>
 
       <!-- MY COLLECTIONS -->
       <div class="tab-content" id="tab-collections">
-        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-people-carry"></i> My Collections</h2>
+        <h2 style="margin-bottom:12px;">My Collections</h2>
         <div class="mobile-cards"><div id="collectedCardsContainer"></div></div>
-        <div class="empty-panel" id="collectedEmpty" style="display:none;"><i class="fas fa-people-carry"></i><p>No collections by you</p></div>
+        <div class="empty-panel" id="collectedEmpty" style="display:none;"><i class="fas fa-people-carry"></i><p>No collections</p></div>
       </div>
 
       <!-- ALL BOOKINGS -->
       <div class="tab-content" id="tab-all-bookings">
-        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-boxes"></i> All Bookings</h2>
-        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
-          <input type="text" id="searchInput" placeholder="🔍 Search..." style="flex:1;min-width:120px;">
-          <select id="filterStatus" style="min-width:100px;"><option value="all">All</option><option value="active">Active</option><option value="received">Received</option><option value="collected">Collected</option><option value="unassigned">Unassigned</option></select>
-          <button class="btn btn-outline" onclick="exportToExcel()" style="white-space:nowrap;font-size:0.7rem;"><i class="fas fa-file-excel"></i> Export</button>
+        <h2 style="margin-bottom:12px;">All Bookings</h2>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <input type="text" id="searchInput" placeholder="Search..." style="flex:1;">
+          <select id="filterStatus"><option value="all">All</option><option value="active">Active</option><option value="received">Received</option><option value="collected">Collected</option><option value="unassigned">Unassigned</option></select>
+          <button class="btn btn-outline" onclick="exportToExcel()">Export</button>
         </div>
         <div class="booking-grid" id="allBookingsGrid"></div>
         <div class="empty-panel" id="allBookingsEmpty" style="display:none;"><i class="fas fa-boxes"></i><p>No bookings</p></div>
       </div>
 
-      <!-- APPROVALS -->
+      <!-- MY APPROVAL REQUESTS -->
+      <div class="tab-content" id="tab-my-approvals">
+        <h2 style="margin-bottom:12px;"><i class="fas fa-list-check"></i> My Approval Requests</h2>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <select id="myApprovalFilter" onchange="renderMyApprovalRequests()">
+            <option value="all">All Requests</option>
+            <option value="pending">⏳ Waiting</option>
+            <option value="approved">✅ Approved</option>
+            <option value="rejected">❌ Rejected</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="desktop-table">
+            <div class="table-responsive">
+              <table>
+                <thead><tr><th>Booking</th><th>Type</th><th>Status</th><th>Submitted</th><th>Response By</th><th>Feedback</th><th>Actions</th></tr></thead>
+                <tbody id="myApprovalsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="mobile-cards"><div id="myApprovalsCardsContainer"></div></div>
+          <div class="empty-panel" id="myApprovalsEmpty" style="display:none;"><i class="fas fa-list-check"></i><p>No approval requests found</p></div>
+        </div>
+      </div>
+
+      <!-- APPROVALS (Admin) -->
       <div class="tab-content" id="tab-approvals">
-        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-check-circle"></i> Pending Approvals</h2>
+        <h2 style="margin-bottom:12px;">Pending Approvals</h2>
         <div id="approvalsContainer"></div>
         <div class="empty-panel" id="approvalsEmpty" style="display:none;"><i class="fas fa-check-circle"></i><p>No pending approvals</p></div>
       </div>
@@ -419,10 +429,11 @@
 </div>
 
 <!-- MODALS -->
-<div id="receiveModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-camera"></i> Receive Items</h3><div id="duplicateAlertReceive" class="duplicate-warning" style="display:none;"><i class="fas fa-exclamation-triangle"></i> <span id="duplicateAlertText"></span></div><form id="receiveForm"><input type="hidden" id="receiveBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="receiveBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="receiveCustomerName" readonly></div><div class="form-group"><label>Phone</label><input type="text" id="receiveCustomerPhone" readonly></div><div class="form-row"><div class="form-group"><label>Item Count *</label><input type="number" id="receiveItemCount" required min="1"></div><div class="form-group"><label>Category</label><select id="receiveCategory"><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Books</option><option>Other</option></select></div></div><div class="form-group"><label>Description *</label><textarea id="receiveDescription" rows="2" required></textarea></div><div class="form-row"><div class="form-group"><label>Condition</label><select id="receiveCondition"><option>Good</option><option>Fair</option><option>Excellent</option></select></div><div class="form-group"><label>Location</label><input type="text" id="receiveLocation" placeholder="Shelf A3"></div></div><div class="form-group"><label>📸 Photos (Min 1)</label><div class="photo-grid" id="receivePhotosGrid"></div><div class="photo-upload-options"><div class="photo-upload-option" onclick="document.getElementById('receivePhotoInput').click()"><i class="fas fa-camera"></i> Camera</div><div class="photo-upload-option" onclick="document.getElementById('receiveGalleryInput').click()"><i class="fas fa-images"></i> Gallery</div></div><input type="file" id="receivePhotoInput" accept="image/*" capture="environment" style="display:none;"><input type="file" id="receiveGalleryInput" accept="image/*" multiple style="display:none;"></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('receiveModal')">Cancel</button><button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirm</button></div></form></div></div>
-<div id="collectionModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-signature"></i> Collect Items</h3><form id="collectionForm"><input type="hidden" id="collectBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="collectBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="collectCustomerName" readonly></div><div class="form-group"><label>Items</label><input type="text" id="collectItems" readonly></div><div class="form-group"><label>Notes</label><textarea id="collectNotes" rows="2"></textarea></div><div class="form-group"><label>👤 Customer Signature *</label><canvas id="customerCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('customerCanvas')" style="margin-top:3px;font-size:0.65rem;">Clear</button></div><div class="form-group"><label>👔 Staff Signature *</label><canvas id="staffCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('staffCanvas')" style="margin-top:3px;font-size:0.65rem;">Clear</button></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button type="submit" class="btn btn-primary">Submit for Approval</button></div></form></div></div>
-<div id="whatsappModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fab fa-whatsapp"></i> WhatsApp</h3><div id="whatsappPreview" class="wa-message-preview"></div><div class="flex-between"><button class="btn btn-outline" onclick="closeModal('whatsappModal')">Cancel</button><button class="btn btn-whatsapp" onclick="sendWhatsApp()">Send</button></div></div></div>
-<div id="feedbackModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-comment-dots"></i> Rejection Feedback</h3><form onsubmit="event.preventDefault(); submitRejectionWithFeedback();"><div class="form-group"><label>Feedback Message *</label><textarea id="feedbackMessage" rows="3" placeholder="Explain why this is being rejected..." required></textarea></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('feedbackModal')">Cancel</button><button type="submit" class="btn btn-reject"><i class="fas fa-times"></i> Reject with Feedback</button></div></form></div></div>
+<div id="receiveModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3>Receive Items</h3><div id="duplicateAlertReceive" class="duplicate-warning" style="display:none;"></div><form id="receiveForm"><input type="hidden" id="receiveBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="receiveBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="receiveCustomerName" readonly></div><div class="form-group"><label>Phone</label><input type="text" id="receiveCustomerPhone" readonly></div><div class="form-group"><label>Item Count *</label><input type="number" id="receiveItemCount" required min="1"></div><div class="form-group"><label>Category</label><select id="receiveCategory"><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Books</option><option>Other</option></select></div><div class="form-group"><label>Description *</label><textarea id="receiveDescription" rows="2" required></textarea></div><div class="form-group"><label>Condition</label><select id="receiveCondition"><option>Good</option><option>Fair</option><option>Excellent</option></select></div><div class="form-group"><label>Location</label><input type="text" id="receiveLocation" placeholder="Shelf A3"></div><div class="form-group"><label>Photos (Min 1)</label><div class="photo-grid" id="receivePhotosGrid"></div><div class="photo-upload-options"><div class="photo-upload-option" onclick="document.getElementById('receivePhotoInput').click()"><i class="fas fa-camera"></i> Camera</div><div class="photo-upload-option" onclick="document.getElementById('receiveGalleryInput').click()"><i class="fas fa-images"></i> Gallery</div></div><input type="file" id="receivePhotoInput" accept="image/*" capture="environment" style="display:none;"><input type="file" id="receiveGalleryInput" accept="image/*" multiple style="display:none;"></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('receiveModal')">Cancel</button><button type="submit" class="btn btn-success">Confirm</button></div></form></div></div>
+<div id="collectionModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3>Collect Items</h3><form id="collectionForm"><input type="hidden" id="collectBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="collectBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="collectCustomerName" readonly></div><div class="form-group"><label>Items</label><input type="text" id="collectItems" readonly></div><div class="form-group"><label>Notes</label><textarea id="collectNotes" rows="2"></textarea></div><div class="form-group"><label>Customer Signature *</label><canvas id="customerCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('customerCanvas')" style="margin-top:3px;">Clear</button></div><div class="form-group"><label>Staff Signature *</label><canvas id="staffCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('staffCanvas')" style="margin-top:3px;">Clear</button></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button type="submit" class="btn btn-primary">Submit for Approval</button></div></form></div></div>
+<div id="whatsappModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3>WhatsApp</h3><div id="whatsappPreview"></div><div class="flex-between"><button class="btn btn-outline" onclick="closeModal('whatsappModal')">Cancel</button><button class="btn btn-whatsapp" onclick="sendWhatsApp()">Send</button></div></div></div>
+<div id="feedbackModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3>Rejection Feedback</h3><form onsubmit="event.preventDefault(); submitRejectionWithFeedback();"><div class="form-group"><label>Feedback Message *</label><textarea id="feedbackMessage" rows="3" placeholder="Explain why this is being rejected..." required></textarea></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('feedbackModal')">Cancel</button><button type="submit" class="btn btn-reject">Reject with Feedback</button></div></form></div></div>
+
 <script>
   firebase.initializeApp({
     apiKey: "AIzaSyCuCd89dawEHOGrKmcCimw3pBErKYJU_VI",
@@ -439,14 +450,9 @@
 
   let currentStaffEmail = null, currentStaffIsAdmin = false;
   let allBookings = [], allReceivedItems = [], allCollectedItems = [], allPendingApprovals = [];
-  let receivePhotos = [], statusChart = null, trendChart = null, weeklyChart = null, categoryChart = null, hourlyChart = null;
-  
-  // Duplicate tracking
-  let duplicateBookings = new Set();
-  let duplicateGroups = {};
+  let receivePhotos = [], statusChart = null, trendChart = null;
+  let duplicateBookings = new Set(), duplicateGroups = {};
   let currentRejectionKey = null;
-
-
 
   function getGreeting() { const h = new Date().getHours(); return h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening'; }
   function updateDate() { document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
@@ -498,8 +504,7 @@
           loadAllRealtime(); switchTab('dashboard');
           showToast('Welcome, ' + dn.split(' ')[0] + '!');
         } else { auth.signOut(); document.getElementById('staffLoginError').textContent = '❌ Unauthorized'; document.getElementById('staffLoginError').style.display = 'block'; }
-          renderMyBookingsGrid(); renderAllBookingsGrid();
-    });
+      });
     }).catch(e => { document.getElementById('staffLoginError').textContent = '❌ ' + e.message; document.getElementById('staffLoginError').style.display = 'block'; });
   };
 
@@ -533,6 +538,7 @@
       if (tab === 'receive') renderMyReceivedCards();
       if (tab === 'collections') renderMyCollectedCards();
       if (tab === 'approvals') renderApprovals();
+      if (tab === 'my-approvals') renderMyApprovalRequests();
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -544,178 +550,79 @@
   window.openModal = openModal;
   document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', function(e) { if (e.target === m) closeModal(m.id); }));
 
-  function fmtPhone(p) { if (!p) return null; let c = p.replace(/\D/g, ''); if (c.startsWith('0')) c = '254' + c.substring(1); if (!c.startsWith('254')) c = '254' + c; return c; }
   function genRcvMsg(b) { return '📦 *ITEMS RECEIVED*\n\nHello ' + (b.name || 'Customer') + ',\n\nYour items have been received at Campus Vault.\n\n📋 Booking: ' + (b.bookingId || b._key.slice(-6)) + '\n📦 Items: ' + (b.itemCount || '?') + ' ' + (b.category || 'items') + '\n\n📍 Campus Vault Storage\nThank you! 🙏'; }
 
-  // ===== DUPLICATE DETECTION =====
   function detectDuplicates(bookings) {
-    duplicateBookings.clear();
-    duplicateGroups = {};
-    const seen = {};
-    
+    duplicateBookings.clear(); duplicateGroups = {}; const seen = {};
     bookings.forEach(b => {
-      if (b.status === 'collected') return; // Skip completed
-      
-      const phone = (b.phone || '').replace(/\D/g, '');
-      const name = (b.name || '').toLowerCase().trim();
-      
-      // Check by phone (most reliable)
-      if (phone && phone.length >= 9) {
-        if (!seen['p:' + phone]) seen['p:' + phone] = [];
-        seen['p:' + phone].push(b);
-      }
-      
-      // Check by name + item count + category
-      if (name.length > 2) {
-        const nk = 'n:' + name + '|' + (b.itemCount || '') + '|' + (b.category || '');
-        if (!seen[nk]) seen[nk] = [];
-        if (!seen[nk].find(x => x._key === b._key)) seen[nk].push(b);
-      }
+      if (b.status === 'collected') return;
+      const phone = (b.phone || '').replace(/\D/g, ''), name = (b.name || '').toLowerCase().trim();
+      if (phone && phone.length >= 9) { if (!seen['p:' + phone]) seen['p:' + phone] = []; seen['p:' + phone].push(b); }
+      if (name.length > 2) { const nk = 'n:' + name + '|' + (b.itemCount || '') + '|' + (b.category || ''); if (!seen[nk]) seen[nk] = []; if (!seen[nk].find(x => x._key === b._key)) seen[nk].push(b); }
     });
-    
-    Object.entries(seen).forEach(([key, group]) => {
-      if (group.length > 1) {
-        duplicateGroups[key] = group;
-        group.forEach(b => duplicateBookings.add(b._key));
-      }
-    });
-    
+    Object.entries(seen).forEach(([key, group]) => { if (group.length > 1) { duplicateGroups[key] = group; group.forEach(b => duplicateBookings.add(b._key)); } });
     return duplicateBookings.size;
   }
 
   function checkBookingDuplicate(booking) {
-    const phone = (booking.phone || '').replace(/\D/g, '');
-    const name = (booking.name || '').toLowerCase().trim();
+    const phone = (booking.phone || '').replace(/\D/g, ''), name = (booking.name || '').toLowerCase().trim();
     let matches = [];
-    
     allBookings.forEach(b => {
-      if (b._key === booking._key) return;
-      if (b.status === 'collected') return;
-      
-      const bPhone = (b.phone || '').replace(/\D/g, '');
-      const bName = (b.name || '').toLowerCase().trim();
-      
-      if (phone && bPhone && phone === bPhone && phone.length >= 9) {
-        matches.push(b);
-      } else if (name.length > 2 && bName.length > 2 && name === bName && 
-                 (b.itemCount || '') === (booking.itemCount || '') && 
-                 (b.category || '') === (booking.category || '')) {
-        matches.push(b);
-      }
+      if (b._key === booking._key || b.status === 'collected') return;
+      const bPhone = (b.phone || '').replace(/\D/g, ''), bName = (b.name || '').toLowerCase().trim();
+      if (phone && bPhone && phone === bPhone && phone.length >= 9) matches.push(b);
+      else if (name.length > 2 && bName.length > 2 && name === bName && (b.itemCount || '') === (booking.itemCount || '') && (b.category || '') === (booking.category || '')) matches.push(b);
     });
-    
     return matches;
   }
 
-  // ===== REQUEST UNASSIGNED =====
   window.requestUnassigned = async function(key) {
     if (!currentStaffEmail) return;
     const b = allBookings.find(x => x._key === key);
     if (!b || b.assigned_to) return;
-    if (!confirm('Request to be assigned to booking #' + (b.bookingId || key.slice(-6)) + '?')) return;
-    
-    await pendingApprovalsRef.push({
-      bookingKey: key, requestedBy: currentStaffEmail, requestedByName: currentStaffEmail.split('@')[0],
-      type: 'assignment_request', timestamp: new Date().toISOString(), status: 'pending',
-      details: 'Staff requesting assignment to unassigned booking'
-    });
+    if (!confirm('Request assignment for #' + (b.bookingId || key.slice(-6)) + '?')) return;
+    await pendingApprovalsRef.push({ bookingKey: key, requestedBy: currentStaffEmail, requestedByName: currentStaffEmail.split('@')[0], type: 'assignment_request', timestamp: new Date().toISOString(), status: 'pending' });
     showToast('Assignment requested! ⏳');
   };
 
-  // ===== PREVIEW =====
   window.showPreview = function(key, type = 'booking') {
     let data = null;
     if (type === 'received') data = allReceivedItems.find(r => r.key === key);
     else if (type === 'collected') data = allCollectedItems.find(c => c.key === key);
     else data = allBookings.find(b => b._key === key);
     if (!data) return;
-    
-    const existing = document.querySelector('.preview-overlay');
-    if (existing) existing.remove();
-    
+    const existing = document.querySelector('.preview-overlay'); if (existing) existing.remove();
     const bookingData = type === 'received' ? allBookings.find(b => b._key === data.bookingKey) || {} : type === 'collected' ? allBookings.find(b => b._key === data.bookingKey) || {} : data;
-    const isDuplicate = duplicateBookings.has(type === 'booking' ? key : (data.bookingKey || ''));
-    const duplicateGroup = isDuplicate ? Object.values(duplicateGroups).find(g => g.some(b => b._key === (type === 'booking' ? key : data.bookingKey))) : null;
-    
-    const overlay = document.createElement('div');
-    overlay.className = 'preview-overlay';
-    overlay.innerHTML = `<div class="preview-content" onclick="event.stopPropagation()">
-      <div class="preview-header"><h3><i class="fas fa-eye" style="color:var(--accent);"></i> ${type === 'received' ? 'Received' : type === 'collected' ? 'Collected' : 'Booking'} Preview ${isDuplicate ? '<span class="badge badge-duplicate">DUPLICATE</span>' : ''}</h3><button class="preview-close-btn" onclick="this.closest('.preview-overlay').remove();document.body.style.overflow='';">&times;</button></div>
-      ${isDuplicate && duplicateGroup ? `<div class="preview-warning"><i class="fas fa-exclamation-triangle"></i> This booking may be a duplicate. ${duplicateGroup.length - 1} similar booking(s) found.</div>` : ''}
-      <div class="preview-grid">
-        <div class="preview-item"><div class="preview-label">Booking ID</div><div class="preview-value" style="font-family:monospace;">${data.bookingId || (data._key ? data._key.slice(-6) : 'N/A')}</div></div>
-        <div class="preview-item"><div class="preview-label">Customer</div><div class="preview-value">${data.customerName || bookingData.name || 'N/A'}</div></div>
-        <div class="preview-item"><div class="preview-label">Phone</div><div class="preview-value">${data.customerPhone || bookingData.phone || 'N/A'}</div></div>
-        <div class="preview-item"><div class="preview-label">Items</div><div class="preview-value">${data.itemCount || bookingData.itemCount || '?'} ${data.category || bookingData.category || 'items'}</div></div>
-        <div class="preview-item"><div class="preview-label">Status</div><div class="preview-value">${getSB(bookingData.status || 'active')}</div></div>
-        <div class="preview-item"><div class="preview-label">Time</div><div class="preview-value"><span class="timestamp-badge"><i class="far fa-clock"></i> ${formatTimestamp(data.timestamp || bookingData.timestamp)}</span></div></div>
-      </div>
-      ${data.photos && data.photos.length ? `<div class="preview-item preview-item-full"><div class="preview-label">📸 Photos</div><div class="preview-photos">${data.photos.map(p => '<img src="' + p + '" onclick="window.open(\'' + p + '\',\'_blank\')">').join('')}</div></div>` : ''}
-      <div class="preview-actions">
-        <button class="btn btn-outline" onclick="this.closest('.preview-overlay').remove();document.body.style.overflow='';">Close</button>
-        ${!bookingData.assigned_to && type === 'booking' ? `<button class="btn btn-request" onclick="this.closest('.preview-overlay').remove();requestUnassigned('${bookingData._key}')"><i class="fas fa-hand-paper"></i> Request</button>` : ''}
-        ${bookingData.status === 'active' && !bookingData.items_received ? `<button class="btn btn-receive" onclick="this.closest('.preview-overlay').remove();openReceiveModal('${bookingData._key}')"><i class="fas fa-camera"></i> Receive</button>` : ''}
-      </div>
-    </div>`;
-    
-    document.body.appendChild(overlay);
-    document.body.style.overflow = 'hidden';
+    const overlay = document.createElement('div'); overlay.className = 'preview-overlay';
+    overlay.innerHTML = `<div class="preview-content" onclick="event.stopPropagation()"><div class="preview-header"><h3>Preview</h3><button class="preview-close-btn" onclick="this.closest('.preview-overlay').remove();document.body.style.overflow='';">&times;</button></div><div class="preview-grid"><div class="preview-item"><div class="preview-label">Booking ID</div><div class="preview-value">${data.bookingId || (data._key ? data._key.slice(-6) : 'N/A')}</div></div><div class="preview-item"><div class="preview-label">Customer</div><div class="preview-value">${data.customerName || bookingData.name || 'N/A'}</div></div><div class="preview-item"><div class="preview-label">Items</div><div class="preview-value">${data.itemCount || bookingData.itemCount || '?'} ${data.category || bookingData.category || 'items'}</div></div><div class="preview-item"><div class="preview-label">Status</div><div class="preview-value">${getSB(bookingData.status || 'active')}</div></div></div><div class="preview-actions"><button class="btn btn-outline" onclick="this.closest('.preview-overlay').remove();document.body.style.overflow='';">Close</button></div></div>`;
+    document.body.appendChild(overlay); document.body.style.overflow = 'hidden';
     overlay.addEventListener('click', function(e) { if (e.target === overlay) { overlay.remove(); document.body.style.overflow = ''; } });
   };
 
   window.deleteBooking = function(key) {
     if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
-    if (!confirm('Delete this booking?')) return;
-    const b = allBookings.find(x => x._key === key);
-    if (!b) return;
-    trashRef.push({ bookingKey: key, bookingId: b.bookingId || key.slice(-6), customerName: b.name || '', deletedBy: currentStaffEmail, deletedAt: new Date().toISOString() })
-      .then(() => bookingsRef.child(key).remove()).then(() => showToast('🗑️ Deleted'));
+    if (!confirm('Delete?')) return;
+    const b = allBookings.find(x => x._key === key); if (!b) return;
+    trashRef.push({ bookingKey: key, bookingId: b.bookingId || key.slice(-6), customerName: b.name || '', deletedBy: currentStaffEmail, deletedAt: new Date().toISOString() }).then(() => bookingsRef.child(key).remove()).then(() => showToast('Deleted'));
   };
 
-  // ===== RECEIVE WITH DUPLICATE WARNING =====
   window.openReceiveModal = function(key) {
     const b = allBookings.find(x => x._key === key);
-    if (!b) return;
-    if (b.status === 'received' || b.items_received) { showToast('⚠️ Already received', 'warning'); return; }
-    
-    // Check for duplicates and show warning
-    const duplicates = checkBookingDuplicate(b);
-    const alertDiv = document.getElementById('duplicateAlertReceive');
-    const alertText = document.getElementById('duplicateAlertText');
-    
-    if (duplicates.length > 0) {
-      alertText.textContent = `⚠️ Potential duplicate detected! ${duplicates.length} similar booking(s) found with ${duplicates[0].name || 'same customer'}. Please verify.`;
-      alertDiv.style.display = 'flex';
-    } else {
-      alertDiv.style.display = 'none';
-    }
-    
+    if (!b || b.status === 'received') { showToast('Already received', 'warning'); return; }
     document.getElementById('receiveBookingKey').value = key;
     document.getElementById('receiveBookingId').value = b.bookingId || key.slice(-6);
     document.getElementById('receiveCustomerName').value = b.name || '';
     document.getElementById('receiveCustomerPhone').value = b.phone || '';
     document.getElementById('receiveItemCount').value = b.itemCount || '';
     document.getElementById('receiveCategory').value = b.category || 'Other';
-    receivePhotos = [];
-    document.getElementById('receivePhotosGrid').innerHTML = '';
-    document.getElementById('receivePhotoInput').value = '';
-    document.getElementById('receiveGalleryInput').value = '';
+    receivePhotos = []; document.getElementById('receivePhotosGrid').innerHTML = '';
     openModal('receiveModal');
   };
 
   document.getElementById('receivePhotoInput').onchange = e => handlePhotos(e.target.files);
   document.getElementById('receiveGalleryInput').onchange = e => handlePhotos(e.target.files);
-
-  function handlePhotos(files) {
-    Array.from(files).forEach(f => {
-      const reader = new FileReader();
-      reader.onload = ev => { receivePhotos.push(ev.target.result); renderRcvPhotos(); };
-      reader.readAsDataURL(f);
-    });
-  }
-  function renderRcvPhotos() {
-    document.getElementById('receivePhotosGrid').innerHTML = receivePhotos.map((p, i) => '<div class="photo-item"><img src="' + p + '"><button class="delete-photo" onclick="receivePhotos.splice(' + i + ',1);renderRcvPhotos();">&times;</button></div>').join('');
-  }
+  function handlePhotos(files) { Array.from(files).forEach(f => { const reader = new FileReader(); reader.onload = ev => { receivePhotos.push(ev.target.result); renderRcvPhotos(); }; reader.readAsDataURL(f); }); }
+  function renderRcvPhotos() { document.getElementById('receivePhotosGrid').innerHTML = receivePhotos.map((p, i) => '<div class="photo-item"><img src="' + p + '"><button class="delete-photo" onclick="receivePhotos.splice(' + i + ',1);renderRcvPhotos();">&times;</button></div>').join(''); }
 
   document.getElementById('receiveForm').onsubmit = function(e) {
     e.preventDefault();
@@ -723,22 +630,16 @@
     const key = document.getElementById('receiveBookingKey').value;
     const b = allBookings.find(x => x._key === key);
     if (!b || b.status === 'received') { showToast('Already received!', 'error'); return; }
-    
     receivedItemsRef.push({
       bookingKey: key, bookingId: b.bookingId || key.slice(-6), customerName: b.name || '', customerPhone: b.phone || '',
       itemCount: parseInt(document.getElementById('receiveItemCount').value), category: document.getElementById('receiveCategory').value,
       description: document.getElementById('receiveDescription').value, condition: document.getElementById('receiveCondition').value,
       location: document.getElementById('receiveLocation').value, photos: receivePhotos,
       receivedBy: currentStaffEmail, receivedByName: currentStaffEmail.split('@')[0], timestamp: new Date().toISOString()
-    }).then(() => {
-      return bookingsRef.child(key).update({ status: 'received', items_received: true, received_at: new Date().toISOString(), received_by: currentStaffEmail, received_locked: true });
-    }).then(() => {
-      showToast('Items received! 📸');
-      closeModal('receiveModal');
-    });
+    }).then(() => bookingsRef.child(key).update({ status: 'received', items_received: true, received_at: new Date().toISOString(), received_by: currentStaffEmail, received_locked: true }))
+    .then(() => { showToast('Items received!'); closeModal('receiveModal'); });
   };
 
-  // Collection
   window.openCollectionModal = function(key) {
     const b = allBookings.find(x => x._key === key);
     if (!b || b.status === 'collected') { showToast('Already collected', 'warning'); return; }
@@ -760,7 +661,7 @@
       bookingKey: key, requestedBy: currentStaffEmail, requestedByName: currentStaffEmail.split('@')[0],
       staffSignature: ss, customerSignature: cs, timestamp: new Date().toISOString(), status: 'pending', type: 'collection'
     }).then(() => bookingsRef.child(key).update({ pending_collection: true }));
-    showToast('Submitted for approval ⏳');
+    showToast('Submitted for approval');
     closeModal('collectionModal');
   };
 
@@ -778,7 +679,7 @@
   }
   window.clearCanvas = id => { const c = document.getElementById(id); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); };
 
-   window.approveCollection = function(key) {
+  window.approveCollection = function(key) {
     if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
     const approval = allPendingApprovals.find(a => a.key === key);
     if (!approval) return;
@@ -789,16 +690,11 @@
       staffSignature: approval.staffSignature, collectedBy: approval.requestedBy,
       collectedByName: approval.requestedByName, approvedBy: currentStaffEmail, timestamp: new Date().toISOString()
     }).then(() => bookingsRef.child(approval.bookingKey).update({ status: 'collected', collected_at: new Date().toISOString(), collection_approved: true, pending_collection: false }))
-      .then(() => pendingApprovalsRef.child(key).update({ 
-        status: 'approved', 
-        adminResponse: 'approved',
-        adminFeedback: 'Collection approved successfully',
-        respondedBy: currentStaffEmail,
-        respondedAt: new Date().toISOString()
-      })).then(() => showToast('✅ Approved!'));
+      .then(() => pendingApprovalsRef.child(key).update({ status: 'approved', adminResponse: 'approved', adminFeedback: 'Collection approved successfully', respondedBy: currentStaffEmail, respondedAt: new Date().toISOString() }))
+      .then(() => showToast('✅ Approved!'));
   };
 
-   window.openRejectFeedback = function(key) {
+  window.openRejectFeedback = function(key) {
     if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
     currentRejectionKey = key;
     document.getElementById('feedbackMessage').value = '';
@@ -808,61 +704,35 @@
   window.submitRejectionWithFeedback = function() {
     const feedback = document.getElementById('feedbackMessage').value.trim();
     if (!feedback) { showToast('Please provide feedback', 'warning'); return; }
-    
     const key = currentRejectionKey;
     const approval = allPendingApprovals.find(a => a.key === key);
-    if (approval) {
-      bookingsRef.child(approval.bookingKey).update({ pending_collection: false });
-    }
-    
-    pendingApprovalsRef.child(key).update({ 
-      status: 'rejected', 
-      adminResponse: 'rejected',
-      adminFeedback: feedback,
-      respondedBy: currentStaffEmail,
-      respondedAt: new Date().toISOString()
-    }).then(() => {
-      showToast('❌ Rejected with feedback');
-      closeModal('feedbackModal');
-      currentRejectionKey = null;
-    });
+    if (approval) { bookingsRef.child(approval.bookingKey).update({ pending_collection: false }); }
+    pendingApprovalsRef.child(key).update({ status: 'rejected', adminResponse: 'rejected', adminFeedback: feedback, respondedBy: currentStaffEmail, respondedAt: new Date().toISOString() })
+      .then(() => { showToast('❌ Rejected with feedback'); closeModal('feedbackModal'); currentRejectionKey = null; });
   };
 
-
-    window.resubmitCollection = function(bookingKey) {
+  window.resubmitCollection = function(bookingKey) {
     if (!currentStaffEmail) return;
     const b = allBookings.find(x => x._key === bookingKey);
     if (!b) return;
-    
     const rejectedApproval = allPendingApprovals.find(a => a.bookingKey === bookingKey && a.status === 'rejected' && a.type === 'collection');
-    
     if (!confirm('Resubmit collection request for #' + (b.bookingId || bookingKey.slice(-6)) + '?')) return;
-    
     bookingsRef.child(bookingKey).update({ pending_collection: true }).then(() => {
       return pendingApprovalsRef.push({
-        bookingKey: bookingKey, 
-        requestedBy: currentStaffEmail, 
-        requestedByName: currentStaffEmail.split('@')[0],
+        bookingKey: bookingKey, requestedBy: currentStaffEmail, requestedByName: currentStaffEmail.split('@')[0],
         staffSignature: rejectedApproval ? rejectedApproval.staffSignature : '',
         customerSignature: rejectedApproval ? rejectedApproval.customerSignature : '',
-        timestamp: new Date().toISOString(), 
-        status: 'pending', 
-        type: 'collection',
-        resubmitted: true,
-        previousRejection: rejectedApproval ? rejectedApproval.adminFeedback : ''
+        timestamp: new Date().toISOString(), status: 'pending', type: 'collection',
+        resubmitted: true, previousRejection: rejectedApproval ? rejectedApproval.adminFeedback : ''
       });
-    }).then(() => {
-      if (rejectedApproval) {
-        pendingApprovalsRef.child(rejectedApproval.key).remove();
-      }
-      showToast('Resubmitted for approval! ⏳');
-    });
+    }).then(() => { if (rejectedApproval) { pendingApprovalsRef.child(rejectedApproval.key).remove(); } showToast('Resubmitted!'); });
   };
 
   window.approveAssignment = function(approvalKey, bookingKey, staffEmail) {
     if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
     bookingsRef.child(bookingKey).update({ assigned_to: staffEmail, assigned_at: new Date().toISOString() })
-      .then(() => pendingApprovalsRef.child(approvalKey).update({ status: 'approved' })).then(() => showToast('✅ Assigned!'));
+      .then(() => pendingApprovalsRef.child(approvalKey).update({ status: 'approved', adminResponse: 'approved', adminFeedback: 'Assignment approved', respondedBy: currentStaffEmail, respondedAt: new Date().toISOString() }))
+      .then(() => showToast('✅ Assigned!'));
   };
 
   function getSB(s) { const map = { active: 'badge-active', collected: 'badge-collected', received: 'badge-received' }; return '<span class="badge ' + (map[s] || 'badge-pending') + '">' + s + '</span>'; }
@@ -871,24 +741,15 @@
       .map(s => '<span class="step-dot ' + (s.d ? 'step-done' : (s.a ? 'step-active' : 'step-waiting')) + '"></span>').join('');
   }
 
-  // Booking Card
   function renderBookingCard(b, showRequestBtn = true) {
-    const isDuplicate = duplicateBookings.has(b._key);
-    const isUnassigned = !b.assigned_to;
-    const isMine = b.assigned_to === currentStaffEmail;
-    
+    const isDuplicate = duplicateBookings.has(b._key), isUnassigned = !b.assigned_to, isMine = b.assigned_to === currentStaffEmail;
     return `<div class="booking-card ${isDuplicate ? 'duplicate' : ''} ${isUnassigned ? 'unassigned' : ''}">
-      ${isDuplicate ? '<div class="duplicate-badge">⚠️ DUPE</div>' : ''}
-      ${isUnassigned ? '<div class="unassigned-badge">Unassigned</div>' : ''}
-      <div class="booking-header">
-        <div><div class="booking-id">#${b.bookingId || b._key.slice(-6)}</div><div style="font-size:0.65rem;color:var(--text-secondary);">${formatTimestamp(b.timestamp)}</div></div>
-        <div class="booking-status">${getSB(b.status)}${b.received_locked ? ' 🔒' : ''}${b.collection_approved ? ' ✅' : ''}</div>
-      </div>
+      ${isDuplicate ? '<div class="duplicate-badge">⚠️ DUPE</div>' : ''}${isUnassigned ? '<div class="unassigned-badge">Unassigned</div>' : ''}
+      <div class="booking-header"><div><div class="booking-id">#${b.bookingId || b._key.slice(-6)}</div><div style="font-size:0.65rem;color:var(--text-secondary);">${formatTimestamp(b.timestamp)}</div></div><div class="booking-status">${getSB(b.status)}</div></div>
       <div class="booking-body">
         <div class="booking-field"><div class="booking-label">Customer</div><div class="booking-value">${b.name || '—'}</div></div>
         <div class="booking-field"><div class="booking-label">Phone</div><div class="booking-value">${b.phone || '—'}</div></div>
         <div class="booking-field"><div class="booking-label">Items</div><div class="booking-value">${b.itemCount || '?'} ${b.category || ''}</div></div>
-        <div class="booking-field"><div class="booking-label">Check-in</div><div class="booking-value">${b.checkIn || '—'}</div></div>
         <div class="booking-field"><div class="booking-label">Staff</div><div class="booking-value">${b.assigned_to ? b.assigned_to.split('@')[0] : '<span style="color:var(--warning);">Unassigned</span>'}</div></div>
         <div class="booking-field"><div class="booking-label">Progress</div><div class="booking-value">${getWS(b)}</div></div>
       </div>
@@ -896,14 +757,10 @@
         <button class="action-btn btn-preview" onclick="showPreview('${b._key}')"><i class="fas fa-eye"></i></button>
         ${showRequestBtn && isUnassigned ? `<button class="action-btn btn-request" onclick="requestUnassigned('${b._key}')"><i class="fas fa-hand-paper"></i> Request</button>` : ''}
         ${isMine && b.status === 'active' && !b.items_received ? `<button class="action-btn btn-receive" onclick="openReceiveModal('${b._key}')"><i class="fas fa-camera"></i> Receive</button>` : ''}
-                ${(() => {
+        ${(() => {
           const rejectedApproval = allPendingApprovals.find(a => a.bookingKey === b._key && a.status === 'rejected' && a.type === 'collection');
           if (rejectedApproval && isMine) {
-            return `<div class="rejected-notice" style="grid-column:1/-1;background:rgba(239,68,68,0.15);border-left:4px solid var(--danger);padding:10px;margin:8px 0;border-radius:4px;font-size:0.8rem;">
-              <i class="fas fa-exclamation-circle"></i> <strong>Rejected by Admin</strong>
-              ${rejectedApproval.adminFeedback ? `<div style="font-size:0.75rem;color:var(--danger);margin-top:4px;">"${rejectedApproval.adminFeedback}"</div>` : ''}
-              <button class="action-btn btn-resubmit" onclick="resubmitCollection('${b._key}')" style="margin-top:6px;background:#f59e0b;color:#000;font-weight:700;"><i class="fas fa-redo"></i> Resubmit</button>
-            </div>`;
+            return `<div class="rejected-notice"><i class="fas fa-exclamation-circle"></i> <strong>Rejected by Admin</strong>${rejectedApproval.adminFeedback ? `<div style="font-size:0.75rem;color:var(--danger);margin-top:4px;">"${rejectedApproval.adminFeedback}"</div>` : ''}<button class="action-btn btn-resubmit" onclick="resubmitCollection('${b._key}')" style="margin-top:6px;"><i class="fas fa-redo"></i> Resubmit</button></div>`;
           } else if (isMine && b.status === 'received') {
             return `<button class="action-btn btn-collect" onclick="openCollectionModal('${b._key}')"><i class="fas fa-people-carry"></i> Collect</button>`;
           }
@@ -911,17 +768,14 @@
         })()}
         ${b.collection_approved ? `<button class="action-btn btn-whatsapp" onclick="openWhatsAppModal('${b._key}')"><i class="fab fa-whatsapp"></i></button>` : ''}
         ${currentStaffIsAdmin ? `<button class="action-btn btn-delete" onclick="deleteBooking('${b._key}')"><i class="fas fa-trash"></i></button>` : ''}
-        ${isDuplicate && currentStaffIsAdmin ? `<button class="action-btn btn-merge" onclick="showToast('Merge feature coming soon', 'info')"><i class="fas fa-compress"></i></button>` : ''}
-      </div>
-    </div>`;
+      </div></div>`;
   }
 
   function renderMyBookingsGrid() {
     const mb = allBookings.filter(b => b.assigned_to === currentStaffEmail);
     const grid = document.getElementById('myBookingsGrid'), empty = document.getElementById('myBookingsEmpty');
     if (!mb.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
-    empty.style.display = 'none';
-    grid.innerHTML = mb.map(b => renderBookingCard(b, false)).join('');
+    empty.style.display = 'none'; grid.innerHTML = mb.map(b => renderBookingCard(b, false)).join('');
   }
 
   function renderAllBookingsGrid() {
@@ -931,60 +785,30 @@
     if (s) bookings = bookings.filter(b => (b.name||'').toLowerCase().includes(s) || (b.bookingId||'').toLowerCase().includes(s) || (b.phone||'').toLowerCase().includes(s));
     if (f === 'unassigned') bookings = bookings.filter(b => !b.assigned_to);
     else if (f !== 'all') bookings = bookings.filter(b => b.status === f);
-    
     const grid = document.getElementById('allBookingsGrid'), empty = document.getElementById('allBookingsEmpty');
     if (!bookings.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
-    empty.style.display = 'none';
-    grid.innerHTML = bookings.map(b => renderBookingCard(b, true)).join('');
+    empty.style.display = 'none'; grid.innerHTML = bookings.map(b => renderBookingCard(b, true)).join('');
   }
 
-  // ===== MY RECEIVED (Staff Only) =====
   function renderMyReceivedCards() {
     const items = allReceivedItems.filter(r => r.receivedBy === currentStaffEmail);
     const c = document.getElementById('receivedCardsContainer'), e = document.getElementById('receivedEmpty');
-    document.getElementById('receiveCount') && (document.getElementById('receiveCount').textContent = items.length);
     document.getElementById('receiveBadge').textContent = items.length;
     document.getElementById('receiveBadge').style.display = items.length > 0 ? 'inline-block' : 'none';
     if (!items.length) { c.innerHTML = ''; e.style.display = 'block'; return; }
     e.style.display = 'none';
-    c.innerHTML = items.map(r => `<div class="data-card">
-      <div class="card-row"><span class="card-label">ID</span><span class="card-value" style="font-family:monospace;">${r.bookingId || (r.bookingKey||'').slice(-6)}</span></div>
-      <div class="card-row"><span class="card-label">Customer</span><span class="card-value">${r.customerName||'—'}</span></div>
-      <div class="card-row"><span class="card-label">Items</span><span class="card-value">${r.itemCount} ${r.category||''}</span></div>
-      <div class="card-row"><span class="card-label">Photos</span><span class="card-value">${r.photos&&r.photos.length?'📸 '+r.photos.length:'—'}</span></div>
-      <div class="card-row"><span class="card-label">Time</span><span class="card-value">${formatTimestamp(r.timestamp)}</span></div>
-      <div class="card-actions">
-        <button class="action-btn btn-preview" onclick="showPreview('${r.key}','received')"><i class="fas fa-eye"></i></button>
-        ${r.photos&&r.photos.length?`<button class="action-btn btn-view" onclick="viewPhotos('${r.key}')"><i class="fas fa-image"></i></button>`:''}
-      </div>
-    </div>`).join('');
+    c.innerHTML = items.map(r => `<div class="data-card"><div class="card-row"><span class="card-label">ID</span><span class="card-value">${r.bookingId || (r.bookingKey||'').slice(-6)}</span></div><div class="card-row"><span class="card-label">Customer</span><span class="card-value">${r.customerName||'—'}</span></div><div class="card-row"><span class="card-label">Items</span><span class="card-value">${r.itemCount} ${r.category||''}</span></div><div class="card-row"><span class="card-label">Time</span><span class="card-value">${formatTimestamp(r.timestamp)}</span></div><div class="card-actions"><button class="action-btn btn-preview" onclick="showPreview('${r.key}','received')"><i class="fas fa-eye"></i></button></div></div>`).join('');
   }
 
-  // ===== MY COLLECTIONS (Staff Only) =====
   function renderMyCollectedCards() {
     const items = allCollectedItems.filter(c => c.collectedBy === currentStaffEmail);
     const c = document.getElementById('collectedCardsContainer'), e = document.getElementById('collectedEmpty');
-    document.getElementById('collectedCount') && (document.getElementById('collectedCount').textContent = items.length);
     document.getElementById('collectBadge').textContent = items.length;
     document.getElementById('collectBadge').style.display = items.length > 0 ? 'inline-block' : 'none';
     if (!items.length) { c.innerHTML = ''; e.style.display = 'block'; return; }
     e.style.display = 'none';
-    c.innerHTML = items.map(co => `<div class="data-card">
-      <div class="card-row"><span class="card-label">ID</span><span class="card-value" style="font-family:monospace;">${co.bookingId||(co.bookingKey||'').slice(-6)}</span></div>
-      <div class="card-row"><span class="card-label">Customer</span><span class="card-value">${co.customerName||'—'}</span></div>
-      <div class="card-row"><span class="card-label">Items</span><span class="card-value">${co.items||'—'}</span></div>
-      <div class="card-row"><span class="card-label">Time</span><span class="card-value">${formatTimestamp(co.timestamp)}</span></div>
-      <div class="card-actions"><button class="action-btn btn-preview" onclick="showPreview('${co.key}','collected')"><i class="fas fa-eye"></i></button></div>
-    </div>`).join('');
+    c.innerHTML = items.map(co => `<div class="data-card"><div class="card-row"><span class="card-label">ID</span><span class="card-value">${co.bookingId||(co.bookingKey||'').slice(-6)}</span></div><div class="card-row"><span class="card-label">Customer</span><span class="card-value">${co.customerName||'—'}</span></div><div class="card-row"><span class="card-label">Items</span><span class="card-value">${co.items||'—'}</span></div><div class="card-row"><span class="card-label">Time</span><span class="card-value">${formatTimestamp(co.timestamp)}</span></div><div class="card-actions"><button class="action-btn btn-preview" onclick="showPreview('${co.key}','collected')"><i class="fas fa-eye"></i></button></div></div>`).join('');
   }
-
-  window.viewPhotos = key => {
-    const item = allReceivedItems.find(r => r.key === key);
-    if (!item || !item.photos) return;
-    const w = window.open('', '_blank');
-    w.document.write('<!DOCTYPE html><html><head><title>Photos</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;padding:16px;text-align:center;background:#f5f5f5}img{max-width:100%;height:auto;margin:8px 0;border-radius:10px}</style></head><body><h2>📸 Item Photos</h2>' + item.photos.map(p => '<img src="' + p + '">').join('') + '</body></html>');
-    w.document.close();
-  };
 
   function renderApprovals() {
     const container = document.getElementById('approvalsContainer');
@@ -995,18 +819,54 @@
     document.getElementById('approvalsEmpty').style.display = 'none';
     container.innerHTML = pending.map(a => {
       const b = allBookings.find(x => x._key === a.bookingKey);
-      return `<div class="approval-pending-card">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-          <div><strong>${a.type === 'collection' ? '📦 Collection' : a.type === 'assignment_request' ? '👤 Assignment' : '✏️ Edit'}</strong>
-            <div style="font-size:0.75rem;">Booking: ${a.bookingKey?.slice(-6)}</div>
-            <div style="font-size:0.72rem;">By: ${a.requestedByName || (a.requestedBy||'').split('@')[0]}</div>
-          </div>
-          <div style="display:flex;gap:4px;">
-            ${a.type === 'assignment_request' ? `<button class="action-btn btn-approve" onclick="approveAssignment('${a.key}','${a.bookingKey}','${a.requestedBy}')"><i class="fas fa-check"></i> Assign</button>` : `<button class="action-btn btn-approve" onclick="approveCollection('${a.key}')"><i class="fas fa-check"></i> Approve</button>`}
-                        <button class="action-btn btn-reject" onclick="openRejectFeedback('${a.key}')"><i class="fas fa-comment"></i> Reject</button>       </div>
-        </div>
-      </div>`;
+      return `<div class="approval-pending-card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;"><div><strong>${a.type === 'collection' ? '📦 Collection' : a.type === 'assignment_request' ? '👤 Assignment' : '✏️ Edit'}</strong><div style="font-size:0.75rem;">Booking: ${a.bookingKey?.slice(-6)}</div><div style="font-size:0.72rem;">By: ${a.requestedByName || (a.requestedBy||'').split('@')[0]}</div></div><div style="display:flex;gap:4px;">${a.type === 'assignment_request' ? `<button class="action-btn btn-approve" onclick="approveAssignment('${a.key}','${a.bookingKey}','${a.requestedBy}')"><i class="fas fa-check"></i> Assign</button>` : `<button class="action-btn btn-approve" onclick="approveCollection('${a.key}')"><i class="fas fa-check"></i> Approve</button>`}<button class="action-btn btn-reject" onclick="openRejectFeedback('${a.key}')"><i class="fas fa-comment"></i> Reject</button></div></div></div>`;
     }).join('');
+  }
+
+  // ===== MY APPROVAL REQUESTS TABLE =====
+  function renderMyApprovalRequests() {
+    const filter = document.getElementById('myApprovalFilter')?.value || 'all';
+    const myRequests = allPendingApprovals.filter(a => a.requestedBy === currentStaffEmail);
+    let filtered = myRequests;
+    if (filter !== 'all') { filtered = myRequests.filter(a => a.status === filter); }
+    filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    const pending = myRequests.filter(a => a.status === 'pending').length;
+    document.getElementById('myApprovalsBadge').textContent = pending;
+    document.getElementById('myApprovalsBadge').style.display = pending > 0 ? 'inline-block' : 'none';
+    
+    const tableBody = document.getElementById('myApprovalsTableBody');
+    const cardsContainer = document.getElementById('myApprovalsCardsContainer');
+    const empty = document.getElementById('myApprovalsEmpty');
+    
+    if (!filtered.length) {
+      tableBody.innerHTML = '<tr><td colspan="7"><div class="empty-state">No requests found</div></td></tr>';
+      cardsContainer.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    
+    const getStatusBadge = (status) => {
+      if (status === 'approved') return '<span class="badge" style="background:#d1fae5;color:#065f46;">✅ Approved</span>';
+      if (status === 'rejected') return '<span class="badge" style="background:#fee2e2;color:#dc2626;">❌ Rejected</span>';
+      return '<span class="badge" style="background:#fef3c7;color:#92400e;">⏳ Waiting</span>';
+    };
+    
+    tableBody.innerHTML = filtered.map(a => {
+      const booking = allBookings.find(b => b._key === a.bookingKey) || {};
+      return `<tr>
+        <td><strong>#${a.bookingKey?.slice(-6)}</strong></td>
+        <td>${a.type === 'collection' ? '📦 Collection' : a.type === 'assignment_request' ? '👤 Assignment' : '✏️ Edit'}</td>
+        <td>${getStatusBadge(a.status)}</td>
+        <td><span class="timestamp-badge">${formatTimestamp(a.timestamp)}</span></td>
+        <td>${a.respondedBy ? (a.respondedBy || '').split('@')[0] : '—'}${a.respondedAt ? `<br><span style="font-size:0.6rem;">${formatTimestamp(a.respondedAt)}</span>` : ''}</td>
+        <td style="max-width:150px;">${a.adminFeedback ? `<span style="color:${a.status==='rejected'?'var(--danger)':'var(--success)'};">"${a.adminFeedback}"</span>` : '—'}</td>
+        <td>${a.status==='rejected'?`<button class="action-btn btn-resubmit" onclick="resubmitCollection('${a.bookingKey}')"><i class="fas fa-redo"></i> Resubmit</button>`:''}${a.status==='pending'?`<button class="action-btn btn-preview" onclick="showPreview('${a.bookingKey}')"><i class="fas fa-eye"></i></button>`:''}</td>
+      </tr>`;
+    }).join('');
+    
+    cardsContainer.innerHTML = filtered.map(a => `<div class="data-card" style="border-left:3px solid ${a.status==='approved'?'var(--success)':a.status==='rejected'?'var(--danger)':'var(--warning)'};"><div class="card-row"><span class="card-label">Booking</span><strong>#${a.bookingKey?.slice(-6)}</strong></div><div class="card-row"><span class="card-label">Type</span>${a.type==='collection'?'📦 Collection':'👤 Assignment'}</div><div class="card-row"><span class="card-label">Status</span>${getStatusBadge(a.status)}</div><div class="card-row"><span class="card-label">Submitted</span>${formatTimestamp(a.timestamp)}</div>${a.respondedBy?`<div class="card-row"><span class="card-label">Responded By</span>${(a.respondedBy||'').split('@')[0]}</div>`:''}${a.adminFeedback?`<div class="card-row"><span class="card-label">Feedback</span><span style="color:${a.status==='rejected'?'var(--danger)':'var(--success)'};">"${a.adminFeedback}"</span></div>`:''}<div class="card-actions">${a.status==='rejected'?`<button class="action-btn btn-resubmit" onclick="resubmitCollection('${a.bookingKey}')"><i class="fas fa-redo"></i> Resubmit</button>`:''}${a.status==='pending'?`<button class="action-btn btn-preview" onclick="showPreview('${a.bookingKey}')"><i class="fas fa-eye"></i> View</button>`:''}</div></div>`).join('');
   }
 
   window.openWhatsAppModal = function(key) {
@@ -1015,30 +875,23 @@
     document.getElementById('whatsappPreview').textContent = genRcvMsg(b);
     openModal('whatsappModal');
   };
-  window.sendWhatsApp = function() { closeModal('whatsappModal'); showToast('WhatsApp opened! 📱'); };
+  window.sendWhatsApp = function() { closeModal('whatsappModal'); showToast('WhatsApp opened!'); };
 
   document.getElementById('searchInput')?.addEventListener('input', renderAllBookingsGrid);
   document.getElementById('filterStatus')?.addEventListener('change', renderAllBookingsGrid);
 
   function exportToExcel() {
-    const data = allBookings.map(b => ({ 'Booking ID': b.bookingId||(b._key?b._key.slice(-6):''), 'Customer': b.name||'', 'Phone': b.phone||'', 'Items': (b.itemCount||'0')+' '+(b.category||''), 'Staff': b.assigned_to||'Unassigned', 'Status': b.status, 'Duplicate': duplicateBookings.has(b._key)?'YES':'NO' }));
+    const data = allBookings.map(b => ({ 'Booking ID': b.bookingId||(b._key?b._key.slice(-6):''), 'Customer': b.name||'', 'Phone': b.phone||'', 'Items': (b.itemCount||'0')+' '+(b.category||''), 'Staff': b.assigned_to||'Unassigned', 'Status': b.status }));
     XLSX.writeFile(XLSX.utils.book_new(XLSX.utils.json_to_sheet(data), 'Bookings'), 'bookings_' + new Date().toISOString().split('T')[0] + '.xlsx');
-    showToast('Exported! 📊');
+    showToast('Exported!');
   }
 
-  // Dashboard
   function updateDashboardStats() {
-    const dupes = detectDuplicates(allBookings);
     document.getElementById('statTotal').textContent = allBookings.length;
     document.getElementById('statMyActive').textContent = allBookings.filter(b => b.assigned_to === currentStaffEmail && b.status === 'active').length;
     document.getElementById('statUnassigned').textContent = allBookings.filter(b => !b.assigned_to && b.status === 'active').length;
     document.getElementById('statReceived').textContent = allReceivedItems.filter(x => x.receivedBy === currentStaffEmail).length;
     document.getElementById('statCollected').textContent = allCollectedItems.filter(x => x.collectedBy === currentStaffEmail).length;
-    
-    const warnContainer = document.getElementById('duplicateWarningContainer');
-    if (dupes > 0) {
-      warnContainer.innerHTML = `<div class="duplicate-warning"><i class="fas fa-exclamation-triangle"></i> ${dupes} potential duplicate booking(s) detected across all bookings.</div>`;
-    } else { warnContainer.innerHTML = ''; }
     updateAllCharts();
   }
 
@@ -1046,15 +899,8 @@
     const feed = document.getElementById('recentActivityFeed');
     const recent = [...allReceivedItems.filter(x => x.receivedBy === currentStaffEmail), ...allCollectedItems.filter(x => x.collectedBy === currentStaffEmail)]
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
-    if (!recent.length) { feed.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-secondary);">No recent activity</div>'; return; }
-    feed.innerHTML = recent.map(item => {
-      const isReceived = item.hasOwnProperty('photos');
-      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.75rem;">
-        <span style="color:${isReceived?'var(--success)':'var(--violet)'};">${isReceived?'📸 Received':'✅ Collected'}</span>
-        <span>${item.customerName||'Unknown'}</span>
-        <span style="margin-left:auto;font-size:0.65rem;color:var(--text-secondary);">${formatTimestamp(item.timestamp)}</span>
-      </div>`;
-    }).join('');
+    if (!recent.length) { feed.innerHTML = '<div style="padding:12px;text-align:center;">No recent activity</div>'; return; }
+    feed.innerHTML = recent.map(item => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.75rem;"><span style="color:${item.hasOwnProperty('photos')?'var(--success)':'var(--violet)'};">${item.hasOwnProperty('photos')?'📸 Received':'✅ Collected'}</span><span>${item.customerName||'Unknown'}</span><span style="margin-left:auto;">${formatTimestamp(item.timestamp)}</span></div>`).join('');
   }
 
   function updateAllCharts() { updateDashboardCharts(); }
@@ -1064,109 +910,24 @@
     const c = allCollectedItems.filter(x => x.collectedBy === currentStaffEmail).length;
     const r = allReceivedItems.filter(x => x.receivedBy === currentStaffEmail).length;
     const u = allBookings.filter(b => !b.assigned_to && b.status === 'active').length;
-    
     const ctx1 = document.getElementById('statusChart');
-    if (ctx1) {
-      if (statusChart) statusChart.destroy();
-      statusChart = new Chart(ctx1, { type: 'doughnut', data: { labels: ['Active','Received','Collected','Unassigned'], datasets: [{ data: [a,r,c,u], backgroundColor: ['#10b981','#3b82f6','#8b5cf6','#f59e0b'], borderColor: isLight?'#fff':'#1e293b', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 9 }, usePointStyle: true } } } } });
-    }
-    
+    if (ctx1) { if (statusChart) statusChart.destroy(); statusChart = new Chart(ctx1, { type: 'doughnut', data: { labels: ['Active','Received','Collected','Unassigned'], datasets: [{ data: [a,r,c,u], backgroundColor: ['#10b981','#3b82f6','#8b5cf6','#f59e0b'], borderColor: isLight?'#fff':'#1e293b', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 9 }, usePointStyle: true } } } } }); }
     const ctx2 = document.getElementById('trendChart');
-    if (ctx2) {
-      if (trendChart) trendChart.destroy();
-      const days = [], rd = [], cd = [];
-      for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const ds = d.toISOString().split('T')[0]; days.push(d.toLocaleDateString('en-US', { weekday: 'short' })); rd.push(allReceivedItems.filter(x => x.receivedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); cd.push(allCollectedItems.filter(x => x.collectedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); }
-      trendChart = new Chart(ctx2, { type: 'line', data: { labels: days, datasets: [{ label: 'Received', data: rd, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }, { label: 'Collected', data: cd, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor, font: { size: 9 } } } }, scales: { x: { ticks: { color: textColor, font: { size: 8 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor } } } } });
-    }
+    if (ctx2) { if (trendChart) trendChart.destroy(); const days = [], rd = [], cd = []; for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const ds = d.toISOString().split('T')[0]; days.push(d.toLocaleDateString('en-US', { weekday: 'short' })); rd.push(allReceivedItems.filter(x => x.receivedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); cd.push(allCollectedItems.filter(x => x.collectedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); } trendChart = new Chart(ctx2, { type: 'line', data: { labels: days, datasets: [{ label: 'Received', data: rd, borderColor: '#3b82f6', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }, { label: 'Collected', data: cd, borderColor: '#8b5cf6', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor, font: { size: 9 } } } }, scales: { x: { ticks: { color: textColor } }, y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor } } } } }); }
   }
 
-  // ===== IMPROVED INSIGHTS =====
   function renderInsights() {
     const todayStr = new Date().toISOString().split('T')[0];
     const myReceived = allReceivedItems.filter(x => x.receivedBy === currentStaffEmail);
     const myCollected = allCollectedItems.filter(x => x.collectedBy === currentStaffEmail);
-    
-    // Today
     document.getElementById('insightTodayReceived').textContent = myReceived.filter(x => x.timestamp && x.timestamp.startsWith(todayStr)).length;
     document.getElementById('insightTodayCollected').textContent = myCollected.filter(x => x.timestamp && x.timestamp.startsWith(todayStr)).length;
     document.getElementById('insightTodayPending').textContent = allBookings.filter(b => b.assigned_to === currentStaffEmail && b.status === 'active').length;
-    
-    // Avg receive time
-    const receiveTimes = myReceived.filter(x => x.timestamp).map(x => {
-      const b = allBookings.find(bk => bk._key === x.bookingKey);
-      return b && b.timestamp ? new Date(x.timestamp) - new Date(b.timestamp) : null;
-    }).filter(t => t !== null);
-    if (receiveTimes.length) {
-      const avgMin = Math.round(receiveTimes.reduce((a, b) => a + b, 0) / receiveTimes.length / 60000);
-      document.getElementById('insightAvgTime').textContent = avgMin + ' min';
-    }
-    
-    // Weekly
     const weekAgo = new Date(Date.now() - 7*86400000);
     document.getElementById('insightWeekReceived').textContent = myReceived.filter(x => new Date(x.timestamp) > weekAgo).length;
     document.getElementById('insightWeekCollected').textContent = myCollected.filter(x => new Date(x.timestamp) > weekAgo).length;
     const total = allBookings.filter(b => b.assigned_to === currentStaffEmail).length;
     document.getElementById('insightWeekRate').textContent = total > 0 ? Math.round((myCollected.length / total) * 100) + '%' : '0%';
-    
-    // Best day
-    const dayCounts = {};
-    myReceived.forEach(x => { const day = new Date(x.timestamp).toLocaleDateString('en-US', { weekday: 'short' }); dayCounts[day] = (dayCounts[day] || 0) + 1; });
-    myCollected.forEach(x => { const day = new Date(x.timestamp).toLocaleDateString('en-US', { weekday: 'short' }); dayCounts[day] = (dayCounts[day] || 0) + 1; });
-    const bestDay = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0];
-    document.getElementById('insightBestDay').textContent = bestDay ? bestDay[0] + ' (' + bestDay[1] + ')' : '—';
-    
-    // Rankings
-    document.getElementById('insightTotalItems').textContent = myReceived.reduce((s, x) => s + (x.itemCount || 0), 0);
-    const cats = new Set(myReceived.map(x => x.category).filter(Boolean));
-    document.getElementById('insightCategories').textContent = cats.size;
-    const catCounts = {};
-    myReceived.forEach(x => { const cat = x.category || 'Other'; catCounts[cat] = (catCounts[cat] || 0) + 1; });
-    const topCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0];
-    document.getElementById('insightTopCategory').textContent = topCat ? topCat[0] : '—';
-    
-    // Streak
-    let streak = 0;
-    for (let i = 0; i < 30; i++) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const ds = d.toISOString().split('T')[0];
-      if (myReceived.some(x => x.timestamp && x.timestamp.startsWith(ds)) || myCollected.some(x => x.timestamp && x.timestamp.startsWith(ds))) {
-        streak++;
-      } else { break; }
-    }
-    document.getElementById('insightStreak').textContent = streak + ' days 🔥';
-    
-    updateWeeklyChart();
-    updateCategoryChart();
-    updateHourlyChart();
-  }
-
-  function updateWeeklyChart() {
-    const ctx = document.getElementById('weeklyChart'); if (!ctx) return;
-    const isLight = document.body.classList.contains('light'), textColor = isLight ? '#0f172a' : '#f1f5f9';
-    if (weeklyChart) weeklyChart.destroy();
-    const days = [], rd = [], cd = [];
-    for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const ds = d.toISOString().split('T')[0]; days.push(d.toLocaleDateString('en-US', { weekday: 'short' })); rd.push(allReceivedItems.filter(x => x.receivedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); cd.push(allCollectedItems.filter(x => x.collectedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); }
-    weeklyChart = new Chart(ctx, { type: 'bar', data: { labels: days, datasets: [{ label: 'Received', data: rd, backgroundColor: '#3b82f6', borderRadius: 4 }, { label: 'Collected', data: cd, backgroundColor: '#8b5cf6', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor, font: { size: 9 } } } }, scales: { x: { ticks: { color: textColor } }, y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor } } } } });
-  }
-
-  function updateCategoryChart() {
-    const ctx = document.getElementById('categoryChart'); if (!ctx) return;
-    const isLight = document.body.classList.contains('light'), textColor = isLight ? '#0f172a' : '#f1f5f9';
-    if (categoryChart) categoryChart.destroy();
-    const cats = {};
-    allReceivedItems.filter(x => x.receivedBy === currentStaffEmail).forEach(i => { const cat = i.category || 'Other'; cats[cat] = (cats[cat] || 0) + 1; });
-    const labels = Object.keys(cats), data = Object.values(cats);
-    categoryChart = new Chart(ctx, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16'], borderColor: isLight?'#fff':'#1e293b', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 8 }, usePointStyle: true } } } } });
-  }
-
-  function updateHourlyChart() {
-    const ctx = document.getElementById('hourlyChart'); if (!ctx) return;
-    const isLight = document.body.classList.contains('light'), textColor = isLight ? '#0f172a' : '#f1f5f9';
-    if (hourlyChart) hourlyChart.destroy();
-    const hours = Array.from({length: 12}, (_, i) => i + 8); // 8AM to 7PM
-    const labels = hours.map(h => h + ':00');
-    const data = hours.map(h => allReceivedItems.filter(x => x.receivedBy === currentStaffEmail && x.timestamp && new Date(x.timestamp).getHours() === h).length);
-    hourlyChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Received', data, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor, font: { size: 9 } } } }, scales: { x: { ticks: { color: textColor } }, y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor } } } } });
   }
 
   function loadAllRealtime() {
@@ -1184,11 +945,18 @@
       renderMyCollectedCards(); updateDashboardStats(); updateRecentActivity();
     });
     pendingApprovalsRef.on('value', snap => {
-      allPendingApprovals = []; snap.forEach(c => { const d = c.val(); d.key = c.key; allPendingApprovals.unshift(d); });
+      allPendingApprovals = []; 
+      snap.forEach(c => { const d = c.val(); d.key = c.key; allPendingApprovals.unshift(d); });
       if (document.getElementById('tab-approvals').classList.contains('active')) renderApprovals();
+      if (document.getElementById('tab-my-approvals').classList.contains('active')) renderMyApprovalRequests();
       const p = allPendingApprovals.filter(a => a.status === 'pending').length;
       document.getElementById('approvalBadge').textContent = p;
       document.getElementById('approvalBadge').style.display = p > 0 ? 'inline-block' : 'none';
+      const myRequests = allPendingApprovals.filter(a => a.requestedBy === currentStaffEmail);
+      const myPending = myRequests.filter(a => a.status === 'pending').length;
+      const myApprovalsBadge = document.getElementById('myApprovalsBadge');
+      if (myApprovalsBadge) { myApprovalsBadge.textContent = myPending; myApprovalsBadge.style.display = myPending > 0 ? 'inline-block' : 'none'; }
+      renderMyBookingsGrid(); renderAllBookingsGrid();
     });
   }
 
