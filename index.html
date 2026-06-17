@@ -2,616 +2,262 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=yes, height=device-height">
+  <meta name="theme-color" content="#0b1e33">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Staff Portal | CampusVault</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0b1e33">
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --text: #f1f5f9;
-      --text-secondary: #cbd5e1;
-      --primary: #38bdf8;
-      --accent: #0ea5e9;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --border: #334155;
-      --shadow: 0 2px 8px rgba(0,0,0,0.3);
-      --radius: 12px;
-      --radius-sm: 8px;
-      --sidebar-width: 260px;
-      --font: 'Inter', sans-serif;
-      --whatsapp-green: #25D366;
-      --violet: #8b5cf6;
+      --bg: #0f172a; --surface: #1e293b; --text: #f1f5f9; --text-secondary: #cbd5e1;
+      --primary: #38bdf8; --accent: #0ea5e9; --success: #10b981; --warning: #f59e0b;
+      --danger: #ef4444; --border: #334155; --shadow: 0 2px 8px rgba(0,0,0,0.3);
+      --radius: 12px; --radius-sm: 8px; --sidebar-width: 260px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --whatsapp-green: #25D366; --violet: #8b5cf6;
     }
     body.light {
-      --bg: #f1f5f9;
-      --surface: #fff;
-      --text: #0f172a;
-      --text-secondary: #475569;
-      --primary: #1e3a5f;
-      --border: #e2e8f0;
-      --shadow: 0 2px 8px rgba(0,0,0,0.06);
+      --bg: #f1f5f9; --surface: #fff; --text: #0f172a; --text-secondary: #475569;
+      --primary: #1e3a5f; --border: #e2e8f0; --shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { height: 100%; height: -webkit-fill-available; }
     body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      transition: background 0.3s, color 0.3s;
-      overscroll-behavior-y: contain;
-      min-height: 100vh;
+      font-family: var(--font); background: var(--bg); color: var(--text);
+      line-height: 1.5; min-height: 100vh; min-height: 100dvh;
+      min-height: -webkit-fill-available; overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      padding: var(--safe-top) 0 var(--safe-bottom) 0;
     }
+    ::-webkit-scrollbar { width: 3px; height: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     .login-overlay {
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(135deg, #0b1e33, #1e3a5f);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 16px;
+      position: fixed; inset: 0; background: linear-gradient(135deg, #0b1e33, #1e3a5f);
+      display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px;
     }
     .login-card {
-      background: var(--surface);
-      border-radius: 20px;
-      padding: 28px 24px;
-      width: min(90%, 400px);
-      text-align: center;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+      background: var(--surface); border-radius: 20px; padding: 28px 24px;
+      width: min(90%, 400px); text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
     }
-    .login-card h2 {
-      font-weight: 800;
-      font-size: 1.5rem;
-      color: var(--primary);
-      margin-bottom: 6px;
-    }
-    .login-card p {
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-      margin-bottom: 6px;
-    }
+    .login-card h2 { font-weight: 800; font-size: 1.3rem; color: var(--primary); margin-bottom: 6px; }
+    .login-card p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 6px; }
     .google-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 30px;
-      border: 2px solid var(--border);
-      background: var(--surface);
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      cursor: pointer;
-      margin-top: 20px;
-      color: var(--text);
-      font-size: 0.95rem;
-      min-height: 48px;
+      width: 100%; padding: 14px; border-radius: 30px; border: 2px solid var(--border);
+      background: var(--surface); font-weight: 600; display: flex; align-items: center;
+      justify-content: center; gap: 10px; cursor: pointer; margin-top: 20px;
+      color: var(--text); font-size: 0.9rem; min-height: 48px;
     }
-    .google-btn:active {
-      transform: scale(0.97);
-    }
-    .login-error {
-      color: var(--danger);
-      margin-top: 12px;
-      display: none;
-      font-size: 0.85rem;
-    }
+    .google-btn:active { transform: scale(0.97); }
+    .login-error { color: var(--danger); margin-top: 12px; display: none; font-size: 0.85rem; }
 
-    .dashboard {
-      display: none;
-    }
-    .dashboard.active {
-      display: flex;
-      min-height: 100vh;
-    }
+    .dashboard { display: none; }
+    .dashboard.active { display: flex; min-height: 100vh; min-height: 100dvh; }
+
     .sidebar {
-      width: var(--sidebar-width);
-      background: linear-gradient(180deg, #0b1e33, #1e293b);
-      color: #fff;
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 100vh;
-      z-index: 200;
-      transition: transform 0.3s ease;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
+      width: var(--sidebar-width); background: linear-gradient(180deg, #0b1e33, #1e293b); color: #fff;
+      position: fixed; top: 0; left: 0; height: 100vh; height: 100dvh; z-index: 250;
+      transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+      overflow-y: auto; display: flex; flex-direction: column; padding-top: var(--safe-top);
     }
-    .sidebar .brand {
-      padding: 20px 16px;
-      font-weight: 800;
-      font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      flex-shrink: 0;
-    }
-    .sidebar nav {
-      padding: 12px 8px;
-      flex: 1;
-      overflow-y: auto;
-    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar .brand { padding: 20px 16px; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+    .sidebar nav { padding: 8px; flex: 1; overflow-y: auto; }
     .sidebar nav a {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      border-radius: var(--radius);
-      color: #cbd5e1;
-      text-decoration: none;
-      font-weight: 500;
-      margin-bottom: 2px;
-      font-size: 0.88rem;
-      min-height: 44px;
-      transition: 0.2s;
-      cursor: pointer;
+      display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--radius);
+      color: #cbd5e1; text-decoration: none; font-weight: 500; margin-bottom: 2px;
+      font-size: 0.85rem; min-height: 48px; transition: 0.2s; cursor: pointer;
     }
-    .sidebar nav a:hover,
-    .sidebar nav a.active {
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-    }
-    .sidebar nav a i {
-      width: 18px;
-      text-align: center;
-      font-size: 0.95rem;
-    }
-    .sidebar nav a .nav-badge {
-      background: var(--danger);
-      color: #fff;
-      border-radius: 10px;
-      padding: 2px 8px;
-      font-size: 0.65rem;
-      margin-left: auto;
-      min-width: 20px;
-      text-align: center;
-      font-weight: 700;
-    }
-    .sidebar-footer {
-      padding: 16px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      flex-shrink: 0;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .user-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 2px solid var(--accent);
-      object-fit: cover;
-      background: rgba(255,255,255,0.1);
-    }
-    .user-name {
-      font-size: 0.85rem;
-      font-weight: 600;
-    }
-    .admin-badge {
-      background: #fbbf24;
-      color: #000;
-      font-size: 0.6rem;
-      padding: 2px 6px;
-      border-radius: 8px;
-      font-weight: 700;
-      display: inline-block;
-      margin-top: 2px;
-    }
-    .logout-btn {
-      width: 100%;
-      background: rgba(255,255,255,0.1);
-      border: none;
-      color: #fff;
-      padding: 10px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 42px;
-    }
+    .sidebar nav a:hover, .sidebar nav a.active { background: rgba(255,255,255,0.12); color: #fff; }
+    .sidebar nav a i { width: 20px; text-align: center; font-size: 1rem; }
+    .sidebar nav a .nav-badge { background: var(--danger); color: #fff; border-radius: 10px; padding: 2px 8px; font-size: 0.65rem; margin-left: auto; min-width: 20px; text-align: center; font-weight: 700; }
+    .sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+    .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; background: rgba(255,255,255,0.1); flex-shrink: 0; }
+    .user-name { font-size: 0.85rem; font-weight: 600; word-break: break-word; }
+    .admin-badge { background: #fbbf24; color: #000; font-size: 0.6rem; padding: 2px 6px; border-radius: 8px; font-weight: 700; display: inline-block; margin-top: 2px; }
+    .logout-btn { width: 100%; background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 12px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 240; }
+    .sidebar-overlay.active { display: block; }
 
-    .main {
-      flex: 1;
-      margin-left: var(--sidebar-width);
-      padding: 20px;
-      transition: margin-left 0.3s ease;
-      min-height: 100vh;
-      background: var(--bg);
-    }
-    .topbar-mobile {
-      display: none;
-      background: var(--surface);
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      box-shadow: var(--shadow);
-    }
-    .hamburger {
-      background: none;
-      border: none;
-      font-size: 1.3rem;
-      color: var(--text);
-      cursor: pointer;
-      padding: 10px;
-      min-width: 44px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .theme-toggle {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 6px 12px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      font-weight: 500;
-      min-height: 36px;
-    }
+    .main { flex: 1; margin-left: 0; padding: 0; transition: margin-left 0.3s ease; min-height: 100vh; min-height: 100dvh; background: var(--bg); display: flex; flex-direction: column; }
+    .topbar-mobile { display: flex; background: var(--surface); padding: 8px 12px; border-bottom: 1px solid var(--border); justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); min-height: 52px; flex-shrink: 0; }
+    .hamburger { background: none; border: none; font-size: 1.3rem; color: var(--text); cursor: pointer; padding: 10px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+    .topbar-title { font-weight: 700; font-size: 0.85rem; }
+    .theme-toggle { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; min-height: 36px; }
+    .content-area { flex: 1; padding: 12px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-    .welcome-banner {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      border-radius: var(--radius);
-      padding: 20px 24px;
-      margin-bottom: 20px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      box-shadow: var(--shadow);
-    }
-    .welcome-text h1 {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin-bottom: 2px;
-    }
-    .welcome-text p {
-      opacity: 0.9;
-      font-size: 0.82rem;
-    }
-    .welcome-date {
-      background: rgba(255,255,255,0.15);
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.82rem;
-      white-space: nowrap;
-    }
+    .tab-content { display: none; min-height: 200px; }
+    .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } }
 
-    .tab-content {
-      display: none;
-      min-height: 300px;
-    }
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.25s ease;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-    }
+    .empty-panel { text-align: center; padding: 32px 16px; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); margin: 12px 0; }
+    .empty-panel i { font-size: 2rem; opacity: 0.5; margin-bottom: 10px; display: block; }
+    .empty-panel p { color: var(--text-secondary); font-size: 0.85rem; }
 
-    .empty-panel {
-      text-align: center;
-      padding: 40px 16px;
-      background: var(--surface);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      margin: 16px 0;
-    }
-    .empty-panel i {
-      font-size: 2.2rem;
-      opacity: 0.5;
-      margin-bottom: 12px;
-      display: block;
-    }
-    .empty-panel p {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-    }
+    .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; margin-bottom: 12px; }
+    .card-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-weight: 700; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 0.85rem; }
 
-    .card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-      overflow: hidden;
-      margin-bottom: 16px;
+    /* Booking Grid */
+    .booking-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .booking-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px; box-shadow: var(--shadow); transition: 0.2s; position: relative;
     }
-    .card-header {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-size: 0.9rem;
-    }
+    .booking-card.duplicate { border-left: 4px solid var(--danger); background: rgba(239,68,68,0.03); }
+    .booking-card.unassigned { border-left: 4px solid var(--warning); }
+    .booking-card .booking-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .booking-card .booking-id { font-family: monospace; font-weight: 700; font-size: 0.9rem; }
+    .booking-card .booking-status { display: flex; align-items: center; gap: 6px; }
+    .booking-card .booking-body { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .booking-card .booking-field { display: flex; flex-direction: column; gap: 2px; }
+    .booking-card .booking-label { font-size: 0.6rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; letter-spacing: 0.5px; }
+    .booking-card .booking-value { font-size: 0.82rem; font-weight: 500; }
+    .booking-card .booking-footer { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--border); justify-content: flex-end; }
+    .booking-card .duplicate-badge { position: absolute; top: 10px; right: 10px; background: var(--danger); color: #fff; font-size: 0.55rem; padding: 2px 6px; border-radius: 8px; font-weight: 700; }
+    .booking-card .unassigned-badge { position: absolute; top: 10px; right: 10px; background: var(--warning); color: #000; font-size: 0.55rem; padding: 2px 6px; border-radius: 8px; font-weight: 700; }
 
-    .desktop-table {
-      display: block;
-    }
-    .table-responsive {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      max-height: 55vh;
-      overflow-y: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.76rem;
-      min-width: 650px;
-    }
-    th {
-      background: var(--bg);
-      padding: 10px 8px;
-      text-align: left;
-      font-weight: 600;
-      color: var(--text-secondary);
-      border-bottom: 2px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      white-space: nowrap;
-    }
-    td {
-      padding: 8px;
-      border-bottom: 1px solid var(--border);
-    }
+    .mobile-cards { display: block; }
+    .data-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; box-shadow: var(--shadow); }
+    .data-card .card-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; gap: 6px; font-size: 0.8rem; }
+    .data-card .card-label { font-weight: 700; color: var(--text-secondary); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .data-card .card-value { font-weight: 500; text-align: right; word-break: break-word; }
+    .data-card .card-actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
 
-    .mobile-cards {
-      display: none;
-    }
-    .data-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 8px;
-      box-shadow: var(--shadow);
-    }
-    .data-card .card-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
-      gap: 4px;
-      font-size: 0.82rem;
-    }
-    .data-card .card-label {
-      font-weight: 600;
-      color: var(--text-secondary);
-      font-size: 0.62rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .data-card .card-actions {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid var(--border);
-    }
-
-    .badge {
-      padding: 3px 8px;
-      border-radius: 10px;
-      font-size: 0.65rem;
-      font-weight: 600;
-      display: inline-block;
-      white-space: nowrap;
-    }
+    .badge { padding: 3px 8px; border-radius: 10px; font-size: 0.62rem; font-weight: 600; display: inline-block; white-space: nowrap; }
     .badge-active { background: #d1fae5; color: #065f46; }
     .badge-received { background: #dbeafe; color: #1e40af; }
     .badge-collected { background: #e0e7ff; color: #3730a3; }
     .badge-pending { background: #fef3c7; color: #92400e; }
-    .badge-approved { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+    .badge-duplicate { background: #fee2e2; color: #dc2626; font-weight: 700; }
 
-    .action-btn {
-      padding: 5px 8px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.68rem;
-      margin: 1px;
-      font-weight: 600;
-      white-space: nowrap;
-      min-height: 30px;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      transition: 0.15s;
-    }
-    .action-btn:active { transform: scale(0.95); }
+    .action-btn { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.7rem; margin: 1px; font-weight: 600; white-space: nowrap; min-height: 34px; display: inline-flex; align-items: center; gap: 4px; transition: 0.15s; }
+    .action-btn:active { transform: scale(0.94); }
     .btn-receive { background: var(--success); color: #fff; }
     .btn-edit { background: #dbeafe; color: #1e40af; }
     .btn-whatsapp { background: var(--whatsapp-green); color: #fff; }
     .btn-collect { background: var(--violet); color: #fff; }
-    .btn-notify { background: var(--accent); color: #fff; }
-    .btn-view { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-    .btn-accept { background: var(--success); color: #fff; }
-    .btn-reassign { background: #dbeafe; color: #1e40af; }
+    .btn-preview { background: linear-gradient(135deg, #06b6d4, #1e4d8c); color: #fff; }
+    .btn-delete { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .btn-request { background: var(--warning); color: #000; font-weight: 700; }
+    .btn-approve { background: var(--success); color: #fff; }
+    .btn-reject { background: var(--danger); color: #fff; }
+    .btn-merge { background: var(--warning); color: #000; }
 
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      z-index: 1100;
-    }
-    .modal.show { display: flex; }
-    .modal-content {
-      background: var(--surface);
-      border-radius: 16px 16px 0 0;
-      width: 100%;
-      max-width: 500px;
-      max-height: 82vh;
-      overflow-y: auto;
-      padding: 18px;
-      border: 1px solid var(--border);
-      animation: slideUp 0.25s ease;
-    }
+    .preview-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; z-index: 2000; animation: fadeIn 0.2s ease; }
+    .preview-content { background: var(--surface); border-radius: 20px 20px 0 0; padding: 16px 12px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; border: 2px solid var(--accent); animation: slideUp 0.3s ease; -webkit-overflow-scrolling: touch; }
     @keyframes slideUp { from { transform: translateY(100%); } }
-    .modal-content h3 { font-size: 1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-    .form-group { margin-bottom: 11px; }
-    .form-group label { font-weight: 600; font-size: 0.72rem; display: block; margin-bottom: 3px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-    input, select, textarea {
-      width: 100%;
-      padding: 9px 11px;
-      border-radius: 7px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      font-family: inherit;
-      font-size: 16px !important;
-    }
-    input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; }
-    input[readonly] { opacity: 0.7; }
-    .signature-canvas {
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      width: 100%;
-      height: 110px;
-      touch-action: none;
-      margin: 4px 0;
-    }
-    .flex-between {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-    .btn {
-      padding: 10px 16px;
-      border-radius: 7px;
-      cursor: pointer;
-      font-weight: 600;
-      border: none;
-      font-size: 0.83rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      min-height: 40px;
-      flex: 1;
-      min-width: 0;
-      transition: 0.15s;
-    }
-    .btn:active { transform: scale(0.97); }
+    .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+    .preview-header h3 { font-size: 1.1rem; font-weight: 800; }
+    .preview-close-btn { background: rgba(255,255,255,0.1); border: none; color: var(--text); font-size: 1.2rem; cursor: pointer; padding: 8px 12px; border-radius: 8px; min-width: 44px; min-height: 44px; }
+    .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .preview-item { background: var(--bg); padding: 10px; border-radius: 10px; border: 1px solid var(--border); }
+    .preview-item-full { grid-column: 1 / -1; }
+    .preview-label { font-size: 0.6rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; margin-bottom: 3px; }
+    .preview-value { font-size: 0.85rem; font-weight: 600; word-break: break-word; }
+    .preview-photos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .preview-photos img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border); cursor: pointer; }
+    .preview-actions { display: flex; gap: 6px; margin-top: 16px; justify-content: flex-end; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--border); }
+    .preview-warning { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 0.78rem; color: var(--danger); display: flex; align-items: center; gap: 8px; }
+
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: flex-end; justify-content: center; z-index: 1100; }
+    .modal.show { display: flex; }
+    .modal-content { background: var(--surface); border-radius: 16px 16px 0 0; width: 100%; max-width: 500px; max-height: 88vh; overflow-y: auto; padding: 16px 14px; border: 1px solid var(--border); animation: slideUp 0.25s ease; -webkit-overflow-scrolling: touch; padding-bottom: calc(16px + var(--safe-bottom)); }
+    .modal-content h3 { font-size: 1rem; margin-bottom: 12px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { font-weight: 700; font-size: 0.7rem; display: block; margin-bottom: 3px; color: var(--text-secondary); text-transform: uppercase; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 16px !important; -webkit-appearance: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(56,189,248,0.2); }
+    .signature-canvas { border: 2px solid var(--border); border-radius: 10px; background: #fff; width: 100%; height: 100px; touch-action: none; margin: 4px 0; }
+    .flex-between { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .btn { padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; border: none; font-size: 0.8rem; display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 42px; flex: 1; }
+    .btn:active { transform: scale(0.96); }
     .btn-primary { background: var(--primary); color: #fff; }
     .btn-success { background: var(--success); color: #fff; }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn-whatsapp { background: var(--whatsapp-green); color: #fff; font-weight: 700; }
 
-    .photo-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
-    .photo-item { position: relative; width: 75px; height: 75px; border-radius: 7px; overflow: hidden; border: 2px solid var(--border); }
+    .photo-grid { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .photo-item { position: relative; width: 65px; height: 65px; border-radius: 8px; overflow: hidden; border: 2px solid var(--border); }
     .photo-item img { width: 100%; height: 100%; object-fit: cover; }
-    .photo-item .delete-photo { position: absolute; top: 2px; right: 2px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; }
-    .photo-upload-area { border: 2px dashed var(--border); border-radius: 8px; padding: 18px; text-align: center; cursor: pointer; margin-top: 6px; transition: 0.2s; }
-    .photo-upload-area:active { border-color: var(--primary); background: var(--bg); }
+    .photo-item .delete-photo { position: absolute; top: 2px; right: 2px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; }
+    .photo-upload-options { display: flex; gap: 8px; margin-top: 6px; }
+    .photo-upload-option { flex: 1; border: 2px dashed var(--border); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: 0.2s; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-secondary); min-height: 60px; justify-content: center; }
+    .photo-upload-option:active { border-color: var(--primary); background: var(--bg); }
+    .photo-upload-option i { font-size: 1.3rem; }
 
-    .toast-container { position: fixed; bottom: 20px; right: 16px; left: 16px; display: flex; flex-direction: column-reverse; gap: 6px; z-index: 1200; pointer-events: none; }
-    .toast { background: var(--surface); border-left: 4px solid var(--success); padding: 10px 14px; border-radius: 8px; box-shadow: var(--shadow); font-size: 0.82rem; animation: slideIn 0.25s ease; pointer-events: auto; max-width: 400px; }
+    .toast-container { position: fixed; bottom: calc(16px + var(--safe-bottom)); right: 12px; left: 12px; display: flex; flex-direction: column-reverse; gap: 6px; z-index: 1200; pointer-events: none; max-width: 400px; margin: 0 auto; }
+    .toast { background: var(--surface); border-left: 4px solid var(--success); padding: 10px 14px; border-radius: 8px; box-shadow: var(--shadow); font-size: 0.8rem; animation: slideIn 0.25s ease; pointer-events: auto; }
     .toast.warning { border-left-color: var(--warning); }
     .toast.error { border-left-color: var(--danger); }
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } }
+    @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } }
 
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 16px; }
-    .stat-card { background: var(--surface); border-radius: 10px; padding: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.15s; }
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 12px; }
+    .stat-card { background: var(--surface); border-radius: 10px; padding: 10px; border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.15s; }
     .stat-card:active { transform: scale(0.97); background: var(--bg); }
-    .stat-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: #fff; flex-shrink: 0; }
-    .stat-value { font-size: 1.25rem; font-weight: 800; line-height: 1.2; }
-    .stat-label { color: var(--text-secondary); font-size: 0.6rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: #fff; flex-shrink: 0; }
+    .stat-value { font-size: 1.1rem; font-weight: 800; line-height: 1.2; }
+    .stat-label { color: var(--text-secondary); font-size: 0.58rem; font-weight: 600; text-transform: uppercase; }
 
-    .chart-card { background: var(--surface); border-radius: var(--radius); padding: 14px; border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 14px; }
-    .chart-card h3 { font-size: 0.82rem; font-weight: 700; margin-bottom: 8px; }
-    .chart-container { position: relative; width: 100%; max-width: 260px; margin: 0 auto; }
-    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    /* Improved Insights */
+    .insights-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+    .insight-metric-card {
+      background: var(--surface); border-radius: var(--radius); padding: 14px;
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
+    .insight-metric-card h4 { font-size: 0.78rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.75rem; }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-value-large { font-size: 1.5rem; font-weight: 800; }
+    .metric-change { font-size: 0.7rem; font-weight: 600; }
+    .metric-change.up { color: var(--success); }
+    .metric-change.down { color: var(--danger); }
 
-    .progress-bar { width: 100%; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-top: 2px; }
-    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-    .activity-item { display: flex; align-items: center; gap: 7px; padding: 6px 0; font-size: 0.78rem; border-bottom: 1px solid var(--border); }
-    .activity-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .activity-time { margin-left: auto; font-size: 0.68rem; color: var(--text-secondary); white-space: nowrap; }
+    .chart-card { background: var(--surface); border-radius: var(--radius); padding: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 10px; }
+    .chart-card h3 { font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; }
+    .chart-container { position: relative; width: 100%; max-width: 200px; margin: 0 auto; }
+    .chart-row { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
 
-    .workflow-steps { display: flex; align-items: center; gap: 4px; }
-    .step-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .welcome-banner { background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; color: #fff; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: var(--shadow); }
+    .welcome-text h1 { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+    .welcome-text p { opacity: 0.9; font-size: 0.75rem; }
+    .welcome-date { background: rgba(255,255,255,0.15); padding: 6px 12px; border-radius: 16px; font-weight: 600; font-size: 0.75rem; white-space: nowrap; }
+
+    .workflow-steps { display: flex; align-items: center; gap: 3px; }
+    .step-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
     .step-done { background: var(--success); }
     .step-active { background: var(--warning); animation: pulse 1.5s infinite; }
     .step-waiting { background: var(--border); }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    .wa-message-preview { background: #dcf8c6; border-radius: 8px; padding: 10px 12px; margin: 8px 0; font-size: 0.82rem; color: #075e54; border-left: 4px solid #25D366; white-space: pre-wrap; max-height: 160px; overflow-y: auto; font-family: var(--font); }
-    .tag-container { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-    .tag { background: var(--accent); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; display: inline-flex; align-items: center; gap: 3px; }
-    .tag .remove-tag { cursor: pointer; font-weight: bold; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .checkbox-label { display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 0.82rem; }
-    .checkbox-label input[type="checkbox"] { width: auto; min-width: 17px; min-height: 17px; accent-color: var(--success); }
+    .duplicate-warning { background: rgba(239,68,68,0.1); border: 1px solid var(--danger); border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 10px; font-size: 0.75rem; display: flex; align-items: center; gap: 8px; color: var(--danger); }
+    .approval-pending-card { background: var(--surface); border: 2px solid var(--warning); border-radius: var(--radius); padding: 12px; margin-bottom: 10px; }
+    .live-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 0.6rem; color: var(--success); }
+    .live-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; animation: pulse 1.5s infinite; }
+    .timestamp-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 0.65rem; color: var(--accent); font-weight: 600; }
 
-    @media(max-width: 768px) {
-      .sidebar { transform: translateX(-100%); z-index: 250; width: 275px; }
-      .sidebar.open { transform: translateX(0); }
-      .main { margin-left: 0; padding: 10px; }
-      .topbar-mobile { display: flex; }
-      .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; }
-      .sidebar-overlay.active { display: block; }
-      .desktop-table { display: none; }
-      .mobile-cards { display: block; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-      .chart-row { grid-template-columns: 1fr; }
-      .form-row { grid-template-columns: 1fr; }
-      .modal-content { border-radius: 14px 14px 0 0; max-width: 100%; padding: 14px; }
-      .welcome-banner { padding: 14px 16px; }
-      .welcome-text h1 { font-size: 1.05rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (min-width: 600px) { .booking-grid { grid-template-columns: 1fr 1fr; } .booking-card .booking-body { grid-template-columns: 1fr 1fr 1fr; } .insights-grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(5, 1fr); } .chart-row { grid-template-columns: 1fr 1fr; } .insights-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) {
+      .sidebar { transform: translateX(0); box-shadow: none; border-right: 1px solid rgba(255,255,255,0.1); }
+      .main { margin-left: var(--sidebar-width); }
+      .topbar-mobile { display: none; }
+      .content-area { padding: 20px; }
+      .booking-grid { grid-template-columns: repeat(2, 1fr); }
+      .insights-grid { grid-template-columns: repeat(3, 1fr); }
+      .modal-content { border-radius: 16px; margin: auto; max-height: 85vh; }
+      .preview-content { border-radius: 20px; margin: auto; }
     }
   </style>
 </head>
@@ -635,12 +281,13 @@
   <aside class="sidebar" id="sidebar">
     <div class="brand"><i class="fas fa-shield-halved"></i> CampusVault</div>
     <nav id="sidebarNav">
-      <a href="#" class="active" data-tab="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a>
+      <a href="#" class="active" data-tab="dashboard"><i class="fas fa-chart-pie"></i> Dashboard <span class="live-indicator"><span class="live-dot"></span></span></a>
       <a href="#" data-tab="insights"><i class="fas fa-chart-line"></i> Insights</a>
       <a href="#" data-tab="my-bookings"><i class="fas fa-calendar-check"></i> My Bookings</a>
-      <a href="#" data-tab="receive"><i class="fas fa-camera"></i> Receive <span class="nav-badge" id="receiveBadge" style="display:none;">0</span></a>
-      <a href="#" data-tab="collections"><i class="fas fa-people-carry"></i> Collections <span class="nav-badge" id="collectBadge" style="display:none;">0</span></a>
+      <a href="#" data-tab="receive"><i class="fas fa-camera"></i> My Received <span class="nav-badge" id="receiveBadge" style="display:none;">0</span></a>
+      <a href="#" data-tab="collections"><i class="fas fa-people-carry"></i> My Collections <span class="nav-badge" id="collectBadge" style="display:none;">0</span></a>
       <a href="#" data-tab="all-bookings"><i class="fas fa-boxes"></i> All Bookings</a>
+      <a href="#" data-tab="approvals" id="approvalsNav" style="display:none;"><i class="fas fa-check-circle"></i> Approvals <span class="nav-badge" id="approvalBadge" style="display:none;">0</span></a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
@@ -657,118 +304,126 @@
   <main class="main">
     <div class="topbar-mobile">
       <button class="hamburger" id="hamburgerBtn"><i class="fas fa-bars"></i></button>
-      <span style="font-weight:600;font-size:0.85rem;">CampusVault Staff</span>
+      <span class="topbar-title">CampusVault <span class="live-dot"></span></span>
       <button class="theme-toggle" id="themeToggleMobile"><i class="fas fa-sun"></i> Light</button>
     </div>
 
-    <!-- DASHBOARD -->
-    <div class="tab-content active" id="tab-dashboard">
-      <div class="welcome-banner">
-        <div class="welcome-text">
-          <h1 id="welcomeGreeting">Welcome, <span id="welcomeName">Staff</span></h1>
-          <p>Here's your performance overview</p>
+    <div class="content-area">
+      <!-- DASHBOARD -->
+      <div class="tab-content active" id="tab-dashboard">
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h1 id="welcomeGreeting">Welcome</h1>
+            <p>Real-time overview</p>
+          </div>
+          <div class="welcome-date" id="currentDate"></div>
         </div>
-        <div class="welcome-date" id="currentDate"></div>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card" onclick="switchTab('my-bookings')"><div class="stat-icon" style="background:linear-gradient(135deg,#38bdf8,#0ea5e9);"><i class="fas fa-boxes"></i></div><div><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total</div></div></div>
-        <div class="stat-card" onclick="switchTab('my-bookings')"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669);"><i class="fas fa-user-check"></i></div><div><div class="stat-value" id="statMyActive">0</div><div class="stat-label">My Active</div></div></div>
-        <div class="stat-card" onclick="switchTab('receive')"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-camera"></i></div><div><div class="stat-value" id="statReceived">0</div><div class="stat-label">Received</div></div></div>
-        <div class="stat-card" onclick="switchTab('collections')"><div class="stat-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-people-carry"></i></div><div><div class="stat-value" id="statCollected">0</div><div class="stat-label">Collected</div></div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-clock"></i></div><div><div class="stat-value" id="statPending">0</div><div class="stat-label">Pending</div></div></div>
-      </div>
-      <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> My Performance</h3><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
-      <div class="chart-card"><h3><i class="fas fa-chart-line"></i> Weekly Trend</h3><div style="position:relative;width:100%;"><canvas id="trendChart" style="max-height:180px;"></canvas></div></div>
-    </div>
-
-    <!-- INSIGHTS -->
-    <div class="tab-content" id="tab-insights">
-      <h2 style="margin-bottom:14px;font-size:1.05rem;"><i class="fas fa-chart-line"></i> Analytics</h2>
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#38bdf8,#0ea5e9);"><i class="fas fa-calendar-check"></i></div><div><div class="stat-value" id="insightToday">0</div><div class="stat-label">Today</div></div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669);"><i class="fas fa-calendar-week"></i></div><div><div class="stat-value" id="insightWeek">0</div><div class="stat-label">Week</div></div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-calendar-alt"></i></div><div><div class="stat-value" id="insightMonth">0</div><div class="stat-label">Month</div></div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-trophy"></i></div><div><div class="stat-value" id="insightCompletion">0%</div><div class="stat-label">Completion</div></div></div>
-      </div>
-      <div class="chart-row">
-        <div class="chart-card"><h3><i class="fas fa-chart-bar"></i> Weekly Activity</h3><div style="position:relative;width:100%;"><canvas id="weeklyChart" style="max-height:200px;"></canvas></div></div>
-        <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> Categories</h3><div class="chart-container"><canvas id="categoryChart"></canvas></div></div>
-      </div>
-      <div class="chart-row">
-        <div class="chart-card"><h3><i class="fas fa-tachometer-alt"></i> Performance</h3>
-          <div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px;"><span>📸 Speed</span><span id="receiveSpeed" style="font-weight:600;">0 min</span></div><div class="progress-bar"><div class="progress-fill" id="receiveSpeedBar" style="width:0%;background:var(--success);"></div></div></div>
-          <div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px;"><span>📦 Collection</span><span id="collectionRate" style="font-weight:600;">0%</span></div><div class="progress-bar"><div class="progress-fill" id="collectionRateBar" style="width:0%;background:var(--violet);"></div></div></div>
-          <div style="margin-bottom:8px;"><div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px;"><span>✅ Approval</span><span id="approvalRate" style="font-weight:600;">0%</span></div><div class="progress-bar"><div class="progress-fill" id="approvalRateBar" style="width:0%;background:var(--warning);"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-bottom:2px;"><span>⭐ Satisfaction</span><span id="satisfactionRate" style="font-weight:600;">0%</span></div><div class="progress-bar"><div class="progress-fill" id="satisfactionBar" style="width:0%;background:var(--accent);"></div></div></div>
+        <div id="duplicateWarningContainer"></div>
+        <div class="stats-grid">
+          <div class="stat-card" onclick="switchTab('my-bookings')"><div class="stat-icon" style="background:linear-gradient(135deg,#38bdf8,#0ea5e9);"><i class="fas fa-boxes"></i></div><div><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total</div></div></div>
+          <div class="stat-card" onclick="switchTab('my-bookings')"><div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669);"><i class="fas fa-user-check"></i></div><div><div class="stat-value" id="statMyActive">0</div><div class="stat-label">My Active</div></div></div>
+          <div class="stat-card" onclick="switchTab('all-bookings')"><div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);"><i class="fas fa-user-plus"></i></div><div><div class="stat-value" id="statUnassigned">0</div><div class="stat-label">Unassigned</div></div></div>
+          <div class="stat-card" onclick="switchTab('receive')"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82f6,#2563eb);"><i class="fas fa-camera"></i></div><div><div class="stat-value" id="statReceived">0</div><div class="stat-label">My Received</div></div></div>
+          <div class="stat-card" onclick="switchTab('collections')"><div class="stat-icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);"><i class="fas fa-people-carry"></i></div><div><div class="stat-value" id="statCollected">0</div><div class="stat-label">My Collected</div></div></div>
         </div>
-        <div class="chart-card"><h3><i class="fas fa-clock"></i> Recent</h3><div id="recentActivity" style="max-height:180px;overflow-y:auto;"><div class="activity-item"><div class="activity-dot" style="background:var(--text-secondary);"></div>No activity<span class="activity-time">—</span></div></div></div>
+        <div class="chart-row">
+          <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> Performance</h3><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+          <div class="chart-card"><h3><i class="fas fa-chart-line"></i> Real-time Trend</h3><canvas id="trendChart" style="max-height:160px;"></canvas></div>
+        </div>
+        <div class="chart-card"><h3><i class="fas fa-clock"></i> Recent Activity</h3><div id="recentActivityFeed" style="max-height:200px;overflow-y:auto;"></div></div>
       </div>
-      <div class="chart-card"><h3><i class="fas fa-list-alt"></i> Top Categories</h3><div id="topCategories" style="padding:4px 0;"></div></div>
-    </div>
 
-    <!-- MY BOOKINGS -->
-    <div class="tab-content" id="tab-my-bookings">
-      <h2 style="margin-bottom:14px;font-size:1.05rem;"><i class="fas fa-calendar-check"></i> My Assigned Bookings</h2>
-      <div class="card">
-        <div class="card-header"><span><i class="fas fa-list"></i> Bookings</span><span class="badge badge-active" id="myAssignedCount">0</span></div>
-        <div class="desktop-table"><div class="table-responsive"><table><thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Check‑in</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead><tbody id="myBookingsTableBody"></tbody></table></div></div>
-        <div class="mobile-cards"><div id="myBookingsCardsContainer"></div></div>
-        <div class="empty-panel" id="myBookingsEmpty" style="display:none;"><i class="fas fa-calendar-check"></i><p>No assigned bookings yet</p></div>
-      </div>
-    </div>
-
-    <!-- RECEIVE -->
-    <div class="tab-content" id="tab-receive">
-      <h2 style="margin-bottom:14px;font-size:1.05rem;"><i class="fas fa-camera"></i> Receive Items</h2>
-      <div class="card">
-        <div class="card-header"><span><i class="fas fa-box-check"></i> Received</span><span class="badge badge-received" id="receiveCount">0</span></div>
-        <p style="padding:10px 14px;font-size:0.75rem;opacity:0.6;">📸 Photos taken during reception</p>
-        <div class="desktop-table"><div class="table-responsive"><table><thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Photos</th><th>Location</th><th>By</th><th>Date</th><th>Act</th></tr></thead><tbody id="receivedTableBody"></tbody></table></div></div>
-        <div class="mobile-cards"><div id="receivedCardsContainer"></div></div>
-        <div class="empty-panel" id="receivedEmpty" style="display:none;"><i class="fas fa-camera"></i><p>No received items recorded</p></div>
-      </div>
-    </div>
-
-    <!-- COLLECTIONS -->
-    <div class="tab-content" id="tab-collections">
-      <h2 style="margin-bottom:14px;font-size:1.05rem;"><i class="fas fa-people-carry"></i> Collections</h2>
-      <div class="card">
-        <div class="card-header"><span><i class="fas fa-clipboard-check"></i> Collected</span><span class="badge badge-collected" id="collectedCount">0</span></div>
-        <p style="padding:10px 14px;font-size:0.75rem;opacity:0.6;">✍️ Returned with signatures</p>
-        <div class="desktop-table"><div class="table-responsive"><table><thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>By</th><th>Date</th><th>Sign</th><th>Act</th></tr></thead><tbody id="collectedTableBody"></tbody></table></div></div>
-        <div class="mobile-cards"><div id="collectedCardsContainer"></div></div>
-        <div class="empty-panel" id="collectedEmpty" style="display:none;"><i class="fas fa-people-carry"></i><p>No collections recorded</p></div>
-      </div>
-    </div>
-
-    <!-- ALL BOOKINGS -->
-    <div class="tab-content" id="tab-all-bookings">
-      <h2 style="margin-bottom:14px;font-size:1.05rem;"><i class="fas fa-boxes"></i> All Bookings</h2>
-      <div class="card">
-        <div class="card-header"><span><i class="fas fa-list"></i> Complete List</span>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-            <input type="text" id="searchInput" placeholder="🔍 Search..." style="flex:1;min-width:110px;">
-            <select id="filterStatus" style="min-width:100px;"><option value="all">All</option><option value="active">Active</option><option value="received">Received</option><option value="collected">Collected</option></select>
-            <button class="btn btn-outline" onclick="exportToExcel()" style="white-space:nowrap;"><i class="fas fa-file-excel"></i> Export</button>
+      <!-- INSIGHTS -->
+      <div class="tab-content" id="tab-insights">
+        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-chart-line"></i> My Analytics</h2>
+        <div class="insights-grid">
+          <div class="insight-metric-card">
+            <h4><i class="fas fa-calendar-check" style="color:var(--success);"></i> Today's Performance</h4>
+            <div class="metric-row"><span>Received</span><span id="insightTodayReceived" style="font-weight:700;">0</span></div>
+            <div class="metric-row"><span>Collected</span><span id="insightTodayCollected" style="font-weight:700;">0</span></div>
+            <div class="metric-row"><span>Pending</span><span id="insightTodayPending" style="font-weight:700;">0</span></div>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+              <div style="font-size:0.7rem;color:var(--text-secondary);">Avg Receive Time</div>
+              <div style="font-size:1.2rem;font-weight:800;" id="insightAvgTime">—</div>
+            </div>
+          </div>
+          <div class="insight-metric-card">
+            <h4><i class="fas fa-chart-bar" style="color:var(--primary);"></i> Weekly Stats</h4>
+            <div class="metric-row"><span>Received</span><span id="insightWeekReceived" style="font-weight:700;">0</span></div>
+            <div class="metric-row"><span>Collected</span><span id="insightWeekCollected" style="font-weight:700;">0</span></div>
+            <div class="metric-row"><span>Completion Rate</span><span id="insightWeekRate" style="font-weight:700;">0%</span></div>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+              <div style="font-size:0.7rem;color:var(--text-secondary);">Best Day</div>
+              <div style="font-size:1.2rem;font-weight:800;" id="insightBestDay">—</div>
+            </div>
+          </div>
+          <div class="insight-metric-card">
+            <h4><i class="fas fa-trophy" style="color:#f59e0b;"></i> Rankings</h4>
+            <div class="metric-row"><span>Items Handled</span><span id="insightTotalItems" style="font-weight:700;">0</span></div>
+            <div class="metric-row"><span>Categories</span><span id="insightCategories" style="font-weight:700;">0</span></div>
+            <div class="metric-row"><span>Top Category</span><span id="insightTopCategory" style="font-weight:700;">—</span></div>
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+              <div style="font-size:0.7rem;color:var(--text-secondary);">Streak</div>
+              <div style="font-size:1.2rem;font-weight:800;" id="insightStreak">0 days 🔥</div>
+            </div>
           </div>
         </div>
-        <div class="desktop-table"><div class="table-responsive"><table><thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Items</th><th>Staff</th><th>Status</th><th>Actions</th></tr></thead><tbody id="allBookingsTableBody"></tbody></table></div></div>
-        <div class="mobile-cards"><div id="allBookingsCardsContainer"></div></div>
-        <div class="empty-panel" id="allBookingsEmpty" style="display:none;"><i class="fas fa-boxes"></i><p>No bookings match your criteria</p></div>
+        <div class="chart-row">
+          <div class="chart-card"><h3><i class="fas fa-chart-bar"></i> Weekly Activity</h3><canvas id="weeklyChart" style="max-height:180px;"></canvas></div>
+          <div class="chart-card"><h3><i class="fas fa-chart-pie"></i> Categories</h3><div class="chart-container"><canvas id="categoryChart"></canvas></div></div>
+        </div>
+        <div class="chart-card"><h3><i class="fas fa-clock"></i> Hourly Distribution</h3><canvas id="hourlyChart" style="max-height:150px;"></canvas></div>
+      </div>
+
+      <!-- MY BOOKINGS -->
+      <div class="tab-content" id="tab-my-bookings">
+        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-calendar-check"></i> My Assigned Bookings</h2>
+        <div class="booking-grid" id="myBookingsGrid"></div>
+        <div class="empty-panel" id="myBookingsEmpty" style="display:none;"><i class="fas fa-calendar-check"></i><p>No assigned bookings</p></div>
+      </div>
+
+      <!-- MY RECEIVED -->
+      <div class="tab-content" id="tab-receive">
+        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-camera"></i> My Received Items</h2>
+        <div class="mobile-cards"><div id="receivedCardsContainer"></div></div>
+        <div class="empty-panel" id="receivedEmpty" style="display:none;"><i class="fas fa-camera"></i><p>No items received by you</p></div>
+      </div>
+
+      <!-- MY COLLECTIONS -->
+      <div class="tab-content" id="tab-collections">
+        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-people-carry"></i> My Collections</h2>
+        <div class="mobile-cards"><div id="collectedCardsContainer"></div></div>
+        <div class="empty-panel" id="collectedEmpty" style="display:none;"><i class="fas fa-people-carry"></i><p>No collections by you</p></div>
+      </div>
+
+      <!-- ALL BOOKINGS -->
+      <div class="tab-content" id="tab-all-bookings">
+        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-boxes"></i> All Bookings</h2>
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+          <input type="text" id="searchInput" placeholder="🔍 Search..." style="flex:1;min-width:120px;">
+          <select id="filterStatus" style="min-width:100px;"><option value="all">All</option><option value="active">Active</option><option value="received">Received</option><option value="collected">Collected</option><option value="unassigned">Unassigned</option></select>
+          <button class="btn btn-outline" onclick="exportToExcel()" style="white-space:nowrap;font-size:0.7rem;"><i class="fas fa-file-excel"></i> Export</button>
+        </div>
+        <div class="booking-grid" id="allBookingsGrid"></div>
+        <div class="empty-panel" id="allBookingsEmpty" style="display:none;"><i class="fas fa-boxes"></i><p>No bookings</p></div>
+      </div>
+
+      <!-- APPROVALS -->
+      <div class="tab-content" id="tab-approvals">
+        <h2 style="margin-bottom:12px;font-size:1rem;"><i class="fas fa-check-circle"></i> Pending Approvals</h2>
+        <div id="approvalsContainer"></div>
+        <div class="empty-panel" id="approvalsEmpty" style="display:none;"><i class="fas fa-check-circle"></i><p>No pending approvals</p></div>
       </div>
     </div>
   </main>
 </div>
 
 <!-- MODALS -->
-<div id="receiveModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-camera"></i> Receive Items</h3><form id="receiveForm"><input type="hidden" id="receiveBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="receiveBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="receiveCustomerName" readonly></div><div class="form-group"><label>Phone</label><input type="text" id="receiveCustomerPhone" readonly></div><div class="form-row"><div class="form-group"><label>Item Count *</label><input type="number" id="receiveItemCount" required min="1"></div><div class="form-group"><label>Category</label><select id="receiveCategory"><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Books</option><option>Kitchenware</option><option>Sports</option><option>Luggage</option><option>Other</option></select></div></div><div class="form-group"><label>Description *</label><textarea id="receiveDescription" rows="2" required></textarea></div><div class="form-row"><div class="form-group"><label>Condition</label><select id="receiveCondition"><option>Good</option><option>Fair</option><option>Excellent</option><option>Needs Attention</option></select></div><div class="form-group"><label>Location</label><input type="text" id="receiveLocation" placeholder="Shelf A3"></div></div><div class="form-group"><label>Tags</label><div style="display:flex;gap:6px;"><input type="text" id="receiveTagInput" placeholder="Add tag..." style="flex:1;"><button type="button" class="btn btn-outline" onclick="addReceiveTag()" style="flex:0;">+</button></div><div class="tag-container" id="receiveTagsContainer"></div></div><div class="form-group"><label>📸 Photos (Min 1)</label><div class="photo-grid" id="receivePhotosGrid"></div><div class="photo-upload-area" onclick="document.getElementById('receivePhotoInput').click()"><i class="fas fa-cloud-upload-alt"></i><p style="font-size:0.8rem;margin-top:4px;">Tap to capture</p></div><input type="file" id="receivePhotoInput" accept="image/*" multiple capture="environment" style="display:none;"></div><div class="form-group"><label class="checkbox-label"><input type="checkbox" id="receiveNotifyCustomer" checked> Send WhatsApp notification</label></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('receiveModal')">Cancel</button><button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirm</button></div></form></div></div>
-<div id="collectionModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-signature"></i> Collect Items</h3><form id="collectionForm"><input type="hidden" id="collectBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="collectBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="collectCustomerName" readonly></div><div class="form-group"><label>Items</label><input type="text" id="collectItems" readonly></div><div class="form-group"><label>Notes</label><textarea id="collectNotes" rows="2"></textarea></div><div class="form-group"><label>👤 Customer Signature *</label><canvas id="customerCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('customerCanvas')" style="margin-top:3px;font-size:0.68rem;">Clear</button></div><div class="form-group"><label>👔 Staff Signature *</label><canvas id="staffCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('staffCanvas')" style="margin-top:3px;font-size:0.68rem;">Clear</button></div><div class="form-group"><label class="checkbox-label"><input type="checkbox" id="collectRequestApproval" checked> Submit for approval</label></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit</button></div></form></div></div>
-<div id="whatsappModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fab fa-whatsapp"></i> WhatsApp</h3><p style="font-size:0.78rem;opacity:0.7;margin-bottom:8px;">Send confirmation to customer</p><div id="whatsappPreview" class="wa-message-preview"></div><div class="flex-between"><button class="btn btn-outline" onclick="closeModal('whatsappModal')">Cancel</button><button class="btn btn-whatsapp" onclick="sendWhatsApp()"><i class="fab fa-whatsapp"></i> Send</button></div></div></div>
-<div id="editModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-pen-alt"></i> Request Edit</h3><form id="editForm"><input type="hidden" id="editBookingKey"><div class="form-group"><label>Name *</label><input id="editName" required></div><div class="form-group"><label>Phone</label><input id="editPhone"></div><div class="form-group"><label>Check‑in</label><input id="editCheckIn" type="date"></div><div class="form-group"><label>Due</label><input id="editCollect" type="date"></div><div class="form-group"><label>Item Count</label><input id="editItemCount" type="number" min="1"></div><div class="form-group"><label>Category</label><select id="editCategory"><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Books</option><option>Other</option></select></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('editModal')">Cancel</button><button type="submit" class="btn btn-primary">Submit</button></div></form></div></div>
-<div id="reassignModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-user-shield"></i> Reassign (Admin)</h3><form id="reassignForm"><input type="hidden" id="reassignBookingKey"><div class="form-group"><label>Current</label><input id="reassignCurrent" disabled></div><div class="form-group"><label>New Email *</label><input id="reassignNewEmail" type="email" required></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('reassignModal')">Cancel</button><button type="submit" class="btn btn-primary">Reassign</button></div></form></div></div>
+<div id="receiveModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-camera"></i> Receive Items</h3><div id="duplicateAlertReceive" class="duplicate-warning" style="display:none;"><i class="fas fa-exclamation-triangle"></i> <span id="duplicateAlertText"></span></div><form id="receiveForm"><input type="hidden" id="receiveBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="receiveBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="receiveCustomerName" readonly></div><div class="form-group"><label>Phone</label><input type="text" id="receiveCustomerPhone" readonly></div><div class="form-row"><div class="form-group"><label>Item Count *</label><input type="number" id="receiveItemCount" required min="1"></div><div class="form-group"><label>Category</label><select id="receiveCategory"><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Books</option><option>Other</option></select></div></div><div class="form-group"><label>Description *</label><textarea id="receiveDescription" rows="2" required></textarea></div><div class="form-row"><div class="form-group"><label>Condition</label><select id="receiveCondition"><option>Good</option><option>Fair</option><option>Excellent</option></select></div><div class="form-group"><label>Location</label><input type="text" id="receiveLocation" placeholder="Shelf A3"></div></div><div class="form-group"><label>📸 Photos (Min 1)</label><div class="photo-grid" id="receivePhotosGrid"></div><div class="photo-upload-options"><div class="photo-upload-option" onclick="document.getElementById('receivePhotoInput').click()"><i class="fas fa-camera"></i> Camera</div><div class="photo-upload-option" onclick="document.getElementById('receiveGalleryInput').click()"><i class="fas fa-images"></i> Gallery</div></div><input type="file" id="receivePhotoInput" accept="image/*" capture="environment" style="display:none;"><input type="file" id="receiveGalleryInput" accept="image/*" multiple style="display:none;"></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('receiveModal')">Cancel</button><button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirm</button></div></form></div></div>
+<div id="collectionModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-signature"></i> Collect Items</h3><form id="collectionForm"><input type="hidden" id="collectBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="collectBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="collectCustomerName" readonly></div><div class="form-group"><label>Items</label><input type="text" id="collectItems" readonly></div><div class="form-group"><label>Notes</label><textarea id="collectNotes" rows="2"></textarea></div><div class="form-group"><label>👤 Customer Signature *</label><canvas id="customerCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('customerCanvas')" style="margin-top:3px;font-size:0.65rem;">Clear</button></div><div class="form-group"><label>👔 Staff Signature *</label><canvas id="staffCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('staffCanvas')" style="margin-top:3px;font-size:0.65rem;">Clear</button></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button type="submit" class="btn btn-primary">Submit for Approval</button></div></form></div></div>
+<div id="whatsappModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fab fa-whatsapp"></i> WhatsApp</h3><div id="whatsappPreview" class="wa-message-preview"></div><div class="flex-between"><button class="btn btn-outline" onclick="closeModal('whatsappModal')">Cancel</button><button class="btn btn-whatsapp" onclick="sendWhatsApp()">Send</button></div></div></div>
 
 <script>
-  // Firebase init
   firebase.initializeApp({
     apiKey: "AIzaSyCuCd89dawEHOGrKmcCimw3pBErKYJU_VI",
     authDomain: "campusvault-connect.firebaseapp.com",
@@ -780,18 +435,32 @@
   });
   const auth = firebase.auth(), db = firebase.database();
   const bookingsRef = db.ref('bookings'), staffRef = db.ref('staff'), pendingApprovalsRef = db.ref('pending_approvals');
-  const receivedItemsRef = db.ref('received_items'), collectedItemsRef = db.ref('collected_items');
+  const receivedItemsRef = db.ref('received_items'), collectedItemsRef = db.ref('collected_items'), trashRef = db.ref('trash');
 
-  let currentStaffEmail = null, currentStaffIsAdmin = false, allBookings = [], allReceivedItems = [], allCollectedItems = [];
-  let currentWhatsAppBooking = null, receivePhotos = [], receiveTags = [];
-  let statusChart = null, trendChart = null, weeklyChart = null, categoryChart = null;
+  let currentStaffEmail = null, currentStaffIsAdmin = false;
+  let allBookings = [], allReceivedItems = [], allCollectedItems = [], allPendingApprovals = [];
+  let receivePhotos = [], statusChart = null, trendChart = null, weeklyChart = null, categoryChart = null, hourlyChart = null;
+  
+  // Duplicate tracking
+  let duplicateBookings = new Set();
+  let duplicateGroups = {};
 
-  // Greeting & date
-  function getGreeting() { const h = new Date().getHours(); if (h < 12) return 'Good Morning'; if (h < 17) return 'Good Afternoon'; return 'Good Evening'; }
+  function getGreeting() { const h = new Date().getHours(); return h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening'; }
   function updateDate() { document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
   updateDate();
 
-  // Theme
+  function formatTimestamp(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts); if (isNaN(d.getTime())) return ts;
+    const diff = Date.now() - d;
+    const mins = Math.floor(diff / 60000), hours = Math.floor(diff / 3600000), days = Math.floor(diff / 86400000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + 'm ago';
+    if (hours < 24) return hours + 'h ago';
+    if (days < 7) return days + 'd ago';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
   function setTheme(dark) {
     document.body.classList.toggle('light', !dark);
     localStorage.setItem('staffTheme', dark ? 'dark' : 'light');
@@ -799,486 +468,656 @@
     updateAllCharts();
   }
   setTheme(localStorage.getItem('staffTheme') !== 'light');
-  document.getElementById('themeToggleMobile').onclick = function () { setTheme(document.body.classList.contains('light')); };
+  document.getElementById('themeToggleMobile').onclick = () => setTheme(document.body.classList.contains('light'));
 
-  // Toast
   function showToast(msg, type = 'success') {
-    const container = document.getElementById('toastContainer'), div = document.createElement('div');
-    div.className = 'toast ' + (type === 'warning' ? 'warning' : type === 'error' ? 'error' : '');
-    const icons = { success: '✅', warning: '⚠️', error: '❌', info: 'ℹ️' };
-    div.innerHTML = icons[type] + ' ' + msg;
-    container.appendChild(div);
-    setTimeout(() => div.remove(), 3200);
+    const c = document.getElementById('toastContainer'), d = document.createElement('div');
+    d.className = 'toast ' + (type === 'warning' ? 'warning' : type === 'error' ? 'error' : '');
+    d.textContent = (type === 'success' ? '✅ ' : type === 'warning' ? '⚠️ ' : '❌ ') + msg;
+    c.appendChild(d); setTimeout(() => d.remove(), 3200);
   }
 
   // Auth
-  document.getElementById('staffGoogleBtn').onclick = function () {
+  document.getElementById('staffGoogleBtn').onclick = () => {
     auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(r => {
       const email = r.user.email, safeEmail = email.replace(/\./g, ',');
       staffRef.child(safeEmail).once('value').then(snap => {
         if (snap.exists()) {
-          const data = snap.val();
           currentStaffEmail = email;
-          currentStaffIsAdmin = !!(data.isAdmin === true || data.role === 'admin');
+          currentStaffIsAdmin = !!(snap.val().isAdmin || snap.val().role === 'admin');
           document.getElementById('loginScreen').style.display = 'none';
           document.getElementById('staffDashboard').classList.add('active');
-          const displayName = r.user.displayName || email;
-          document.getElementById('userNameDisplay').textContent = displayName;
-          document.getElementById('welcomeGreeting').innerHTML = getGreeting() + ', <span id="welcomeName">' + displayName.split(' ')[0] + '</span>';
-          if (currentStaffIsAdmin) document.getElementById('adminBadge').style.display = 'inline-block';
+          const dn = r.user.displayName || email;
+          document.getElementById('userNameDisplay').textContent = dn;
+          document.getElementById('welcomeGreeting').innerHTML = getGreeting() + ', <span id="welcomeName">' + dn.split(' ')[0] + '</span>';
+          if (currentStaffIsAdmin) { document.getElementById('adminBadge').style.display = 'inline-block'; document.getElementById('approvalsNav').style.display = 'flex'; }
           if (r.user.photoURL) { document.getElementById('userAvatar').src = r.user.photoURL; document.getElementById('userAvatar').style.display = 'block'; }
-          loadAllRealtime();
-          switchTab('dashboard');
-          showToast('Welcome, ' + displayName.split(' ')[0] + '!');
-        } else {
-          auth.signOut();
-          document.getElementById('staffLoginError').textContent = '❌ Unauthorized email. Contact admin.';
-          document.getElementById('staffLoginError').style.display = 'block';
-        }
+          loadAllRealtime(); switchTab('dashboard');
+          showToast('Welcome, ' + dn.split(' ')[0] + '!');
+        } else { auth.signOut(); document.getElementById('staffLoginError').textContent = '❌ Unauthorized'; document.getElementById('staffLoginError').style.display = 'block'; }
       });
-    }).catch(e => {
-      document.getElementById('staffLoginError').textContent = '❌ ' + e.message;
-      document.getElementById('staffLoginError').style.display = 'block';
-    });
+    }).catch(e => { document.getElementById('staffLoginError').textContent = '❌ ' + e.message; document.getElementById('staffLoginError').style.display = 'block'; });
   };
 
   function logout() { auth.signOut().then(() => location.reload()); }
   document.getElementById('logoutStaffBtn').onclick = logout;
 
-  // Sidebar
   const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('sidebarOverlay');
-  document.getElementById('hamburgerBtn').onclick = function () { sidebar.classList.add('open'); overlay.classList.add('active'); document.body.style.overflow = 'hidden'; };
-  window.closeSidebar = function () { sidebar.classList.remove('open'); overlay.classList.remove('active'); document.body.style.overflow = ''; };
+  document.getElementById('hamburgerBtn').onclick = () => { sidebar.classList.add('open'); overlay.classList.add('active'); document.body.style.overflow = 'hidden'; };
+  window.closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); document.body.style.overflow = ''; };
   overlay.addEventListener('click', closeSidebar);
 
-  // Tab navigation with empty panel prevention
-  document.getElementById('sidebarNav').addEventListener('click', function (e) {
+  document.getElementById('sidebarNav').addEventListener('click', function(e) {
     const link = e.target.closest('a[data-tab]');
     if (!link) return;
     e.preventDefault();
-    const tab = link.dataset.tab;
-    switchTab(tab);
+    switchTab(link.dataset.tab);
     document.querySelectorAll('#sidebarNav a').forEach(n => n.classList.remove('active'));
     link.classList.add('active');
-    if (window.innerWidth <= 768) closeSidebar();
+    if (window.innerWidth <= 1024) closeSidebar();
   });
 
   function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    const activePanel = document.getElementById('tab-' + tab);
-    if (activePanel) {
-      activePanel.classList.add('active');
-      // Force content refresh to avoid empty panels
-      if (tab === 'dashboard') updateDashboardStats();
+    const panel = document.getElementById('tab-' + tab);
+    if (panel) {
+      panel.classList.add('active');
+      if (tab === 'dashboard') { updateDashboardStats(); updateRecentActivity(); }
       if (tab === 'insights') renderInsights();
-      if (tab === 'my-bookings' || tab === 'all-bookings') refreshFilteredUI();
-      if (tab === 'receive') { rRT(allReceivedItems); rRC(allReceivedItems); }
-      if (tab === 'collections') { rCT(allCollectedItems); rCC(allCollectedItems); }
+      if (tab === 'my-bookings') renderMyBookingsGrid();
+      if (tab === 'all-bookings') renderAllBookingsGrid();
+      if (tab === 'receive') renderMyReceivedCards();
+      if (tab === 'collections') renderMyCollectedCards();
+      if (tab === 'approvals') renderApprovals();
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+  window.switchTab = switchTab;
 
-  // Modals
-  function closeModal(id) {
-    const el = document.getElementById(id);
-    if (el) { el.classList.remove('show'); document.body.style.overflow = ''; }
-  }
+  function closeModal(id) { const el = document.getElementById(id); if (el) { el.classList.remove('show'); document.body.style.overflow = ''; } }
   window.closeModal = closeModal;
+  function openModal(id) { const el = document.getElementById(id); if (el) { el.classList.add('show'); document.body.style.overflow = 'hidden'; } if (id === 'collectionModal') setTimeout(() => { initSig('staffCanvas'); initSig('customerCanvas'); }, 200); }
+  window.openModal = openModal;
+  document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', function(e) { if (e.target === m) closeModal(m.id); }));
 
-  function openModal(id) {
-    const el = document.getElementById(id);
-    if (el) { el.classList.add('show'); document.body.style.overflow = 'hidden'; }
-    if (id === 'collectionModal') {
-      setTimeout(() => { initSig('staffCanvas'); initSig('customerCanvas'); }, 200);
-    }
+  function fmtPhone(p) { if (!p) return null; let c = p.replace(/\D/g, ''); if (c.startsWith('0')) c = '254' + c.substring(1); if (!c.startsWith('254')) c = '254' + c; return c; }
+  function genRcvMsg(b) { return '📦 *ITEMS RECEIVED*\n\nHello ' + (b.name || 'Customer') + ',\n\nYour items have been received at Campus Vault.\n\n📋 Booking: ' + (b.bookingId || b._key.slice(-6)) + '\n📦 Items: ' + (b.itemCount || '?') + ' ' + (b.category || 'items') + '\n\n📍 Campus Vault Storage\nThank you! 🙏'; }
+
+  // ===== DUPLICATE DETECTION =====
+  function detectDuplicates(bookings) {
+    duplicateBookings.clear();
+    duplicateGroups = {};
+    const seen = {};
+    
+    bookings.forEach(b => {
+      if (b.status === 'collected') return; // Skip completed
+      
+      const phone = (b.phone || '').replace(/\D/g, '');
+      const name = (b.name || '').toLowerCase().trim();
+      
+      // Check by phone (most reliable)
+      if (phone && phone.length >= 9) {
+        if (!seen['p:' + phone]) seen['p:' + phone] = [];
+        seen['p:' + phone].push(b);
+      }
+      
+      // Check by name + item count + category
+      if (name.length > 2) {
+        const nk = 'n:' + name + '|' + (b.itemCount || '') + '|' + (b.category || '');
+        if (!seen[nk]) seen[nk] = [];
+        if (!seen[nk].find(x => x._key === b._key)) seen[nk].push(b);
+      }
+    });
+    
+    Object.entries(seen).forEach(([key, group]) => {
+      if (group.length > 1) {
+        duplicateGroups[key] = group;
+        group.forEach(b => duplicateBookings.add(b._key));
+      }
+    });
+    
+    return duplicateBookings.size;
   }
 
-  document.querySelectorAll('.modal').forEach(m => {
-    m.addEventListener('click', function (e) { if (e.target === m) closeModal(m.id); });
-  });
+  function checkBookingDuplicate(booking) {
+    const phone = (booking.phone || '').replace(/\D/g, '');
+    const name = (booking.name || '').toLowerCase().trim();
+    let matches = [];
+    
+    allBookings.forEach(b => {
+      if (b._key === booking._key) return;
+      if (b.status === 'collected') return;
+      
+      const bPhone = (b.phone || '').replace(/\D/g, '');
+      const bName = (b.name || '').toLowerCase().trim();
+      
+      if (phone && bPhone && phone === bPhone && phone.length >= 9) {
+        matches.push(b);
+      } else if (name.length > 2 && bName.length > 2 && name === bName && 
+                 (b.itemCount || '') === (booking.itemCount || '') && 
+                 (b.category || '') === (booking.category || '')) {
+        matches.push(b);
+      }
+    });
+    
+    return matches;
+  }
 
-  // Phone formatting
-  function fmtPhone(p) { if (!p) return null; let c = p.replace(/\D/g, ''); if (c.startsWith('0')) c = '254' + c.substring(1); if (!c.startsWith('254')) c = '254' + c; return c; }
+  // ===== REQUEST UNASSIGNED =====
+  window.requestUnassigned = async function(key) {
+    if (!currentStaffEmail) return;
+    const b = allBookings.find(x => x._key === key);
+    if (!b || b.assigned_to) return;
+    if (!confirm('Request to be assigned to booking #' + (b.bookingId || key.slice(-6)) + '?')) return;
+    
+    await pendingApprovalsRef.push({
+      bookingKey: key, requestedBy: currentStaffEmail, requestedByName: currentStaffEmail.split('@')[0],
+      type: 'assignment_request', timestamp: new Date().toISOString(), status: 'pending',
+      details: 'Staff requesting assignment to unassigned booking'
+    });
+    showToast('Assignment requested! ⏳');
+  };
 
-  // Message generators
-  function genRcvMsg(b) { return '📦 *ITEMS RECEIVED*\n\nHello ' + (b.name || 'Customer') + ',\n\nYour items have been received at Campus Vault.\n\n📋 Booking: ' + (b.bookingId || (b._key ? b._key.slice(-6) : '')) + '\n📦 Items: ' + (b.itemCount || '?') + ' ' + (b.category || 'items') + '\n📅 Stored: ' + (b.checkIn || '—') + '\n\nWe\'ll notify you when ready.\n\n📍 Campus Vault Storage\nThank you! 🙏'; }
-  function genColMsg(b) { return '✅ *COLLECTION CONFIRMATION*\n\nHello ' + (b.name || 'Customer') + ',\n\nYour items are ready!\n\n📦 Booking: ' + (b.bookingId || (b._key ? b._key.slice(-6) : '')) + '\n📋 Items: ' + (b.itemCount || '?') + ' ' + (b.category || 'items') + '\n📅 Stored: ' + (b.checkIn || '—') + '\n📅 Collect by: ' + (b.collect || '—') + '\n\n📍 Campus Vault Storage\n⏰ Mon-Fri 8AM-6PM, Sat 9AM-2PM\n\n🔐 Bring Student ID.\n\nThank you! 🙏'; }
+  // ===== PREVIEW =====
+  window.showPreview = function(key, type = 'booking') {
+    let data = null;
+    if (type === 'received') data = allReceivedItems.find(r => r.key === key);
+    else if (type === 'collected') data = allCollectedItems.find(c => c.key === key);
+    else data = allBookings.find(b => b._key === key);
+    if (!data) return;
+    
+    const existing = document.querySelector('.preview-overlay');
+    if (existing) existing.remove();
+    
+    const bookingData = type === 'received' ? allBookings.find(b => b._key === data.bookingKey) || {} : type === 'collected' ? allBookings.find(b => b._key === data.bookingKey) || {} : data;
+    const isDuplicate = duplicateBookings.has(type === 'booking' ? key : (data.bookingKey || ''));
+    const duplicateGroup = isDuplicate ? Object.values(duplicateGroups).find(g => g.some(b => b._key === (type === 'booking' ? key : data.bookingKey))) : null;
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'preview-overlay';
+    overlay.innerHTML = `<div class="preview-content" onclick="event.stopPropagation()">
+      <div class="preview-header"><h3><i class="fas fa-eye" style="color:var(--accent);"></i> ${type === 'received' ? 'Received' : type === 'collected' ? 'Collected' : 'Booking'} Preview ${isDuplicate ? '<span class="badge badge-duplicate">DUPLICATE</span>' : ''}</h3><button class="preview-close-btn" onclick="this.closest('.preview-overlay').remove();document.body.style.overflow='';">&times;</button></div>
+      ${isDuplicate && duplicateGroup ? `<div class="preview-warning"><i class="fas fa-exclamation-triangle"></i> This booking may be a duplicate. ${duplicateGroup.length - 1} similar booking(s) found.</div>` : ''}
+      <div class="preview-grid">
+        <div class="preview-item"><div class="preview-label">Booking ID</div><div class="preview-value" style="font-family:monospace;">${data.bookingId || (data._key ? data._key.slice(-6) : 'N/A')}</div></div>
+        <div class="preview-item"><div class="preview-label">Customer</div><div class="preview-value">${data.customerName || bookingData.name || 'N/A'}</div></div>
+        <div class="preview-item"><div class="preview-label">Phone</div><div class="preview-value">${data.customerPhone || bookingData.phone || 'N/A'}</div></div>
+        <div class="preview-item"><div class="preview-label">Items</div><div class="preview-value">${data.itemCount || bookingData.itemCount || '?'} ${data.category || bookingData.category || 'items'}</div></div>
+        <div class="preview-item"><div class="preview-label">Status</div><div class="preview-value">${getSB(bookingData.status || 'active')}</div></div>
+        <div class="preview-item"><div class="preview-label">Time</div><div class="preview-value"><span class="timestamp-badge"><i class="far fa-clock"></i> ${formatTimestamp(data.timestamp || bookingData.timestamp)}</span></div></div>
+      </div>
+      ${data.photos && data.photos.length ? `<div class="preview-item preview-item-full"><div class="preview-label">📸 Photos</div><div class="preview-photos">${data.photos.map(p => '<img src="' + p + '" onclick="window.open(\'' + p + '\',\'_blank\')">').join('')}</div></div>` : ''}
+      <div class="preview-actions">
+        <button class="btn btn-outline" onclick="this.closest('.preview-overlay').remove();document.body.style.overflow='';">Close</button>
+        ${!bookingData.assigned_to && type === 'booking' ? `<button class="btn btn-request" onclick="this.closest('.preview-overlay').remove();requestUnassigned('${bookingData._key}')"><i class="fas fa-hand-paper"></i> Request</button>` : ''}
+        ${bookingData.status === 'active' && !bookingData.items_received ? `<button class="btn btn-receive" onclick="this.closest('.preview-overlay').remove();openReceiveModal('${bookingData._key}')"><i class="fas fa-camera"></i> Receive</button>` : ''}
+      </div>
+    </div>`;
+    
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) { overlay.remove(); document.body.style.overflow = ''; } });
+  };
 
-  // Receive functions
-  window.openReceiveModal = function (key) {
+  window.deleteBooking = function(key) {
+    if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
+    if (!confirm('Delete this booking?')) return;
     const b = allBookings.find(x => x._key === key);
     if (!b) return;
+    trashRef.push({ bookingKey: key, bookingId: b.bookingId || key.slice(-6), customerName: b.name || '', deletedBy: currentStaffEmail, deletedAt: new Date().toISOString() })
+      .then(() => bookingsRef.child(key).remove()).then(() => showToast('🗑️ Deleted'));
+  };
+
+  // ===== RECEIVE WITH DUPLICATE WARNING =====
+  window.openReceiveModal = function(key) {
+    const b = allBookings.find(x => x._key === key);
+    if (!b) return;
+    if (b.status === 'received' || b.items_received) { showToast('⚠️ Already received', 'warning'); return; }
+    
+    // Check for duplicates and show warning
+    const duplicates = checkBookingDuplicate(b);
+    const alertDiv = document.getElementById('duplicateAlertReceive');
+    const alertText = document.getElementById('duplicateAlertText');
+    
+    if (duplicates.length > 0) {
+      alertText.textContent = `⚠️ Potential duplicate detected! ${duplicates.length} similar booking(s) found with ${duplicates[0].name || 'same customer'}. Please verify.`;
+      alertDiv.style.display = 'flex';
+    } else {
+      alertDiv.style.display = 'none';
+    }
+    
     document.getElementById('receiveBookingKey').value = key;
     document.getElementById('receiveBookingId').value = b.bookingId || key.slice(-6);
     document.getElementById('receiveCustomerName').value = b.name || '';
     document.getElementById('receiveCustomerPhone').value = b.phone || '';
     document.getElementById('receiveItemCount').value = b.itemCount || '';
     document.getElementById('receiveCategory').value = b.category || 'Other';
-    document.getElementById('receiveDescription').value = '';
-    document.getElementById('receiveCondition').value = 'Good';
-    document.getElementById('receiveLocation').value = '';
-    document.getElementById('receiveNotifyCustomer').checked = true;
-    receivePhotos = []; receiveTags = [];
+    receivePhotos = [];
     document.getElementById('receivePhotosGrid').innerHTML = '';
-    document.getElementById('receiveTagsContainer').innerHTML = '';
     document.getElementById('receivePhotoInput').value = '';
+    document.getElementById('receiveGalleryInput').value = '';
     openModal('receiveModal');
   };
 
-  document.getElementById('receivePhotoInput').onchange = function (e) {
-    Array.from(e.target.files).forEach(f => {
+  document.getElementById('receivePhotoInput').onchange = e => handlePhotos(e.target.files);
+  document.getElementById('receiveGalleryInput').onchange = e => handlePhotos(e.target.files);
+
+  function handlePhotos(files) {
+    Array.from(files).forEach(f => {
       const reader = new FileReader();
       reader.onload = ev => { receivePhotos.push(ev.target.result); renderRcvPhotos(); };
       reader.readAsDataURL(f);
     });
-  };
-
+  }
   function renderRcvPhotos() {
-    document.getElementById('receivePhotosGrid').innerHTML = receivePhotos.map((p, i) => '<div class="photo-item"><img src="' + p + '"><button class="delete-photo" onclick="delRcvPhoto(' + i + ')">&times;</button></div>').join('');
-  }
-  window.delRcvPhoto = function (i) { receivePhotos.splice(i, 1); renderRcvPhotos(); };
-
-  window.addReceiveTag = function () {
-    const t = document.getElementById('receiveTagInput').value.trim();
-    if (t && !receiveTags.includes(t)) { receiveTags.push(t); renderRcvTags(); }
-    document.getElementById('receiveTagInput').value = '';
-  };
-  function renderRcvTags() {
-    document.getElementById('receiveTagsContainer').innerHTML = receiveTags.map((t, i) => '<span class="tag">' + t + '<span class="remove-tag" onclick="receiveTags.splice(' + i + ',1);renderRcvTags();">&times;</span></span>').join('');
+    document.getElementById('receivePhotosGrid').innerHTML = receivePhotos.map((p, i) => '<div class="photo-item"><img src="' + p + '"><button class="delete-photo" onclick="receivePhotos.splice(' + i + ',1);renderRcvPhotos();">&times;</button></div>').join('');
   }
 
-  document.getElementById('receiveForm').onsubmit = function (e) {
+  document.getElementById('receiveForm').onsubmit = function(e) {
     e.preventDefault();
-    if (!receivePhotos.length) { showToast('At least 1 photo required!', 'warning'); return; }
+    if (!receivePhotos.length) { showToast('At least 1 photo!', 'warning'); return; }
     const key = document.getElementById('receiveBookingKey').value;
     const b = allBookings.find(x => x._key === key);
-    if (!b) return;
-    const data = {
-      bookingKey: key, bookingId: b.bookingId || key.slice(-6), customerName: b.name || 'Unknown', customerPhone: b.phone || '',
+    if (!b || b.status === 'received') { showToast('Already received!', 'error'); return; }
+    
+    receivedItemsRef.push({
+      bookingKey: key, bookingId: b.bookingId || key.slice(-6), customerName: b.name || '', customerPhone: b.phone || '',
       itemCount: parseInt(document.getElementById('receiveItemCount').value), category: document.getElementById('receiveCategory').value,
       description: document.getElementById('receiveDescription').value, condition: document.getElementById('receiveCondition').value,
-      location: document.getElementById('receiveLocation').value, tags: receiveTags, photos: receivePhotos,
+      location: document.getElementById('receiveLocation').value, photos: receivePhotos,
       receivedBy: currentStaffEmail, receivedByName: currentStaffEmail.split('@')[0], timestamp: new Date().toISOString()
-    };
-    receivedItemsRef.push(data).then(() => {
-      return bookingsRef.child(key).update({ status: 'received', items_received: true, received_at: new Date().toISOString(), received_by: currentStaffEmail });
     }).then(() => {
-      if (document.getElementById('receiveNotifyCustomer').checked) sendRcvNotif(key);
+      return bookingsRef.child(key).update({ status: 'received', items_received: true, received_at: new Date().toISOString(), received_by: currentStaffEmail, received_locked: true });
+    }).then(() => {
       showToast('Items received! 📸');
       closeModal('receiveModal');
-    }).catch(err => showToast('Error: ' + err.message, 'error'));
+    });
   };
 
-  window.sendRcvNotif = function (key) {
+  // Collection
+  window.openCollectionModal = function(key) {
     const b = allBookings.find(x => x._key === key);
-    if (!b || !b.phone) { showToast('No phone', 'warning'); return; }
-    const c = fmtPhone(b.phone); if (!c) return;
-    window.open('https://wa.me/' + c + '?text=' + encodeURIComponent(genRcvMsg(b)), '_blank');
-    showToast('WhatsApp sent! 📱');
-  };
-  window.sendReceivedNotification = function (key) { sendRcvNotif(key); };
-
-  window.viewReceivedPhotos = function (key) {
-    const item = allReceivedItems.find(r => r.key === key);
-    if (!item || !item.photos || !item.photos.length) { showToast('No photos', 'info'); return; }
-    const w = window.open('', '_blank');
-    w.document.write('<!DOCTYPE html><html><head><title>Photos</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;padding:16px;text-align:center;background:#f5f5f5}img{max-width:100%;height:auto;margin:8px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.15)}</style></head><body><h2>📸 Item Photos</h2><p>Booking: ' + item.bookingId + '</p><p>Customer: ' + item.customerName + '</p><hr>' + item.photos.map(p => '<img src="' + p + '">').join('') + '</body></html>');
-    w.document.close();
+    if (!b || b.status === 'collected') { showToast('Already collected', 'warning'); return; }
+    document.getElementById('collectBookingKey').value = key;
+    document.getElementById('collectBookingId').value = b.bookingId || key.slice(-6);
+    document.getElementById('collectCustomerName').value = b.name || '';
+    document.getElementById('collectItems').value = (b.itemCount || '?') + ' ' + (b.category || 'items');
+    clearCanvas('staffCanvas'); clearCanvas('customerCanvas');
+    openModal('collectionModal');
   };
 
-  // Signatures
+  document.getElementById('collectionForm').onsubmit = function(e) {
+    e.preventDefault();
+    const cs = document.getElementById('customerCanvas').toDataURL(), ss = document.getElementById('staffCanvas').toDataURL();
+    if (!cs || cs === 'data:,') { showToast('Customer signature!', 'warning'); return; }
+    if (!ss || ss === 'data:,') { showToast('Staff signature!', 'warning'); return; }
+    const key = document.getElementById('collectBookingKey').value;
+    pendingApprovalsRef.push({
+      bookingKey: key, requestedBy: currentStaffEmail, requestedByName: currentStaffEmail.split('@')[0],
+      staffSignature: ss, customerSignature: cs, timestamp: new Date().toISOString(), status: 'pending', type: 'collection'
+    }).then(() => bookingsRef.child(key).update({ pending_collection: true }));
+    showToast('Submitted for approval ⏳');
+    closeModal('collectionModal');
+  };
+
   function initSig(id) {
-    const c = document.getElementById(id);
-    if (!c) return;
-    const ctx = c.getContext('2d');
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    const c = document.getElementById(id); if (!c) return;
+    const ctx = c.getContext('2d'); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round';
     let drawing = false;
     function getPos(e) { const r = c.getBoundingClientRect(); return { x: (e.touches ? e.touches[0] : e).clientX - r.left, y: (e.touches ? e.touches[0] : e).clientY - r.top }; }
     c.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
     c.addEventListener('mousemove', e => { if (drawing) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } });
     c.addEventListener('mouseup', () => drawing = false);
-    c.addEventListener('mouseleave', () => drawing = false);
     c.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
     c.addEventListener('touchmove', e => { e.preventDefault(); if (drawing) { const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); } }, { passive: false });
     c.addEventListener('touchend', () => drawing = false);
   }
-  initSig('staffCanvas'); initSig('customerCanvas');
-  window.clearCanvas = function (id) { const c = document.getElementById(id); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); };
+  window.clearCanvas = id => { const c = document.getElementById(id); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); };
 
-  // Collection
-  window.openCollectionModal = function (key) {
-    const b = allBookings.find(x => x._key === key);
-    if (!b) return;
-    document.getElementById('collectBookingKey').value = key;
-    document.getElementById('collectBookingId').value = b.bookingId || key.slice(-6);
-    document.getElementById('collectCustomerName').value = b.name || '';
-    document.getElementById('collectItems').value = (b.itemCount || '?') + ' ' + (b.category || 'items');
-    document.getElementById('collectNotes').value = '';
-    document.getElementById('collectRequestApproval').checked = true;
-    clearCanvas('staffCanvas'); clearCanvas('customerCanvas');
-    openModal('collectionModal');
+  window.approveCollection = function(key) {
+    if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
+    const approval = allPendingApprovals.find(a => a.key === key);
+    if (!approval) return;
+    const b = allBookings.find(x => x._key === approval.bookingKey) || {};
+    collectedItemsRef.push({
+      bookingKey: approval.bookingKey, bookingId: b.bookingId || '', customerName: b.name || '',
+      items: (b.itemCount||'?') + ' items', customerSignature: approval.customerSignature,
+      staffSignature: approval.staffSignature, collectedBy: approval.requestedBy,
+      collectedByName: approval.requestedByName, approvedBy: currentStaffEmail, timestamp: new Date().toISOString()
+    }).then(() => bookingsRef.child(approval.bookingKey).update({ status: 'collected', collected_at: new Date().toISOString(), collection_approved: true }))
+      .then(() => pendingApprovalsRef.child(key).update({ status: 'approved' })).then(() => showToast('✅ Approved!'));
   };
 
-  document.getElementById('collectionForm').onsubmit = function (e) {
-    e.preventDefault();
-    const key = document.getElementById('collectBookingKey').value;
-    const cs = document.getElementById('customerCanvas').toDataURL();
-    const ss = document.getElementById('staffCanvas').toDataURL();
-    if (!cs || cs === 'data:,') { showToast('Customer signature required!', 'warning'); return; }
-    if (!ss || ss === 'data:,') { showToast('Staff signature required!', 'warning'); return; }
-    if (document.getElementById('collectRequestApproval').checked) {
-      pendingApprovalsRef.push({ bookingKey: key, requestedBy: currentStaffEmail, staffSignature: ss, customerSignature: cs, notes: document.getElementById('collectNotes').value, timestamp: new Date().toISOString(), status: 'pending', type: 'collection' })
-        .then(() => bookingsRef.child(key).update({ pending_collection: true }));
-      showToast('Submitted for approval ⏳');
-    } else {
-      collectedItemsRef.push({ bookingKey: key, bookingId: document.getElementById('collectBookingId').value, customerName: document.getElementById('collectCustomerName').value, items: document.getElementById('collectItems').value, notes: document.getElementById('collectNotes').value, customerSignature: cs, staffSignature: ss, collectedBy: currentStaffEmail, collectedByName: currentStaffEmail.split('@')[0], timestamp: new Date().toISOString() })
-        .then(() => bookingsRef.child(key).update({ status: 'collected', collected_at: new Date().toISOString(), collected_by: currentStaffEmail, collection_approved: true }));
-      showToast('Collected! ✅');
-    }
-    closeModal('collectionModal');
+  window.rejectCollection = function(key) {
+    if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
+    if (!confirm('Reject?')) return;
+    pendingApprovalsRef.child(key).update({ status: 'rejected' }).then(() => showToast('❌ Rejected'));
   };
 
-  window.viewCollectionDetail = function (key) {
-    const item = allCollectedItems.find(c => c.key === key);
-    if (!item) return;
+  window.approveAssignment = function(approvalKey, bookingKey, staffEmail) {
+    if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
+    bookingsRef.child(bookingKey).update({ assigned_to: staffEmail, assigned_at: new Date().toISOString() })
+      .then(() => pendingApprovalsRef.child(approvalKey).update({ status: 'approved' })).then(() => showToast('✅ Assigned!'));
+  };
+
+  function getSB(s) { const map = { active: 'badge-active', collected: 'badge-collected', received: 'badge-received' }; return '<span class="badge ' + (map[s] || 'badge-pending') + '">' + s + '</span>'; }
+  function getWS(b) {
+    return [{ d: b.items_received || b.status === 'received', a: b.status === 'active' && !b.items_received }, { d: b.collection_approved, a: b.pending_collection }, { d: b.status === 'collected', a: false }]
+      .map(s => '<span class="step-dot ' + (s.d ? 'step-done' : (s.a ? 'step-active' : 'step-waiting')) + '"></span>').join('');
+  }
+
+  // Booking Card
+  function renderBookingCard(b, showRequestBtn = true) {
+    const isDuplicate = duplicateBookings.has(b._key);
+    const isUnassigned = !b.assigned_to;
+    const isMine = b.assigned_to === currentStaffEmail;
+    
+    return `<div class="booking-card ${isDuplicate ? 'duplicate' : ''} ${isUnassigned ? 'unassigned' : ''}">
+      ${isDuplicate ? '<div class="duplicate-badge">⚠️ DUPE</div>' : ''}
+      ${isUnassigned ? '<div class="unassigned-badge">Unassigned</div>' : ''}
+      <div class="booking-header">
+        <div><div class="booking-id">#${b.bookingId || b._key.slice(-6)}</div><div style="font-size:0.65rem;color:var(--text-secondary);">${formatTimestamp(b.timestamp)}</div></div>
+        <div class="booking-status">${getSB(b.status)}${b.received_locked ? ' 🔒' : ''}${b.collection_approved ? ' ✅' : ''}</div>
+      </div>
+      <div class="booking-body">
+        <div class="booking-field"><div class="booking-label">Customer</div><div class="booking-value">${b.name || '—'}</div></div>
+        <div class="booking-field"><div class="booking-label">Phone</div><div class="booking-value">${b.phone || '—'}</div></div>
+        <div class="booking-field"><div class="booking-label">Items</div><div class="booking-value">${b.itemCount || '?'} ${b.category || ''}</div></div>
+        <div class="booking-field"><div class="booking-label">Check-in</div><div class="booking-value">${b.checkIn || '—'}</div></div>
+        <div class="booking-field"><div class="booking-label">Staff</div><div class="booking-value">${b.assigned_to ? b.assigned_to.split('@')[0] : '<span style="color:var(--warning);">Unassigned</span>'}</div></div>
+        <div class="booking-field"><div class="booking-label">Progress</div><div class="booking-value">${getWS(b)}</div></div>
+      </div>
+      <div class="booking-footer">
+        <button class="action-btn btn-preview" onclick="showPreview('${b._key}')"><i class="fas fa-eye"></i></button>
+        ${showRequestBtn && isUnassigned ? `<button class="action-btn btn-request" onclick="requestUnassigned('${b._key}')"><i class="fas fa-hand-paper"></i> Request</button>` : ''}
+        ${isMine && b.status === 'active' && !b.items_received ? `<button class="action-btn btn-receive" onclick="openReceiveModal('${b._key}')"><i class="fas fa-camera"></i> Receive</button>` : ''}
+        ${isMine && b.status === 'received' ? `<button class="action-btn btn-collect" onclick="openCollectionModal('${b._key}')"><i class="fas fa-people-carry"></i> Collect</button>` : ''}
+        ${b.collection_approved ? `<button class="action-btn btn-whatsapp" onclick="openWhatsAppModal('${b._key}')"><i class="fab fa-whatsapp"></i></button>` : ''}
+        ${currentStaffIsAdmin ? `<button class="action-btn btn-delete" onclick="deleteBooking('${b._key}')"><i class="fas fa-trash"></i></button>` : ''}
+        ${isDuplicate && currentStaffIsAdmin ? `<button class="action-btn btn-merge" onclick="showToast('Merge feature coming soon', 'info')"><i class="fas fa-compress"></i></button>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function renderMyBookingsGrid() {
+    const mb = allBookings.filter(b => b.assigned_to === currentStaffEmail);
+    const grid = document.getElementById('myBookingsGrid'), empty = document.getElementById('myBookingsEmpty');
+    if (!mb.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    grid.innerHTML = mb.map(b => renderBookingCard(b, false)).join('');
+  }
+
+  function renderAllBookingsGrid() {
+    let bookings = allBookings;
+    const s = (document.getElementById('searchInput')?.value || '').toLowerCase();
+    const f = document.getElementById('filterStatus')?.value || 'all';
+    if (s) bookings = bookings.filter(b => (b.name||'').toLowerCase().includes(s) || (b.bookingId||'').toLowerCase().includes(s) || (b.phone||'').toLowerCase().includes(s));
+    if (f === 'unassigned') bookings = bookings.filter(b => !b.assigned_to);
+    else if (f !== 'all') bookings = bookings.filter(b => b.status === f);
+    
+    const grid = document.getElementById('allBookingsGrid'), empty = document.getElementById('allBookingsEmpty');
+    if (!bookings.length) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    grid.innerHTML = bookings.map(b => renderBookingCard(b, true)).join('');
+  }
+
+  // ===== MY RECEIVED (Staff Only) =====
+  function renderMyReceivedCards() {
+    const items = allReceivedItems.filter(r => r.receivedBy === currentStaffEmail);
+    const c = document.getElementById('receivedCardsContainer'), e = document.getElementById('receivedEmpty');
+    document.getElementById('receiveCount') && (document.getElementById('receiveCount').textContent = items.length);
+    document.getElementById('receiveBadge').textContent = items.length;
+    document.getElementById('receiveBadge').style.display = items.length > 0 ? 'inline-block' : 'none';
+    if (!items.length) { c.innerHTML = ''; e.style.display = 'block'; return; }
+    e.style.display = 'none';
+    c.innerHTML = items.map(r => `<div class="data-card">
+      <div class="card-row"><span class="card-label">ID</span><span class="card-value" style="font-family:monospace;">${r.bookingId || (r.bookingKey||'').slice(-6)}</span></div>
+      <div class="card-row"><span class="card-label">Customer</span><span class="card-value">${r.customerName||'—'}</span></div>
+      <div class="card-row"><span class="card-label">Items</span><span class="card-value">${r.itemCount} ${r.category||''}</span></div>
+      <div class="card-row"><span class="card-label">Photos</span><span class="card-value">${r.photos&&r.photos.length?'📸 '+r.photos.length:'—'}</span></div>
+      <div class="card-row"><span class="card-label">Time</span><span class="card-value">${formatTimestamp(r.timestamp)}</span></div>
+      <div class="card-actions">
+        <button class="action-btn btn-preview" onclick="showPreview('${r.key}','received')"><i class="fas fa-eye"></i></button>
+        ${r.photos&&r.photos.length?`<button class="action-btn btn-view" onclick="viewPhotos('${r.key}')"><i class="fas fa-image"></i></button>`:''}
+      </div>
+    </div>`).join('');
+  }
+
+  // ===== MY COLLECTIONS (Staff Only) =====
+  function renderMyCollectedCards() {
+    const items = allCollectedItems.filter(c => c.collectedBy === currentStaffEmail);
+    const c = document.getElementById('collectedCardsContainer'), e = document.getElementById('collectedEmpty');
+    document.getElementById('collectedCount') && (document.getElementById('collectedCount').textContent = items.length);
+    document.getElementById('collectBadge').textContent = items.length;
+    document.getElementById('collectBadge').style.display = items.length > 0 ? 'inline-block' : 'none';
+    if (!items.length) { c.innerHTML = ''; e.style.display = 'block'; return; }
+    e.style.display = 'none';
+    c.innerHTML = items.map(co => `<div class="data-card">
+      <div class="card-row"><span class="card-label">ID</span><span class="card-value" style="font-family:monospace;">${co.bookingId||(co.bookingKey||'').slice(-6)}</span></div>
+      <div class="card-row"><span class="card-label">Customer</span><span class="card-value">${co.customerName||'—'}</span></div>
+      <div class="card-row"><span class="card-label">Items</span><span class="card-value">${co.items||'—'}</span></div>
+      <div class="card-row"><span class="card-label">Time</span><span class="card-value">${formatTimestamp(co.timestamp)}</span></div>
+      <div class="card-actions"><button class="action-btn btn-preview" onclick="showPreview('${co.key}','collected')"><i class="fas fa-eye"></i></button></div>
+    </div>`).join('');
+  }
+
+  window.viewPhotos = key => {
+    const item = allReceivedItems.find(r => r.key === key);
+    if (!item || !item.photos) return;
     const w = window.open('', '_blank');
-    w.document.write('<!DOCTYPE html><html><head><title>Collection</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;padding:16px;background:#f5f5f5}img{max-width:100%;height:auto;margin:8px 0;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.15)}.card{background:#fff;padding:16px;border-radius:12px;margin:12px 0}</style></head><body><h2>📋 Collection</h2><div class="card"><p><strong>Booking:</strong> ' + item.bookingId + '</p><p><strong>Customer:</strong> ' + item.customerName + '</p><p><strong>Items:</strong> ' + item.items + '</p><p><strong>Notes:</strong> ' + (item.notes || 'None') + '</p></div><div class="card"><h3>Customer Signature</h3>' + (item.customerSignature ? '<img src="' + item.customerSignature + '">' : 'Not signed') + '</div><div class="card"><h3>Staff Signature</h3>' + (item.staffSignature ? '<img src="' + item.staffSignature + '">' : 'Not signed') + '</div></body></html>');
+    w.document.write('<!DOCTYPE html><html><head><title>Photos</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:sans-serif;padding:16px;text-align:center;background:#f5f5f5}img{max-width:100%;height:auto;margin:8px 0;border-radius:10px}</style></head><body><h2>📸 Item Photos</h2>' + item.photos.map(p => '<img src="' + p + '">').join('') + '</body></html>');
     w.document.close();
   };
 
-  // WhatsApp
-  window.openWhatsAppModal = function (key) {
+  function renderApprovals() {
+    const container = document.getElementById('approvalsContainer');
+    const pending = allPendingApprovals.filter(a => a.status === 'pending');
+    document.getElementById('approvalBadge').textContent = pending.length;
+    document.getElementById('approvalBadge').style.display = pending.length > 0 ? 'inline-block' : 'none';
+    if (!pending.length) { container.innerHTML = ''; document.getElementById('approvalsEmpty').style.display = 'block'; return; }
+    document.getElementById('approvalsEmpty').style.display = 'none';
+    container.innerHTML = pending.map(a => {
+      const b = allBookings.find(x => x._key === a.bookingKey);
+      return `<div class="approval-pending-card">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div><strong>${a.type === 'collection' ? '📦 Collection' : a.type === 'assignment_request' ? '👤 Assignment' : '✏️ Edit'}</strong>
+            <div style="font-size:0.75rem;">Booking: ${a.bookingKey?.slice(-6)}</div>
+            <div style="font-size:0.72rem;">By: ${a.requestedByName || (a.requestedBy||'').split('@')[0]}</div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            ${a.type === 'assignment_request' ? `<button class="action-btn btn-approve" onclick="approveAssignment('${a.key}','${a.bookingKey}','${a.requestedBy}')"><i class="fas fa-check"></i> Assign</button>` : `<button class="action-btn btn-approve" onclick="approveCollection('${a.key}')"><i class="fas fa-check"></i> Approve</button>`}
+            <button class="action-btn btn-reject" onclick="rejectCollection('${a.key}')"><i class="fas fa-times"></i> Reject</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.openWhatsAppModal = function(key) {
     const b = allBookings.find(x => x._key === key);
-    if (!b || !b.collection_approved) { showToast('Collection not approved yet', 'warning'); return; }
-    currentWhatsAppBooking = b;
-    document.getElementById('whatsappPreview').textContent = genColMsg(b);
+    if (!b || !b.collection_approved) { showToast('Not approved', 'warning'); return; }
+    document.getElementById('whatsappPreview').textContent = genRcvMsg(b);
     openModal('whatsappModal');
   };
-  window.sendWhatsApp = function () {
-    if (!currentWhatsAppBooking || !currentWhatsAppBooking.phone) { showToast('No phone', 'warning'); return; }
-    const c = fmtPhone(currentWhatsAppBooking.phone); if (!c) return;
-    window.open('https://wa.me/' + c + '?text=' + encodeURIComponent(genColMsg(currentWhatsAppBooking)), '_blank');
-    closeModal('whatsappModal'); showToast('WhatsApp opened! 📱');
-  };
+  window.sendWhatsApp = function() { closeModal('whatsappModal'); showToast('WhatsApp opened! 📱'); };
 
-  // Edit
-  window.openEditModal = function (key) {
-    const b = allBookings.find(x => x._key === key);
-    if (!b) return;
-    document.getElementById('editBookingKey').value = key;
-    document.getElementById('editName').value = b.name || '';
-    document.getElementById('editPhone').value = b.phone || '';
-    document.getElementById('editCheckIn').value = b.checkIn || '';
-    document.getElementById('editCollect').value = b.collect || '';
-    document.getElementById('editItemCount').value = b.itemCount || '';
-    document.getElementById('editCategory').value = b.category || 'Other';
-    openModal('editModal');
-  };
-  document.getElementById('editForm').onsubmit = function (e) {
-    e.preventDefault();
-    const key = document.getElementById('editBookingKey').value;
-    pendingApprovalsRef.push({
-      bookingKey: key, requestedBy: currentStaffEmail,
-      proposed: { name: document.getElementById('editName').value, phone: document.getElementById('editPhone').value, checkIn: document.getElementById('editCheckIn').value, collect: document.getElementById('editCollect').value, itemCount: parseInt(document.getElementById('editItemCount').value) || 0, category: document.getElementById('editCategory').value },
-      timestamp: new Date().toISOString(), status: 'pending', type: 'edit'
-    }).then(() => bookingsRef.child(key).update({ pending_edit: true }));
-    showToast('Edit request submitted');
-    closeModal('editModal');
-  };
+  document.getElementById('searchInput')?.addEventListener('input', renderAllBookingsGrid);
+  document.getElementById('filterStatus')?.addEventListener('change', renderAllBookingsGrid);
 
-  // Admin
-  window.acceptBooking = function (key) {
-    if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
-    bookingsRef.child(key).update({ assigned_to: currentStaffEmail, assigned_at: new Date().toISOString() }).then(() => showToast('Assigned to you'));
-  };
-  window.openReassignModal = function (key) {
-    if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
-    const b = allBookings.find(x => x._key === key);
-    if (!b) return;
-    document.getElementById('reassignBookingKey').value = key;
-    document.getElementById('reassignCurrent').value = b.assigned_to || 'Unassigned';
-    openModal('reassignModal');
-  };
-  document.getElementById('reassignForm').onsubmit = function (e) {
-    e.preventDefault();
-    const key = document.getElementById('reassignBookingKey').value, newEmail = document.getElementById('reassignNewEmail').value.trim();
-    if (!newEmail) { showToast('Enter email', 'warning'); return; }
-    staffRef.child(newEmail.replace(/\./g, ',')).once('value').then(snap => {
-      if (!snap.exists()) { showToast('Not registered', 'error'); return; }
-      return bookingsRef.child(key).update({ assigned_to: newEmail, assigned_at: new Date().toISOString() });
-    }).then(() => { showToast('Reassigned to ' + newEmail); closeModal('reassignModal'); });
-  };
-
-  // Badges & Workflow
-  function getSB(s) { const map = { active: 'badge-active', collected: 'badge-collected', received: 'badge-received' }; return '<span class="badge ' + (map[s] || 'badge-pending') + '">' + s + '</span>'; }
-  function getWS(b) {
-    return [
-      { d: b.items_received || b.status === 'received', a: b.status === 'active' && !b.items_received },
-      { d: b.collection_approved, a: b.pending_collection },
-      { d: b.status === 'collected', a: false }
-    ].map(s => '<span class="step-dot ' + (s.d ? 'step-done' : (s.a ? 'step-active' : 'step-waiting')) + '"></span>').join('');
-  }
-
-  // Empty panel helper
-  function toggleEmptyState(containerId, emptyId, count) {
-    const emptyEl = document.getElementById(emptyId);
-    if (emptyEl) emptyEl.style.display = count === 0 ? 'block' : 'none';
-  }
-
-  // Render My Bookings
-  function rMBT(bookings) {
-    const tb = document.getElementById('myBookingsTableBody');
-    const mb = bookings.filter(b => b.assigned_to === currentStaffEmail);
-    document.getElementById('myAssignedCount').textContent = mb.length;
-    toggleEmptyState('myBookingsTableBody', 'myBookingsEmpty', mb.length);
-    if (!mb.length) { tb.innerHTML = ''; return; }
-    tb.innerHTML = mb.map(b => '<tr><td style="font-family:monospace;font-weight:600;">' + (b.bookingId || b._key.slice(-6)) + '</td><td>' + (b.name || '—') + '</td><td>' + (b.phone || '—') + '</td><td>' + (b.itemCount || '?') + ' ' + (b.category || '') + '</td><td>' + (b.checkIn || '—') + '</td><td>' + getSB(b.status) + (b.collection_approved ? ' <span class="badge badge-approved">✅</span>' : '') + '</td><td><div class="workflow-steps">' + getWS(b) + '</div></td><td onclick="event.stopPropagation();" style="white-space:nowrap;">' + (b.status === 'active' ? '<button class="action-btn btn-receive" onclick="openReceiveModal(\'' + b._key + '\')"><i class="fas fa-camera"></i></button>' : '') + (b.status === 'received' ? '<button class="action-btn btn-collect" onclick="openCollectionModal(\'' + b._key + '\')"><i class="fas fa-people-carry"></i></button>' : '') + (b.status === 'active' ? '<button class="action-btn btn-edit" onclick="openEditModal(\'' + b._key + '\')"><i class="fas fa-edit"></i></button>' : '') + (b.collection_approved ? '<button class="action-btn btn-whatsapp" onclick="openWhatsAppModal(\'' + b._key + '\')"><i class="fab fa-whatsapp"></i></button>' : '') + (b.status === 'received' ? '<button class="action-btn btn-notify" onclick="sendReceivedNotification(\'' + b._key + '\')"><i class="fas fa-bell"></i></button>' : '') + '</td></tr>').join('');
-  }
-  function rMBC(bookings) {
-    const mb = bookings.filter(b => b.assigned_to === currentStaffEmail), container = document.getElementById('myBookingsCardsContainer');
-    toggleEmptyState('myBookingsCardsContainer', 'myBookingsEmpty', mb.length);
-    if (!mb.length) { container.innerHTML = ''; return; }
-    container.innerHTML = mb.map(b => '<div class="data-card"><div class="card-row"><span class="card-label">ID</span><span style="font-family:monospace;">' + (b.bookingId || b._key.slice(-6)) + '</span></div><div class="card-row"><span class="card-label">Customer</span><span>' + (b.name || '—') + '</span></div><div class="card-row"><span class="card-label">Items</span><span>' + (b.itemCount || '?') + ' ' + (b.category || '') + '</span></div><div class="card-row"><span class="card-label">Status</span><span>' + getSB(b.status) + (b.collection_approved ? ' ✅' : '') + '</span></div><div class="card-row"><span class="card-label">Progress</span><span>' + getWS(b) + '</span></div><div class="card-actions">' + (b.status === 'active' ? '<button class="action-btn btn-receive" onclick="openReceiveModal(\'' + b._key + '\')"><i class="fas fa-camera"></i></button>' : '') + (b.status === 'received' ? '<button class="action-btn btn-collect" onclick="openCollectionModal(\'' + b._key + '\')"><i class="fas fa-people-carry"></i></button>' : '') + (b.status === 'active' ? '<button class="action-btn btn-edit" onclick="openEditModal(\'' + b._key + '\')"><i class="fas fa-edit"></i></button>' : '') + (b.collection_approved ? '<button class="action-btn btn-whatsapp" onclick="openWhatsAppModal(\'' + b._key + '\')"><i class="fab fa-whatsapp"></i></button>' : '') + '</div></div>').join('');
-  }
-
-  // Received items render
-  function rRT(items) {
-    const tb = document.getElementById('receivedTableBody');
-    document.getElementById('receiveCount').textContent = items.length;
-    document.getElementById('receiveBadge').textContent = items.length;
-    document.getElementById('receiveBadge').style.display = items.length > 0 ? 'inline-block' : 'none';
-    toggleEmptyState('receivedTableBody', 'receivedEmpty', items.length);
-    if (!items.length) { tb.innerHTML = ''; return; }
-    tb.innerHTML = items.map(r => '<tr><td style="font-family:monospace;font-weight:600;">' + (r.bookingId || (r.bookingKey ? r.bookingKey.slice(-6) : '')) + '</td><td>' + (r.customerName || '—') + '</td><td>' + (r.customerPhone || '—') + '</td><td>' + r.itemCount + ' ' + (r.category || '') + '</td><td>' + (r.photos && r.photos.length ? '<span style="color:var(--success);">📸 ' + r.photos.length + '</span>' : '—') + '</td><td>' + (r.location || '—') + '</td><td>' + (r.receivedByName || (r.receivedBy || '').split('@')[0]) + '</td><td>' + new Date(r.timestamp).toLocaleDateString() + '</td><td><button class="action-btn btn-view" onclick="viewReceivedPhotos(\'' + r.key + '\')"><i class="fas fa-image"></i></button></td></tr>').join('');
-  }
-  function rRC(items) {
-    const container = document.getElementById('receivedCardsContainer');
-    toggleEmptyState('receivedCardsContainer', 'receivedEmpty', items.length);
-    if (!items.length) { container.innerHTML = ''; return; }
-    container.innerHTML = items.map(r => '<div class="data-card"><div class="card-row"><span class="card-label">Booking</span><span style="font-family:monospace;">' + (r.bookingId || (r.bookingKey ? r.bookingKey.slice(-6) : '')) + '</span></div><div class="card-row"><span class="card-label">Customer</span><span>' + (r.customerName || '—') + '</span></div><div class="card-row"><span class="card-label">Items</span><span>' + r.itemCount + ' ' + (r.category || '') + '</span></div><div class="card-row"><span class="card-label">Photos</span><span>' + (r.photos && r.photos.length ? '📸 ' + r.photos.length : '—') + '</span></div><div class="card-actions"><button class="action-btn btn-view" onclick="viewReceivedPhotos(\'' + r.key + '\')"><i class="fas fa-image"></i> View</button></div></div>').join('');
-  }
-
-  // Collected items render
-  function rCT(items) {
-    const tb = document.getElementById('collectedTableBody');
-    document.getElementById('collectedCount').textContent = items.length;
-    document.getElementById('collectBadge').textContent = items.length;
-    document.getElementById('collectBadge').style.display = items.length > 0 ? 'inline-block' : 'none';
-    toggleEmptyState('collectedTableBody', 'collectedEmpty', items.length);
-    if (!items.length) { tb.innerHTML = ''; return; }
-    tb.innerHTML = items.map(c => '<tr><td style="font-family:monospace;font-weight:600;">' + (c.bookingId || (c.bookingKey ? c.bookingKey.slice(-6) : '')) + '</td><td>' + (c.customerName || '—') + '</td><td>' + (c.customerPhone || '—') + '</td><td>' + (c.items || '—') + '</td><td>' + (c.collectedByName || (c.collectedBy || '').split('@')[0]) + '</td><td>' + new Date(c.timestamp).toLocaleDateString() + '</td><td>' + (c.customerSignature ? '👤' : '') + (c.staffSignature ? '👔' : '') + '</td><td><button class="action-btn btn-view" onclick="viewCollectionDetail(\'' + c.key + '\')"><i class="fas fa-eye"></i></button></td></tr>').join('');
-  }
-  function rCC(items) {
-    const container = document.getElementById('collectedCardsContainer');
-    toggleEmptyState('collectedCardsContainer', 'collectedEmpty', items.length);
-    if (!items.length) { container.innerHTML = ''; return; }
-    container.innerHTML = items.map(c => '<div class="data-card"><div class="card-row"><span class="card-label">Booking</span><span style="font-family:monospace;">' + (c.bookingId || (c.bookingKey ? c.bookingKey.slice(-6) : '')) + '</span></div><div class="card-row"><span class="card-label">Customer</span><span>' + (c.customerName || '—') + '</span></div><div class="card-row"><span class="card-label">Items</span><span>' + (c.items || '—') + '</span></div><div class="card-row"><span class="card-label">Sign</span><span>' + (c.customerSignature ? '👤' : '') + (c.staffSignature ? '👔' : '') + '</span></div><div class="card-actions"><button class="action-btn btn-view" onclick="viewCollectionDetail(\'' + c.key + '\')"><i class="fas fa-eye"></i> View</button></div></div>').join('');
-  }
-
-  // All bookings render
-  function rABT(bookings) {
-    const tb = document.getElementById('allBookingsTableBody');
-    toggleEmptyState('allBookingsTableBody', 'allBookingsEmpty', bookings.length);
-    if (!bookings.length) { tb.innerHTML = ''; return; }
-    tb.innerHTML = bookings.map(b => '<tr><td style="font-family:monospace;font-weight:600;">' + (b.bookingId || b._key.slice(-6)) + '</td><td>' + (b.name || '—') + '</td><td>' + (b.phone || '—') + '</td><td>' + (b.itemCount || '?') + ' ' + (b.category || '') + '</td><td>' + (b.assigned_to ? b.assigned_to.split('@')[0] : '<span style="opacity:0.5;">—</span>') + '</td><td>' + getSB(b.status) + '</td><td onclick="event.stopPropagation();" style="white-space:nowrap;">' + (!b.assigned_to && b.status === 'active' && currentStaffIsAdmin ? '<button class="action-btn btn-accept" onclick="acceptBooking(\'' + b._key + '\')"><i class="fas fa-check-circle"></i></button>' : '') + (b.assigned_to && b.status === 'active' && currentStaffIsAdmin ? '<button class="action-btn btn-reassign" onclick="openReassignModal(\'' + b._key + '\')"><i class="fas fa-user-shield"></i></button>' : '') + '</td></tr>').join('');
-  }
-  function rABC(bookings) {
-    const container = document.getElementById('allBookingsCardsContainer');
-    toggleEmptyState('allBookingsCardsContainer', 'allBookingsEmpty', bookings.length);
-    if (!bookings.length) { container.innerHTML = ''; return; }
-    container.innerHTML = bookings.map(b => '<div class="data-card"><div class="card-row"><span class="card-label">ID</span><span style="font-family:monospace;">' + (b.bookingId || b._key.slice(-6)) + '</span></div><div class="card-row"><span class="card-label">Customer</span><span>' + (b.name || '—') + '</span></div><div class="card-row"><span class="card-label">Staff</span><span>' + (b.assigned_to ? b.assigned_to.split('@')[0] : 'Unassigned') + '</span></div><div class="card-row"><span class="card-label">Status</span><span>' + getSB(b.status) + '</span></div><div class="card-actions">' + (!b.assigned_to && b.status === 'active' && currentStaffIsAdmin ? '<button class="action-btn btn-accept" onclick="acceptBooking(\'' + b._key + '\')"><i class="fas fa-check-circle"></i> Accept</button>' : '') + (b.assigned_to && b.status === 'active' && currentStaffIsAdmin ? '<button class="action-btn btn-reassign" onclick="openReassignModal(\'' + b._key + '\')"><i class="fas fa-user-shield"></i> Reassign</button>' : '') + '</div></div>').join('');
-  }
-
-  // Search & Filter
-  document.getElementById('searchInput').addEventListener('input', refreshFilteredUI);
-  document.getElementById('filterStatus').addEventListener('change', refreshFilteredUI);
-  function getFilteredBookings() {
-    const s = document.getElementById('searchInput').value.toLowerCase(), f = document.getElementById('filterStatus').value;
-    return allBookings.filter(b => {
-      const ms = !s || (b.name || '').toLowerCase().includes(s) || (b.bookingId || '').toLowerCase().includes(s) || (b.phone || '').toLowerCase().includes(s);
-      const mf = f === 'all' || b.status === f;
-      return ms && mf;
-    });
-  }
-  function refreshFilteredUI() {
-    const fb = getFilteredBookings();
-    rMBT(fb); rMBC(fb); rABT(fb); rABC(fb);
-  }
   function exportToExcel() {
-    const fb = getFilteredBookings(), data = fb.map(b => ({ 'Booking ID': b.bookingId || (b._key ? b._key.slice(-6) : ''), 'Customer': b.name || '', 'Phone': b.phone || '', 'Items': (b.itemCount || '0') + ' ' + (b.category || ''), 'Staff': b.assigned_to || 'Unassigned', 'Status': b.status }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Bookings');
-    XLSX.writeFile(wb, 'bookings_' + new Date().toISOString().split('T')[0] + '.xlsx');
+    const data = allBookings.map(b => ({ 'Booking ID': b.bookingId||(b._key?b._key.slice(-6):''), 'Customer': b.name||'', 'Phone': b.phone||'', 'Items': (b.itemCount||'0')+' '+(b.category||''), 'Staff': b.assigned_to||'Unassigned', 'Status': b.status, 'Duplicate': duplicateBookings.has(b._key)?'YES':'NO' }));
+    XLSX.writeFile(XLSX.utils.book_new(XLSX.utils.json_to_sheet(data), 'Bookings'), 'bookings_' + new Date().toISOString().split('T')[0] + '.xlsx');
     showToast('Exported! 📊');
   }
-  window.exportToExcel = exportToExcel;
 
-  // Dashboard & Charts
+  // Dashboard
   function updateDashboardStats() {
-    const t = allBookings.length, a = allBookings.filter(b => b.assigned_to === currentStaffEmail && b.status === 'active').length,
-      p = allBookings.filter(b => b.assigned_to === currentStaffEmail && (b.pending_edit || b.pending_collection)).length,
-      c = allCollectedItems.filter(x => x.collectedBy === currentStaffEmail).length,
-      r = allReceivedItems.filter(x => x.receivedBy === currentStaffEmail).length;
-    document.getElementById('statTotal').textContent = t;
-    document.getElementById('statMyActive').textContent = a;
-    document.getElementById('statReceived').textContent = r;
-    document.getElementById('statCollected').textContent = c;
-    document.getElementById('statPending').textContent = p;
+    const dupes = detectDuplicates(allBookings);
+    document.getElementById('statTotal').textContent = allBookings.length;
+    document.getElementById('statMyActive').textContent = allBookings.filter(b => b.assigned_to === currentStaffEmail && b.status === 'active').length;
+    document.getElementById('statUnassigned').textContent = allBookings.filter(b => !b.assigned_to && b.status === 'active').length;
+    document.getElementById('statReceived').textContent = allReceivedItems.filter(x => x.receivedBy === currentStaffEmail).length;
+    document.getElementById('statCollected').textContent = allCollectedItems.filter(x => x.collectedBy === currentStaffEmail).length;
+    
+    const warnContainer = document.getElementById('duplicateWarningContainer');
+    if (dupes > 0) {
+      warnContainer.innerHTML = `<div class="duplicate-warning"><i class="fas fa-exclamation-triangle"></i> ${dupes} potential duplicate booking(s) detected across all bookings.</div>`;
+    } else { warnContainer.innerHTML = ''; }
     updateAllCharts();
   }
-  function updateAllCharts() { updateDashboardCharts(); if (document.getElementById('tab-insights').classList.contains('active')) renderInsights(); }
+
+  function updateRecentActivity() {
+    const feed = document.getElementById('recentActivityFeed');
+    const recent = [...allReceivedItems.filter(x => x.receivedBy === currentStaffEmail), ...allCollectedItems.filter(x => x.collectedBy === currentStaffEmail)]
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
+    if (!recent.length) { feed.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-secondary);">No recent activity</div>'; return; }
+    feed.innerHTML = recent.map(item => {
+      const isReceived = item.hasOwnProperty('photos');
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.75rem;">
+        <span style="color:${isReceived?'var(--success)':'var(--violet)'};">${isReceived?'📸 Received':'✅ Collected'}</span>
+        <span>${item.customerName||'Unknown'}</span>
+        <span style="margin-left:auto;font-size:0.65rem;color:var(--text-secondary);">${formatTimestamp(item.timestamp)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function updateAllCharts() { updateDashboardCharts(); }
   function updateDashboardCharts() {
     const isLight = document.body.classList.contains('light'), textColor = isLight ? '#0f172a' : '#f1f5f9';
-    const a = allBookings.filter(b => b.assigned_to === currentStaffEmail && b.status === 'active').length,
-      c = allCollectedItems.filter(x => x.collectedBy === currentStaffEmail).length,
-      r = allReceivedItems.filter(x => x.receivedBy === currentStaffEmail).length,
-      p = allBookings.filter(b => b.assigned_to === currentStaffEmail && (b.pending_edit || b.pending_collection)).length;
+    const a = allBookings.filter(b => b.assigned_to === currentStaffEmail && b.status === 'active').length;
+    const c = allCollectedItems.filter(x => x.collectedBy === currentStaffEmail).length;
+    const r = allReceivedItems.filter(x => x.receivedBy === currentStaffEmail).length;
+    const u = allBookings.filter(b => !b.assigned_to && b.status === 'active').length;
+    
     const ctx1 = document.getElementById('statusChart');
     if (ctx1) {
-      const c1 = ctx1.getContext('2d');
       if (statusChart) statusChart.destroy();
-      statusChart = new Chart(c1, { type: 'doughnut', data: { labels: ['Active', 'Received', 'Collected', 'Pending'], datasets: [{ data: [a, r, c, p], backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'], borderColor: isLight ? '#fff' : '#1e293b', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: textColor, padding: 10, font: { size: 10 }, usePointStyle: true } } } } });
+      statusChart = new Chart(ctx1, { type: 'doughnut', data: { labels: ['Active','Received','Collected','Unassigned'], datasets: [{ data: [a,r,c,u], backgroundColor: ['#10b981','#3b82f6','#8b5cf6','#f59e0b'], borderColor: isLight?'#fff':'#1e293b', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 9 }, usePointStyle: true } } } } });
     }
+    
     const ctx2 = document.getElementById('trendChart');
     if (ctx2) {
-      const c2 = ctx2.getContext('2d');
       if (trendChart) trendChart.destroy();
       const days = [], rd = [], cd = [];
       for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const ds = d.toISOString().split('T')[0]; days.push(d.toLocaleDateString('en-US', { weekday: 'short' })); rd.push(allReceivedItems.filter(x => x.receivedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); cd.push(allCollectedItems.filter(x => x.collectedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); }
-      trendChart = new Chart(c2, { type: 'line', data: { labels: days, datasets: [{ label: 'Received', data: rd, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }, { label: 'Collected', data: cd, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor, usePointStyle: true, font: { size: 10 } } } }, scales: { x: { ticks: { color: textColor, font: { size: 9 } }, grid: { display: false } }, y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor, font: { size: 9 } }, grid: { color: isLight ? '#e2e8f0' : '#334155' } } }, interaction: { intersect: false, mode: 'index' } } });
+      trendChart = new Chart(ctx2, { type: 'line', data: { labels: days, datasets: [{ label: 'Received', data: rd, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }, { label: 'Collected', data: cd, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor, font: { size: 9 } } } }, scales: { x: { ticks: { color: textColor, font: { size: 8 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor } } } } });
     }
   }
 
+  // ===== IMPROVED INSIGHTS =====
   function renderInsights() {
-    // Minimal render to avoid empty panel – fill with placeholder data if needed
-    document.getElementById('insightToday').textContent = allReceivedItems.filter(x => x.timestamp && x.timestamp.startsWith(new Date().toISOString().split('T')[0])).length;
-    document.getElementById('insightWeek').textContent = allReceivedItems.filter(x => x.timestamp && new Date(x.timestamp) > new Date(Date.now() - 7*86400000)).length;
-    document.getElementById('insightMonth').textContent = allReceivedItems.filter(x => x.timestamp && new Date(x.timestamp) > new Date(Date.now() - 30*86400000)).length;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const myReceived = allReceivedItems.filter(x => x.receivedBy === currentStaffEmail);
+    const myCollected = allCollectedItems.filter(x => x.collectedBy === currentStaffEmail);
+    
+    // Today
+    document.getElementById('insightTodayReceived').textContent = myReceived.filter(x => x.timestamp && x.timestamp.startsWith(todayStr)).length;
+    document.getElementById('insightTodayCollected').textContent = myCollected.filter(x => x.timestamp && x.timestamp.startsWith(todayStr)).length;
+    document.getElementById('insightTodayPending').textContent = allBookings.filter(b => b.assigned_to === currentStaffEmail && b.status === 'active').length;
+    
+    // Avg receive time
+    const receiveTimes = myReceived.filter(x => x.timestamp).map(x => {
+      const b = allBookings.find(bk => bk._key === x.bookingKey);
+      return b && b.timestamp ? new Date(x.timestamp) - new Date(b.timestamp) : null;
+    }).filter(t => t !== null);
+    if (receiveTimes.length) {
+      const avgMin = Math.round(receiveTimes.reduce((a, b) => a + b, 0) / receiveTimes.length / 60000);
+      document.getElementById('insightAvgTime').textContent = avgMin + ' min';
+    }
+    
+    // Weekly
+    const weekAgo = new Date(Date.now() - 7*86400000);
+    document.getElementById('insightWeekReceived').textContent = myReceived.filter(x => new Date(x.timestamp) > weekAgo).length;
+    document.getElementById('insightWeekCollected').textContent = myCollected.filter(x => new Date(x.timestamp) > weekAgo).length;
+    const total = allBookings.filter(b => b.assigned_to === currentStaffEmail).length;
+    document.getElementById('insightWeekRate').textContent = total > 0 ? Math.round((myCollected.length / total) * 100) + '%' : '0%';
+    
+    // Best day
+    const dayCounts = {};
+    myReceived.forEach(x => { const day = new Date(x.timestamp).toLocaleDateString('en-US', { weekday: 'short' }); dayCounts[day] = (dayCounts[day] || 0) + 1; });
+    myCollected.forEach(x => { const day = new Date(x.timestamp).toLocaleDateString('en-US', { weekday: 'short' }); dayCounts[day] = (dayCounts[day] || 0) + 1; });
+    const bestDay = Object.entries(dayCounts).sort((a, b) => b[1] - a[1])[0];
+    document.getElementById('insightBestDay').textContent = bestDay ? bestDay[0] + ' (' + bestDay[1] + ')' : '—';
+    
+    // Rankings
+    document.getElementById('insightTotalItems').textContent = myReceived.reduce((s, x) => s + (x.itemCount || 0), 0);
+    const cats = new Set(myReceived.map(x => x.category).filter(Boolean));
+    document.getElementById('insightCategories').textContent = cats.size;
+    const catCounts = {};
+    myReceived.forEach(x => { const cat = x.category || 'Other'; catCounts[cat] = (catCounts[cat] || 0) + 1; });
+    const topCat = Object.entries(catCounts).sort((a, b) => b[1] - a[1])[0];
+    document.getElementById('insightTopCategory').textContent = topCat ? topCat[0] : '—';
+    
+    // Streak
+    let streak = 0;
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const ds = d.toISOString().split('T')[0];
+      if (myReceived.some(x => x.timestamp && x.timestamp.startsWith(ds)) || myCollected.some(x => x.timestamp && x.timestamp.startsWith(ds))) {
+        streak++;
+      } else { break; }
+    }
+    document.getElementById('insightStreak').textContent = streak + ' days 🔥';
+    
+    updateWeeklyChart();
+    updateCategoryChart();
+    updateHourlyChart();
   }
 
-  // Real-time listeners
+  function updateWeeklyChart() {
+    const ctx = document.getElementById('weeklyChart'); if (!ctx) return;
+    const isLight = document.body.classList.contains('light'), textColor = isLight ? '#0f172a' : '#f1f5f9';
+    if (weeklyChart) weeklyChart.destroy();
+    const days = [], rd = [], cd = [];
+    for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const ds = d.toISOString().split('T')[0]; days.push(d.toLocaleDateString('en-US', { weekday: 'short' })); rd.push(allReceivedItems.filter(x => x.receivedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); cd.push(allCollectedItems.filter(x => x.collectedBy === currentStaffEmail && x.timestamp && x.timestamp.startsWith(ds)).length); }
+    weeklyChart = new Chart(ctx, { type: 'bar', data: { labels: days, datasets: [{ label: 'Received', data: rd, backgroundColor: '#3b82f6', borderRadius: 4 }, { label: 'Collected', data: cd, backgroundColor: '#8b5cf6', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor, font: { size: 9 } } } }, scales: { x: { ticks: { color: textColor } }, y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor } } } } });
+  }
+
+  function updateCategoryChart() {
+    const ctx = document.getElementById('categoryChart'); if (!ctx) return;
+    const isLight = document.body.classList.contains('light'), textColor = isLight ? '#0f172a' : '#f1f5f9';
+    if (categoryChart) categoryChart.destroy();
+    const cats = {};
+    allReceivedItems.filter(x => x.receivedBy === currentStaffEmail).forEach(i => { const cat = i.category || 'Other'; cats[cat] = (cats[cat] || 0) + 1; });
+    const labels = Object.keys(cats), data = Object.values(cats);
+    categoryChart = new Chart(ctx, { type: 'doughnut', data: { labels, datasets: [{ data, backgroundColor: ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16'], borderColor: isLight?'#fff':'#1e293b', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { size: 8 }, usePointStyle: true } } } } });
+  }
+
+  function updateHourlyChart() {
+    const ctx = document.getElementById('hourlyChart'); if (!ctx) return;
+    const isLight = document.body.classList.contains('light'), textColor = isLight ? '#0f172a' : '#f1f5f9';
+    if (hourlyChart) hourlyChart.destroy();
+    const hours = Array.from({length: 12}, (_, i) => i + 8); // 8AM to 7PM
+    const labels = hours.map(h => h + ':00');
+    const data = hours.map(h => allReceivedItems.filter(x => x.receivedBy === currentStaffEmail && x.timestamp && new Date(x.timestamp).getHours() === h).length);
+    hourlyChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Received', data, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor, font: { size: 9 } } } }, scales: { x: { ticks: { color: textColor } }, y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor } } } } });
+  }
+
   function loadAllRealtime() {
     bookingsRef.on('value', snap => {
-      const bks = []; snap.forEach(c => { const v = c.val(); v._key = c.key; bks.push(v); });
-      allBookings = bks;
-      refreshFilteredUI(); updateDashboardStats();
-      if (document.getElementById('tab-insights').classList.contains('active')) renderInsights();
+      allBookings = []; snap.forEach(c => { const v = c.val(); v._key = c.key; allBookings.push(v); });
+      detectDuplicates(allBookings);
+      renderMyBookingsGrid(); renderAllBookingsGrid(); updateDashboardStats(); updateRecentActivity();
     });
     receivedItemsRef.orderByChild('timestamp').limitToLast(100).on('value', snap => {
-      const its = []; snap.forEach(c => { const d = c.val(); d.key = c.key; its.unshift(d); });
-      allReceivedItems = its;
-      rRT(its); rRC(its); updateDashboardStats();
+      allReceivedItems = []; snap.forEach(c => { const d = c.val(); d.key = c.key; allReceivedItems.unshift(d); });
+      renderMyReceivedCards(); updateDashboardStats(); updateRecentActivity();
     });
     collectedItemsRef.orderByChild('timestamp').limitToLast(100).on('value', snap => {
-      const its = []; snap.forEach(c => { const d = c.val(); d.key = c.key; its.unshift(d); });
-      allCollectedItems = its;
-      rCT(its); rCC(its); updateDashboardStats();
+      allCollectedItems = []; snap.forEach(c => { const d = c.val(); d.key = c.key; allCollectedItems.unshift(d); });
+      renderMyCollectedCards(); updateDashboardStats(); updateRecentActivity();
+    });
+    pendingApprovalsRef.on('value', snap => {
+      allPendingApprovals = []; snap.forEach(c => { const d = c.val(); d.key = c.key; allPendingApprovals.unshift(d); });
+      if (document.getElementById('tab-approvals').classList.contains('active')) renderApprovals();
+      const p = allPendingApprovals.filter(a => a.status === 'pending').length;
+      document.getElementById('approvalBadge').textContent = p;
+      document.getElementById('approvalBadge').style.display = p > 0 ? 'inline-block' : 'none';
     });
   }
 
-  // Viewport fix
   function setVH() { document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px'); }
   window.addEventListener('resize', setVH); window.addEventListener('orientationchange', setVH); setVH();
-  document.addEventListener('dblclick', e => { if (e.target.tagName === 'BUTTON' || e.target.closest('button')) e.preventDefault(); }, { passive: false });
 </script>
 </body>
 </html>
