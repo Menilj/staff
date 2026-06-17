@@ -422,7 +422,7 @@
 <div id="receiveModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-camera"></i> Receive Items</h3><div id="duplicateAlertReceive" class="duplicate-warning" style="display:none;"><i class="fas fa-exclamation-triangle"></i> <span id="duplicateAlertText"></span></div><form id="receiveForm"><input type="hidden" id="receiveBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="receiveBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="receiveCustomerName" readonly></div><div class="form-group"><label>Phone</label><input type="text" id="receiveCustomerPhone" readonly></div><div class="form-row"><div class="form-group"><label>Item Count *</label><input type="number" id="receiveItemCount" required min="1"></div><div class="form-group"><label>Category</label><select id="receiveCategory"><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Books</option><option>Other</option></select></div></div><div class="form-group"><label>Description *</label><textarea id="receiveDescription" rows="2" required></textarea></div><div class="form-row"><div class="form-group"><label>Condition</label><select id="receiveCondition"><option>Good</option><option>Fair</option><option>Excellent</option></select></div><div class="form-group"><label>Location</label><input type="text" id="receiveLocation" placeholder="Shelf A3"></div></div><div class="form-group"><label>📸 Photos (Min 1)</label><div class="photo-grid" id="receivePhotosGrid"></div><div class="photo-upload-options"><div class="photo-upload-option" onclick="document.getElementById('receivePhotoInput').click()"><i class="fas fa-camera"></i> Camera</div><div class="photo-upload-option" onclick="document.getElementById('receiveGalleryInput').click()"><i class="fas fa-images"></i> Gallery</div></div><input type="file" id="receivePhotoInput" accept="image/*" capture="environment" style="display:none;"><input type="file" id="receiveGalleryInput" accept="image/*" multiple style="display:none;"></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('receiveModal')">Cancel</button><button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirm</button></div></form></div></div>
 <div id="collectionModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-signature"></i> Collect Items</h3><form id="collectionForm"><input type="hidden" id="collectBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="collectBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="collectCustomerName" readonly></div><div class="form-group"><label>Items</label><input type="text" id="collectItems" readonly></div><div class="form-group"><label>Notes</label><textarea id="collectNotes" rows="2"></textarea></div><div class="form-group"><label>👤 Customer Signature *</label><canvas id="customerCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('customerCanvas')" style="margin-top:3px;font-size:0.65rem;">Clear</button></div><div class="form-group"><label>👔 Staff Signature *</label><canvas id="staffCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('staffCanvas')" style="margin-top:3px;font-size:0.65rem;">Clear</button></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button type="submit" class="btn btn-primary">Submit for Approval</button></div></form></div></div>
 <div id="whatsappModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fab fa-whatsapp"></i> WhatsApp</h3><div id="whatsappPreview" class="wa-message-preview"></div><div class="flex-between"><button class="btn btn-outline" onclick="closeModal('whatsappModal')">Cancel</button><button class="btn btn-whatsapp" onclick="sendWhatsApp()">Send</button></div></div></div>
-
+<div id="feedbackModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3><i class="fas fa-comment-dots"></i> Rejection Feedback</h3><form onsubmit="event.preventDefault(); submitRejectionWithFeedback();"><div class="form-group"><label>Feedback Message *</label><textarea id="feedbackMessage" rows="3" placeholder="Explain why this is being rejected..." required></textarea></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('feedbackModal')">Cancel</button><button type="submit" class="btn btn-reject"><i class="fas fa-times"></i> Reject with Feedback</button></div></form></div></div>
 <script>
   firebase.initializeApp({
     apiKey: "AIzaSyCuCd89dawEHOGrKmcCimw3pBErKYJU_VI",
@@ -444,6 +444,9 @@
   // Duplicate tracking
   let duplicateBookings = new Set();
   let duplicateGroups = {};
+  let currentRejectionKey = null;
+
+
 
   function getGreeting() { const h = new Date().getHours(); return h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening'; }
   function updateDate() { document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
@@ -495,7 +498,8 @@
           loadAllRealtime(); switchTab('dashboard');
           showToast('Welcome, ' + dn.split(' ')[0] + '!');
         } else { auth.signOut(); document.getElementById('staffLoginError').textContent = '❌ Unauthorized'; document.getElementById('staffLoginError').style.display = 'block'; }
-      });
+          renderMyBookingsGrid(); renderAllBookingsGrid();
+    });
     }).catch(e => { document.getElementById('staffLoginError').textContent = '❌ ' + e.message; document.getElementById('staffLoginError').style.display = 'block'; });
   };
 
@@ -774,7 +778,7 @@
   }
   window.clearCanvas = id => { const c = document.getElementById(id); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); };
 
-  window.approveCollection = function(key) {
+   window.approveCollection = function(key) {
     if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
     const approval = allPendingApprovals.find(a => a.key === key);
     if (!approval) return;
@@ -784,14 +788,75 @@
       items: (b.itemCount||'?') + ' items', customerSignature: approval.customerSignature,
       staffSignature: approval.staffSignature, collectedBy: approval.requestedBy,
       collectedByName: approval.requestedByName, approvedBy: currentStaffEmail, timestamp: new Date().toISOString()
-    }).then(() => bookingsRef.child(approval.bookingKey).update({ status: 'collected', collected_at: new Date().toISOString(), collection_approved: true }))
-      .then(() => pendingApprovalsRef.child(key).update({ status: 'approved' })).then(() => showToast('✅ Approved!'));
+    }).then(() => bookingsRef.child(approval.bookingKey).update({ status: 'collected', collected_at: new Date().toISOString(), collection_approved: true, pending_collection: false }))
+      .then(() => pendingApprovalsRef.child(key).update({ 
+        status: 'approved', 
+        adminResponse: 'approved',
+        adminFeedback: 'Collection approved successfully',
+        respondedBy: currentStaffEmail,
+        respondedAt: new Date().toISOString()
+      })).then(() => showToast('✅ Approved!'));
   };
 
-  window.rejectCollection = function(key) {
+   window.openRejectFeedback = function(key) {
     if (!currentStaffIsAdmin) { showToast('Admin only', 'warning'); return; }
-    if (!confirm('Reject?')) return;
-    pendingApprovalsRef.child(key).update({ status: 'rejected' }).then(() => showToast('❌ Rejected'));
+    currentRejectionKey = key;
+    document.getElementById('feedbackMessage').value = '';
+    openModal('feedbackModal');
+  };
+
+  window.submitRejectionWithFeedback = function() {
+    const feedback = document.getElementById('feedbackMessage').value.trim();
+    if (!feedback) { showToast('Please provide feedback', 'warning'); return; }
+    
+    const key = currentRejectionKey;
+    const approval = allPendingApprovals.find(a => a.key === key);
+    if (approval) {
+      bookingsRef.child(approval.bookingKey).update({ pending_collection: false });
+    }
+    
+    pendingApprovalsRef.child(key).update({ 
+      status: 'rejected', 
+      adminResponse: 'rejected',
+      adminFeedback: feedback,
+      respondedBy: currentStaffEmail,
+      respondedAt: new Date().toISOString()
+    }).then(() => {
+      showToast('❌ Rejected with feedback');
+      closeModal('feedbackModal');
+      currentRejectionKey = null;
+    });
+  };
+
+
+    window.resubmitCollection = function(bookingKey) {
+    if (!currentStaffEmail) return;
+    const b = allBookings.find(x => x._key === bookingKey);
+    if (!b) return;
+    
+    const rejectedApproval = allPendingApprovals.find(a => a.bookingKey === bookingKey && a.status === 'rejected' && a.type === 'collection');
+    
+    if (!confirm('Resubmit collection request for #' + (b.bookingId || bookingKey.slice(-6)) + '?')) return;
+    
+    bookingsRef.child(bookingKey).update({ pending_collection: true }).then(() => {
+      return pendingApprovalsRef.push({
+        bookingKey: bookingKey, 
+        requestedBy: currentStaffEmail, 
+        requestedByName: currentStaffEmail.split('@')[0],
+        staffSignature: rejectedApproval ? rejectedApproval.staffSignature : '',
+        customerSignature: rejectedApproval ? rejectedApproval.customerSignature : '',
+        timestamp: new Date().toISOString(), 
+        status: 'pending', 
+        type: 'collection',
+        resubmitted: true,
+        previousRejection: rejectedApproval ? rejectedApproval.adminFeedback : ''
+      });
+    }).then(() => {
+      if (rejectedApproval) {
+        pendingApprovalsRef.child(rejectedApproval.key).remove();
+      }
+      showToast('Resubmitted for approval! ⏳');
+    });
   };
 
   window.approveAssignment = function(approvalKey, bookingKey, staffEmail) {
@@ -831,7 +896,19 @@
         <button class="action-btn btn-preview" onclick="showPreview('${b._key}')"><i class="fas fa-eye"></i></button>
         ${showRequestBtn && isUnassigned ? `<button class="action-btn btn-request" onclick="requestUnassigned('${b._key}')"><i class="fas fa-hand-paper"></i> Request</button>` : ''}
         ${isMine && b.status === 'active' && !b.items_received ? `<button class="action-btn btn-receive" onclick="openReceiveModal('${b._key}')"><i class="fas fa-camera"></i> Receive</button>` : ''}
-        ${isMine && b.status === 'received' ? `<button class="action-btn btn-collect" onclick="openCollectionModal('${b._key}')"><i class="fas fa-people-carry"></i> Collect</button>` : ''}
+                ${(() => {
+          const rejectedApproval = allPendingApprovals.find(a => a.bookingKey === b._key && a.status === 'rejected' && a.type === 'collection');
+          if (rejectedApproval && isMine) {
+            return `<div class="rejected-notice" style="grid-column:1/-1;background:rgba(239,68,68,0.15);border-left:4px solid var(--danger);padding:10px;margin:8px 0;border-radius:4px;font-size:0.8rem;">
+              <i class="fas fa-exclamation-circle"></i> <strong>Rejected by Admin</strong>
+              ${rejectedApproval.adminFeedback ? `<div style="font-size:0.75rem;color:var(--danger);margin-top:4px;">"${rejectedApproval.adminFeedback}"</div>` : ''}
+              <button class="action-btn btn-resubmit" onclick="resubmitCollection('${b._key}')" style="margin-top:6px;background:#f59e0b;color:#000;font-weight:700;"><i class="fas fa-redo"></i> Resubmit</button>
+            </div>`;
+          } else if (isMine && b.status === 'received') {
+            return `<button class="action-btn btn-collect" onclick="openCollectionModal('${b._key}')"><i class="fas fa-people-carry"></i> Collect</button>`;
+          }
+          return '';
+        })()}
         ${b.collection_approved ? `<button class="action-btn btn-whatsapp" onclick="openWhatsAppModal('${b._key}')"><i class="fab fa-whatsapp"></i></button>` : ''}
         ${currentStaffIsAdmin ? `<button class="action-btn btn-delete" onclick="deleteBooking('${b._key}')"><i class="fas fa-trash"></i></button>` : ''}
         ${isDuplicate && currentStaffIsAdmin ? `<button class="action-btn btn-merge" onclick="showToast('Merge feature coming soon', 'info')"><i class="fas fa-compress"></i></button>` : ''}
@@ -926,8 +1003,7 @@
           </div>
           <div style="display:flex;gap:4px;">
             ${a.type === 'assignment_request' ? `<button class="action-btn btn-approve" onclick="approveAssignment('${a.key}','${a.bookingKey}','${a.requestedBy}')"><i class="fas fa-check"></i> Assign</button>` : `<button class="action-btn btn-approve" onclick="approveCollection('${a.key}')"><i class="fas fa-check"></i> Approve</button>`}
-            <button class="action-btn btn-reject" onclick="rejectCollection('${a.key}')"><i class="fas fa-times"></i> Reject</button>
-          </div>
+                        <button class="action-btn btn-reject" onclick="openRejectFeedback('${a.key}')"><i class="fas fa-comment"></i> Reject</button>       </div>
         </div>
       </div>`;
     }).join('');
