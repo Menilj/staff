@@ -429,7 +429,9 @@
 </div>
 
 <!-- MODALS -->
-<div id="receiveModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3>Receive Items</h3><div id="duplicateAlertReceive" class="duplicate-warning" style="display:none;"></div><form id="receiveForm"><input type="hidden" id="receiveBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="receiveBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="receiveCustomerName" readonly></div><div class="form-group"><label>Phone</label><input type="text" id="receiveCustomerPhone" readonly></div><div class="form-group"><label>Item Count *</label><input type="number" id="receiveItemCount" required min="1"></div><div class="form-group"><label>Category</label><select id="receiveCategory"><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Books</option><option>Other</option></select></div><div class="form-group"><label>Description *</label><textarea id="receiveDescription" rows="2" required></textarea></div><div class="form-group"><label>Condition</label><select id="receiveCondition"><option>Good</option><option>Fair</option><option>Excellent</option></select></div><div class="form-group"><label>Location</label><input type="text" id="receiveLocation" placeholder="Shelf A3"></div><div class="form-group"><label>Photos (Min 1)</label><div class="photo-grid" id="receivePhotosGrid"></div><div class="photo-upload-options"><div class="photo-upload-option" onclick="document.getElementById('receivePhotoInput').click()"><i class="fas fa-camera"></i> Camera</div><div class="photo-upload-option" onclick="document.getElementById('receiveGalleryInput').click()"><i class="fas fa-images"></i> Gallery</div></div><input type="file" id="receivePhotoInput" accept="image/*" capture="environment" style="display:none;"><input type="file" id="receiveGalleryInput" accept="image/*" multiple style="display:none;"></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('receiveModal')">Cancel</button><button type="submit" class="btn btn-success">Confirm</button></div></form></div></div>
+<!-- RECEIVE MODAL - Image Upload Removed -->
+<div id="receiveModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3>Receive Items</h3><div id="duplicateAlertReceive" class="duplicate-warning" style="display:none;"></div><form id="receiveForm"><input type="hidden" id="receiveBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="receiveBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="receiveCustomerName" readonly></div><div class="form-group"><label>Phone</label><input type="text" id="receiveCustomerPhone" readonly></div><div class="form-group"><label>Item Count *</label><input type="number" id="receiveItemCount" required min="1"></div><div class="form-group"><label>Category</label><select id="receiveCategory"><option>Electronics</option><option>Furniture</option><option>Clothing</option><option>Books</option><option>Other</option></select></div><div class="form-group"><label>Description *</label><textarea id="receiveDescription" rows="2" required></textarea></div><div class="form-group"><label>Condition</label><select id="receiveCondition"><option>Good</option><option>Fair</option><option>Excellent</option></select></div><div class="form-group"><label>Location</label><input type="text" id="receiveLocation" placeholder="Shelf A3"></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('receiveModal')">Cancel</button><button type="submit" class="btn btn-success">Confirm</button></div></form></div></div>
+
 <div id="collectionModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3>Collect Items</h3><form id="collectionForm"><input type="hidden" id="collectBookingKey"><div class="form-group"><label>Booking ID</label><input type="text" id="collectBookingId" readonly></div><div class="form-group"><label>Customer</label><input type="text" id="collectCustomerName" readonly></div><div class="form-group"><label>Items</label><input type="text" id="collectItems" readonly></div><div class="form-group"><label>Notes</label><textarea id="collectNotes" rows="2"></textarea></div><div class="form-group"><label>Customer Signature *</label><canvas id="customerCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('customerCanvas')" style="margin-top:3px;">Clear</button></div><div class="form-group"><label>Staff Signature *</label><canvas id="staffCanvas" class="signature-canvas"></canvas><button type="button" class="btn btn-outline" onclick="clearCanvas('staffCanvas')" style="margin-top:3px;">Clear</button></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('collectionModal')">Cancel</button><button type="submit" class="btn btn-primary">Submit for Approval</button></div></form></div></div>
 <div id="whatsappModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3>WhatsApp</h3><div id="whatsappPreview"></div><div class="flex-between"><button class="btn btn-outline" onclick="closeModal('whatsappModal')">Cancel</button><button class="btn btn-whatsapp" onclick="sendWhatsApp()">Send</button></div></div></div>
 <div id="feedbackModal" class="modal"><div class="modal-content" onclick="event.stopPropagation()"><h3>Rejection Feedback</h3><form onsubmit="event.preventDefault(); submitRejectionWithFeedback();"><div class="form-group"><label>Feedback Message *</label><textarea id="feedbackMessage" rows="3" placeholder="Explain why this is being rejected..." required></textarea></div><div class="flex-between"><button type="button" class="btn btn-outline" onclick="closeModal('feedbackModal')">Cancel</button><button type="submit" class="btn btn-reject">Reject with Feedback</button></div></form></div></div>
@@ -450,7 +452,6 @@
 
   let currentStaffEmail = null, currentStaffIsAdmin = false;
   let allBookings = [], allReceivedItems = [], allCollectedItems = [], allPendingApprovals = [];
-  let receivePhotos = [], statusChart = null, trendChart = null;
   let duplicateBookings = new Set(), duplicateGroups = {};
   let currentRejectionKey = null;
 
@@ -615,18 +616,11 @@
     document.getElementById('receiveCustomerPhone').value = b.phone || '';
     document.getElementById('receiveItemCount').value = b.itemCount || '';
     document.getElementById('receiveCategory').value = b.category || 'Other';
-    receivePhotos = []; document.getElementById('receivePhotosGrid').innerHTML = '';
     openModal('receiveModal');
   };
 
-  document.getElementById('receivePhotoInput').onchange = e => handlePhotos(e.target.files);
-  document.getElementById('receiveGalleryInput').onchange = e => handlePhotos(e.target.files);
-  function handlePhotos(files) { Array.from(files).forEach(f => { const reader = new FileReader(); reader.onload = ev => { receivePhotos.push(ev.target.result); renderRcvPhotos(); }; reader.readAsDataURL(f); }); }
-  function renderRcvPhotos() { document.getElementById('receivePhotosGrid').innerHTML = receivePhotos.map((p, i) => '<div class="photo-item"><img src="' + p + '"><button class="delete-photo" onclick="receivePhotos.splice(' + i + ',1);renderRcvPhotos();">&times;</button></div>').join(''); }
-
   document.getElementById('receiveForm').onsubmit = function(e) {
     e.preventDefault();
-    if (!receivePhotos.length) { showToast('At least 1 photo!', 'warning'); return; }
     const key = document.getElementById('receiveBookingKey').value;
     const b = allBookings.find(x => x._key === key);
     if (!b || b.status === 'received') { showToast('Already received!', 'error'); return; }
@@ -634,7 +628,7 @@
       bookingKey: key, bookingId: b.bookingId || key.slice(-6), customerName: b.name || '', customerPhone: b.phone || '',
       itemCount: parseInt(document.getElementById('receiveItemCount').value), category: document.getElementById('receiveCategory').value,
       description: document.getElementById('receiveDescription').value, condition: document.getElementById('receiveCondition').value,
-      location: document.getElementById('receiveLocation').value, photos: receivePhotos,
+      location: document.getElementById('receiveLocation').value,
       receivedBy: currentStaffEmail, receivedByName: currentStaffEmail.split('@')[0], timestamp: new Date().toISOString()
     }).then(() => bookingsRef.child(key).update({ status: 'received', items_received: true, received_at: new Date().toISOString(), received_by: currentStaffEmail, received_locked: true }))
     .then(() => { showToast('Items received!'); closeModal('receiveModal'); });
