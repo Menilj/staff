@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b1e33">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Staff Portal | CampusVault</title>
+  <title>Admin Portal | CampusVault</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -195,15 +195,6 @@
     .btn-success { background: var(--success); color: #fff; }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn-whatsapp { background: var(--whatsapp-green); color: #fff; font-weight: 700; }
-
-    .photo-grid { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
-    .photo-item { position: relative; width: 65px; height: 65px; border-radius: 8px; overflow: hidden; border: 2px solid var(--border); }
-    .photo-item img { width: 100%; height: 100%; object-fit: cover; }
-    .photo-item .delete-photo { position: absolute; top: 2px; right: 2px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; }
-    .photo-upload-options { display: flex; gap: 8px; margin-top: 6px; }
-    .photo-upload-option { flex: 1; border: 2px dashed var(--border); border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: 0.2s; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-secondary); min-height: 60px; justify-content: center; }
-    .photo-upload-option:active { border-color: var(--primary); background: var(--bg); }
-    .photo-upload-option i { font-size: 1.3rem; }
 
     .toast-container { position: fixed; bottom: calc(16px + var(--safe-bottom)); right: 12px; left: 12px; display: flex; flex-direction: column-reverse; gap: 6px; z-index: 1200; pointer-events: none; max-width: 400px; margin: 0 auto; }
     .toast { background: var(--surface); border-left: 4px solid var(--success); padding: 10px 14px; border-radius: 8px; box-shadow: var(--shadow); font-size: 0.8rem; animation: slideIn 0.25s ease; pointer-events: auto; }
@@ -630,14 +621,39 @@
     const key = document.getElementById('receiveBookingKey').value;
     const b = allBookings.find(x => x._key === key);
     if (!b || b.status === 'received') { showToast('Already received!', 'error'); return; }
+    
+    // Save to received_items - this is the key fix for admin to see received items
     receivedItemsRef.push({
-      bookingKey: key, bookingId: b.bookingId || key.slice(-6), customerName: b.name || '', customerPhone: b.phone || '',
-      itemCount: parseInt(document.getElementById('receiveItemCount').value), category: document.getElementById('receiveCategory').value,
-      description: document.getElementById('receiveDescription').value, condition: document.getElementById('receiveCondition').value,
+      bookingKey: key, 
+      bookingId: b.bookingId || key.slice(-6), 
+      customerName: b.name || '', 
+      customerPhone: b.phone || '',
+      itemCount: parseInt(document.getElementById('receiveItemCount').value), 
+      category: document.getElementById('receiveCategory').value,
+      description: document.getElementById('receiveDescription').value, 
+      condition: document.getElementById('receiveCondition').value,
       location: document.getElementById('receiveLocation').value,
-      receivedBy: currentStaffEmail, receivedByName: currentStaffEmail.split('@')[0], timestamp: new Date().toISOString()
-    }).then(() => bookingsRef.child(key).update({ status: 'received', items_received: true, received_at: new Date().toISOString(), received_by: currentStaffEmail, received_locked: true }))
-    .then(() => { showToast('Items received!'); closeModal('receiveModal'); });
+      receivedBy: currentStaffEmail, 
+      receivedByName: currentStaffEmail.split('@')[0], 
+      timestamp: new Date().toISOString()
+    }).then(() => {
+      // Also update the booking status
+      return bookingsRef.child(key).update({ 
+        status: 'received', 
+        items_received: true, 
+        received_at: new Date().toISOString(), 
+        received_by: currentStaffEmail, 
+        received_locked: true 
+      });
+    }).then(() => { 
+      showToast('Items received!'); 
+      closeModal('receiveModal');
+      // Refresh data
+      loadAllRealtime();
+    }).catch(err => {
+      console.error('Error receiving items:', err);
+      showToast('Error receiving items', 'error');
+    });
   };
 
   window.openCollectionModal = function(key) {
@@ -1027,37 +1043,85 @@
   }
 
   function loadAllRealtime() {
+    // Load bookings
     bookingsRef.on('value', snap => {
-      allBookings = []; snap.forEach(c => { const v = c.val(); v._key = c.key; allBookings.push(v); });
+      allBookings = []; 
+      snap.forEach(c => { 
+        const v = c.val(); 
+        v._key = c.key; 
+        allBookings.push(v); 
+      });
       detectDuplicates(allBookings);
-      renderMyBookingsGrid(); renderAllBookingsGrid(); updateDashboardStats(); updateRecentActivity();
+      renderMyBookingsGrid(); 
+      renderAllBookingsGrid(); 
+      updateDashboardStats(); 
+      updateRecentActivity();
     });
-    receivedItemsRef.orderByChild('timestamp').limitToLast(100).on('value', snap => {
-      allReceivedItems = []; snap.forEach(c => { const d = c.val(); d.key = c.key; allReceivedItems.unshift(d); });
-      renderMyReceivedCards(); updateDashboardStats(); updateRecentActivity();
+    
+    // Load received items - THIS IS THE KEY FIX for admin to see received items
+    receivedItemsRef.orderByChild('timestamp').limitToLast(200).on('value', snap => {
+      allReceivedItems = []; 
+      snap.forEach(c => { 
+        const d = c.val(); 
+        d.key = c.key; 
+        allReceivedItems.unshift(d); 
+      });
+      renderMyReceivedCards(); 
+      updateDashboardStats(); 
+      updateRecentActivity();
+      // Also update the received badge in the sidebar
+      const receivedCount = allReceivedItems.filter(r => r.receivedBy === currentStaffEmail).length;
+      document.getElementById('receiveBadge').textContent = receivedCount;
+      document.getElementById('receiveBadge').style.display = receivedCount > 0 ? 'inline-block' : 'none';
     });
-    collectedItemsRef.orderByChild('timestamp').limitToLast(100).on('value', snap => {
-      allCollectedItems = []; snap.forEach(c => { const d = c.val(); d.key = c.key; allCollectedItems.unshift(d); });
-      renderMyCollectedCards(); updateDashboardStats(); updateRecentActivity();
+    
+    // Load collected items
+    collectedItemsRef.orderByChild('timestamp').limitToLast(200).on('value', snap => {
+      allCollectedItems = []; 
+      snap.forEach(c => { 
+        const d = c.val(); 
+        d.key = c.key; 
+        allCollectedItems.unshift(d); 
+      });
+      renderMyCollectedCards(); 
+      updateDashboardStats(); 
+      updateRecentActivity();
+      const collectedCount = allCollectedItems.filter(c => c.collectedBy === currentStaffEmail).length;
+      document.getElementById('collectBadge').textContent = collectedCount;
+      document.getElementById('collectBadge').style.display = collectedCount > 0 ? 'inline-block' : 'none';
     });
+    
+    // Load pending approvals
     pendingApprovalsRef.on('value', snap => {
       allPendingApprovals = []; 
-      snap.forEach(c => { const d = c.val(); d.key = c.key; allPendingApprovals.unshift(d); });
+      snap.forEach(c => { 
+        const d = c.val(); 
+        d.key = c.key; 
+        allPendingApprovals.unshift(d); 
+      });
       if (document.getElementById('tab-approvals').classList.contains('active')) renderApprovals();
       if (document.getElementById('tab-my-approvals').classList.contains('active')) renderMyApprovalRequests();
+      
       const p = allPendingApprovals.filter(a => a.status === 'pending').length;
       document.getElementById('approvalBadge').textContent = p;
       document.getElementById('approvalBadge').style.display = p > 0 ? 'inline-block' : 'none';
+      
       const myRequests = allPendingApprovals.filter(a => a.requestedBy === currentStaffEmail);
       const myPending = myRequests.filter(a => a.status === 'pending').length;
       const myApprovalsBadge = document.getElementById('myApprovalsBadge');
-      if (myApprovalsBadge) { myApprovalsBadge.textContent = myPending; myApprovalsBadge.style.display = myPending > 0 ? 'inline-block' : 'none'; }
-      renderMyBookingsGrid(); renderAllBookingsGrid();
+      if (myApprovalsBadge) { 
+        myApprovalsBadge.textContent = myPending; 
+        myApprovalsBadge.style.display = myPending > 0 ? 'inline-block' : 'none'; 
+      }
+      renderMyBookingsGrid(); 
+      renderAllBookingsGrid();
     });
   }
 
   function setVH() { document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px'); }
-  window.addEventListener('resize', setVH); window.addEventListener('orientationchange', setVH); setVH();
+  window.addEventListener('resize', setVH); 
+  window.addEventListener('orientationchange', setVH); 
+  setVH();
 </script>
 </body>
-</html>
+  </html>
